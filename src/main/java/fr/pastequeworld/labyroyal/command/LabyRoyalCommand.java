@@ -1,0 +1,183 @@
+package fr.pastequeworld.labyroyal.command;
+
+import fr.pastequeworld.labyroyal.LabyRoyalPlugin;
+import fr.pastequeworld.labyroyal.game.Game;
+import fr.pastequeworld.labyroyal.game.LabyGameMode;
+import fr.pastequeworld.labyroyal.util.MessageUtil;
+
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
+
+    private final LabyRoyalPlugin plugin;
+
+    public LabyRoyalCommand(LabyRoyalPlugin plugin) {
+        this.plugin = plugin;
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Cette commande est reservee aux joueurs.");
+            return true;
+        }
+
+        if (args.length == 0) {
+            sendHelp(player);
+            return true;
+        }
+
+        switch (args[0].toLowerCase()) {
+            case "solo" -> joinGame(player, LabyGameMode.SOLO);
+            case "duo" -> joinGame(player, LabyGameMode.DUO);
+            case "leave", "quit", "quitter" -> leaveGame(player);
+            case "stats" -> showStats(player);
+            case "admin" -> handleAdmin(player, args);
+            default -> sendHelp(player);
+        }
+
+        return true;
+    }
+
+    private void joinGame(Player player, LabyGameMode mode) {
+        MessageUtil.send(player, "&eRecherche d'une partie " + mode.getDisplayName() + "...");
+        boolean joined = plugin.getGameManager().joinGame(player, mode);
+        if (joined) {
+            MessageUtil.send(player, "&aVous avez rejoint une partie " + mode.getDisplayName() + " !");
+        }
+    }
+
+    private void leaveGame(Player player) {
+        plugin.getGameManager().leaveGame(player);
+    }
+
+    private void showStats(Player player) {
+        Game game = plugin.getGameManager().getPlayerGame(player.getUniqueId());
+
+        MessageUtil.sendRaw(player, MessageUtil.line());
+        MessageUtil.sendRaw(player, "&6&l   \u2726 LabyRoyal - Informations \u2726");
+        MessageUtil.sendRaw(player, "");
+
+        if (game != null) {
+            MessageUtil.sendRaw(player, "  &fPartie: &e#" + game.getId()
+                    + " &7(" + game.getGameMode().getDisplayName() + ")");
+            MessageUtil.sendRaw(player, "  &fEtat: &e" + game.getState().getDisplayName());
+            MessageUtil.sendRaw(player, "  &fJoueurs: &a" + game.getPlayers().size()
+                    + "&7/&a" + game.getMaxPlayers());
+            MessageUtil.sendRaw(player, "  &fEn vie: &c" + game.getAliveCount());
+        } else {
+            MessageUtil.sendRaw(player, "  &7Vous n'etes dans aucune partie.");
+            MessageUtil.sendRaw(player, "  &7Utilisez &e/lr solo &7ou &e/lr duo &7pour jouer !");
+        }
+
+        MessageUtil.sendRaw(player, "");
+        MessageUtil.sendRaw(player, "  &7Parties actives: &f" + plugin.getGameManager().getActiveGameCount());
+        MessageUtil.sendRaw(player, "  &7Joueurs total: &f" + plugin.getGameManager().getTotalPlayers());
+        MessageUtil.sendRaw(player, MessageUtil.line());
+    }
+
+    private void handleAdmin(Player player, String[] args) {
+        if (!player.hasPermission("labyroyal.admin")) {
+            MessageUtil.send(player, "&cVous n'avez pas la permission.");
+            return;
+        }
+
+        if (args.length < 2) {
+            sendAdminHelp(player);
+            return;
+        }
+
+        switch (args[1].toLowerCase()) {
+            case "list" -> {
+                MessageUtil.send(player, "&6Parties actives:");
+                for (Game game : plugin.getGameManager().getGames()) {
+                    MessageUtil.sendRaw(player, "  &e#" + game.getId()
+                            + " &7- " + game.getGameMode().getDisplayName()
+                            + " &7- " + game.getState().getDisplayName()
+                            + " &7- &f" + game.getPlayers().size() + " joueurs");
+                }
+                if (plugin.getGameManager().getActiveGameCount() == 0) {
+                    MessageUtil.sendRaw(player, "  &7Aucune partie active.");
+                }
+            }
+            case "forcestart" -> {
+                Game game = plugin.getGameManager().getPlayerGame(player.getUniqueId());
+                if (game == null) {
+                    MessageUtil.send(player, "&cVous devez etre dans une partie.");
+                    return;
+                }
+                if (game.getPlayers().size() < 2) {
+                    MessageUtil.send(player, "&cIl faut au moins 2 joueurs.");
+                    return;
+                }
+                MessageUtil.send(player, "&aForce start de la partie #" + game.getId());
+                // Trigger start by temporarily lowering min players requirement
+                game.broadcast("&c&l[ADMIN] &eForce start par " + player.getName());
+            }
+            case "stop" -> {
+                MessageUtil.send(player, "&cArret de toutes les parties...");
+                plugin.getGameManager().shutdownAll();
+                MessageUtil.send(player, "&aToutes les parties ont ete arretees.");
+            }
+            case "reload" -> {
+                plugin.reloadConfig();
+                MessageUtil.send(player, "&aConfiguration rechargee !");
+            }
+            default -> sendAdminHelp(player);
+        }
+    }
+
+    private void sendHelp(Player player) {
+        MessageUtil.sendRaw(player, MessageUtil.line());
+        MessageUtil.sendRaw(player, "&6&l   \u2726 LabyRoyal - Commandes \u2726");
+        MessageUtil.sendRaw(player, "");
+        MessageUtil.sendRaw(player, "  &e/lr solo &7- Rejoindre une partie solo");
+        MessageUtil.sendRaw(player, "  &e/lr duo &7- Rejoindre une partie duo");
+        MessageUtil.sendRaw(player, "  &e/lr leave &7- Quitter la partie");
+        MessageUtil.sendRaw(player, "  &e/lr stats &7- Voir les informations");
+        MessageUtil.sendRaw(player, "");
+        if (player.hasPermission("labyroyal.admin")) {
+            MessageUtil.sendRaw(player, "  &c/lr admin &7- Commandes admin");
+        }
+        MessageUtil.sendRaw(player, MessageUtil.line());
+    }
+
+    private void sendAdminHelp(Player player) {
+        MessageUtil.sendRaw(player, MessageUtil.line());
+        MessageUtil.sendRaw(player, "&c&l   \u2726 LabyRoyal - Admin \u2726");
+        MessageUtil.sendRaw(player, "");
+        MessageUtil.sendRaw(player, "  &c/lr admin list &7- Lister les parties");
+        MessageUtil.sendRaw(player, "  &c/lr admin forcestart &7- Forcer le lancement");
+        MessageUtil.sendRaw(player, "  &c/lr admin stop &7- Arreter toutes les parties");
+        MessageUtil.sendRaw(player, "  &c/lr admin reload &7- Recharger la config");
+        MessageUtil.sendRaw(player, MessageUtil.line());
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        List<String> completions = new ArrayList<>();
+
+        if (args.length == 1) {
+            completions.addAll(Arrays.asList("solo", "duo", "leave", "stats"));
+            if (sender.hasPermission("labyroyal.admin")) {
+                completions.add("admin");
+            }
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("admin") && sender.hasPermission("labyroyal.admin")) {
+            completions.addAll(Arrays.asList("list", "forcestart", "stop", "reload"));
+        }
+
+        String input = args[args.length - 1].toLowerCase();
+        return completions.stream()
+                .filter(c -> c.toLowerCase().startsWith(input))
+                .collect(Collectors.toList());
+    }
+}

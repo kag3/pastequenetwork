@@ -1,0 +1,11 @@
+name: LabyRoyal
+version: 1.0.0
+main: fr.pastequeworld.labyroyal.LabyRoyalPlugin
+api-version: '1.19'
+description: Mode de jeu LabyRoyal - Battle Royale en Labyrinthe pour PastequeWorld
+author: PastequeWorld
+commands:
+  labyroyal:
+    description: Commande principale du LabyRoyal
+    aliases: [lr, laby]
+    usage: /labyroyal <solo|duo|leave|admin>

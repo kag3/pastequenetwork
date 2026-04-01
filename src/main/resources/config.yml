@@ -1,0 +1,45 @@
+# ============================================
+#         LabyRoyal - Configuration
+#         PastequeWorld Network
+# ============================================
+
+general:
+  prefix: "&6&l\u2726 &eLabyRoyal &6&l\u2726 &7\u00bb &f"
+  hub-world: "world"
+
+solo:
+  min-players: 6
+  max-players: 8
+  maze-cells: 20
+  preparation-time: 300
+  pvp-time: 420
+  storm-start-delay: 60
+  storm-duration: 300
+  countdown: 15
+  wait-timeout: 60
+
+duo:
+  min-players: 8
+  max-players: 16
+  maze-cells: 28
+  preparation-time: 360
+  pvp-time: 480
+  storm-start-delay: 60
+  storm-duration: 360
+  countdown: 15
+  wait-timeout: 60
+
+maze:
+  wall-height: 8
+  base-y: 60
+  special-rooms: 4
+  ore-chance: 0.15
+  bonus-chests: 6
+
+lobby:
+  y-level: 100
+  size: 15
+
+anti-cheat:
+  fly-detection: true
+  auto-kick: true
