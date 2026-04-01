@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>fr.pastequeworld</groupId>
-    <artifactId>LabyRoyal</artifactId>
+    <artifactId>LabyRoyale</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>LabyRoyal</name>
+    <name>LabyRoyale</name>
     <description>Battle Royale Labyrinth game mode for PastequeWorld</description>
 
     <properties>

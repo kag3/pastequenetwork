@@ -24,7 +24,7 @@ public class ScoreboardManager {
 
     public void setup(Player player) {
         Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
-        Objective obj = board.registerNewObjective("labyroyal", "dummy");
+        Objective obj = board.registerNewObjective("labyroyale", "dummy");
         obj.setDisplayName(color("&2&lpasteque&7.&d&lworld"));
         obj.setDisplaySlot(DisplaySlot.SIDEBAR);
         player.setScoreboard(board);
@@ -33,7 +33,7 @@ public class ScoreboardManager {
 
     public void update(Player player) {
         Scoreboard board = player.getScoreboard();
-        Objective obj = board.getObjective("labyroyal");
+        Objective obj = board.getObjective("labyroyale");
         if (obj == null) return;
 
         // Clear old entries
@@ -55,7 +55,7 @@ public class ScoreboardManager {
         setScore(obj, " ", line--);
 
         // Serveur
-        setScore(obj, "&7Serveur: &fLabyRoyal&2#" + game.getId(), line--);
+        setScore(obj, "&7Serveur: &fLabyRoyale&2#" + game.getId(), line--);
 
         setScore(obj, "  ", line--);
 

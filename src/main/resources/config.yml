@@ -1,10 +1,10 @@
 # ============================================
-#         LabyRoyal - Configuration
+#         LabyRoyale - Configuration
 #         PastequeWorld Network
 # ============================================
 
 general:
-  prefix: "&6&l\u2726 &eLabyRoyal &6&l\u2726 &7\u00bb &f"
+  prefix: "&6&l\u2726 &eLabyRoyale &6&l\u2726 &7\u00bb &f"
   hub-world: "world"
 
 solo:

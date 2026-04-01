@@ -1,5 +1,5 @@
-name: LabyRoyalBungee
+name: LabyRoyaleBungee
 main: fr.pastequeworld.labyroyalbungee.LabyRoyalBungee
 version: 1.0.0
 author: PastequeWorld
-description: Bridge BungeeCord pour LabyRoyal - route les joueurs vers les files d'attente
+description: Bridge BungeeCord pour LabyRoyale - route les joueurs vers les files d'attente

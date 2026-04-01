@@ -98,7 +98,7 @@ public class Game {
 
     @SuppressWarnings("deprecation")
     public boolean createWorld() {
-        String worldName = "labyroyal_" + id;
+        String worldName = "labyroyale_" + id;
 
         WorldCreator creator = new WorldCreator(worldName);
         creator.generator(new VoidGenerator());
@@ -576,10 +576,10 @@ public class Game {
 
             MessageUtil.broadcastTitle(online,
                     "&6&l\u2726 VICTOIRE \u2726",
-                    "&e" + winName + " &7remporte le LabyRoyal !");
+                    "&e" + winName + " &7remporte le LabyRoyale !");
 
             broadcast(MessageUtil.line());
-            broadcast("&6&l       \u2726 LABYROYAL - VICTOIRE \u2726");
+            broadcast("&6&l       \u2726 LABYROYALE - VICTOIRE \u2726");
             broadcast("");
             broadcast("   &e\u2b50 Gagnant: &f&l" + winName);
             broadcast("   &7\u2694 Kills: &f" + winner.getKills());
@@ -640,10 +640,10 @@ public class Game {
 
         MessageUtil.broadcastTitle(online,
                 "&6&l\u2726 VICTOIRE \u2726",
-                "&eEquipe " + winTeam.getId() + " &7remporte le LabyRoyal !");
+                "&eEquipe " + winTeam.getId() + " &7remporte le LabyRoyale !");
 
         broadcast(MessageUtil.line());
-        broadcast("&6&l       \u2726 LABYROYAL - VICTOIRE \u2726");
+        broadcast("&6&l       \u2726 LABYROYALE - VICTOIRE \u2726");
         broadcast("");
         broadcast("   &e\u2b50 Gagnants: &f&l" + memberNames);
         broadcast("");

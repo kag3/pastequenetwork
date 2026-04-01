@@ -76,7 +76,7 @@ public class GameManager {
         String id = String.valueOf(nextId.getAndIncrement());
         Game game = new Game(id, mode, plugin);
 
-        plugin.getLogger().info("Creation du monde LabyRoyal #" + id + " (" + mode.getDisplayName() + ")...");
+        plugin.getLogger().info("Creation du monde LabyRoyale #" + id + " (" + mode.getDisplayName() + ")...");
 
         if (!game.createWorld()) {
             plugin.getLogger().severe("Echec de la creation du monde pour la partie #" + id);
@@ -84,7 +84,7 @@ public class GameManager {
         }
 
         games.put(id, game);
-        plugin.getLogger().info("Partie LabyRoyal #" + id + " creee avec succes !");
+        plugin.getLogger().info("Partie LabyRoyale #" + id + " creee avec succes !");
         return game;
     }
 
@@ -94,7 +94,7 @@ public class GameManager {
             playerGameMap.remove(uuid);
         }
         games.remove(game.getId());
-        plugin.getLogger().info("Partie LabyRoyal #" + game.getId() + " supprimee.");
+        plugin.getLogger().info("Partie LabyRoyale #" + game.getId() + " supprimee.");
     }
 
     public Game getPlayerGame(UUID uuid) {

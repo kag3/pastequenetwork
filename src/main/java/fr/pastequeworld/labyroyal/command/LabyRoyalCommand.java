@@ -79,7 +79,7 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
         Game game = plugin.getGameManager().getPlayerGame(player.getUniqueId());
 
         MessageUtil.sendRaw(player, MessageUtil.line());
-        MessageUtil.sendRaw(player, "&6&l   \u2726 LabyRoyal - Informations \u2726");
+        MessageUtil.sendRaw(player, "&6&l   \u2726 LabyRoyale - Informations \u2726");
         MessageUtil.sendRaw(player, "");
 
         if (game != null) {
@@ -101,7 +101,7 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleAdmin(Player player, String[] args) {
-        if (!player.hasPermission("labyroyal.admin")) {
+        if (!player.hasPermission("labyroyale.admin")) {
             MessageUtil.send(player, "&cVous n'avez pas la permission.");
             return;
         }
@@ -155,14 +155,14 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
 
     private void sendHelp(Player player) {
         MessageUtil.sendRaw(player, MessageUtil.line());
-        MessageUtil.sendRaw(player, "&6&l   \u2726 LabyRoyal - Commandes \u2726");
+        MessageUtil.sendRaw(player, "&6&l   \u2726 LabyRoyale - Commandes \u2726");
         MessageUtil.sendRaw(player, "");
         MessageUtil.sendRaw(player, "  &e/lr solo &7- Rejoindre une partie solo");
         MessageUtil.sendRaw(player, "  &e/lr duo &7- Rejoindre une partie duo");
         MessageUtil.sendRaw(player, "  &e/lr leave &7- Quitter la partie");
         MessageUtil.sendRaw(player, "  &e/lr stats &7- Voir les informations");
         MessageUtil.sendRaw(player, "");
-        if (player.hasPermission("labyroyal.admin")) {
+        if (player.hasPermission("labyroyale.admin")) {
             MessageUtil.sendRaw(player, "  &c/lr admin &7- Commandes admin");
         }
         MessageUtil.sendRaw(player, MessageUtil.line());
@@ -170,7 +170,7 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
 
     private void sendAdminHelp(Player player) {
         MessageUtil.sendRaw(player, MessageUtil.line());
-        MessageUtil.sendRaw(player, "&c&l   \u2726 LabyRoyal - Admin \u2726");
+        MessageUtil.sendRaw(player, "&c&l   \u2726 LabyRoyale - Admin \u2726");
         MessageUtil.sendRaw(player, "");
         MessageUtil.sendRaw(player, "  &c/lr admin list &7- Lister les parties");
         MessageUtil.sendRaw(player, "  &c/lr admin forcestart &7- Forcer le lancement");
@@ -185,10 +185,10 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 1) {
             completions.addAll(Arrays.asList("solo", "duo", "leave", "stats"));
-            if (sender.hasPermission("labyroyal.admin")) {
+            if (sender.hasPermission("labyroyale.admin")) {
                 completions.add("admin");
             }
-        } else if (args.length == 2 && args[0].equalsIgnoreCase("admin") && sender.hasPermission("labyroyal.admin")) {
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("admin") && sender.hasPermission("labyroyale.admin")) {
             completions.addAll(Arrays.asList("list", "forcestart", "stop", "reload"));
         }
 

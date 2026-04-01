@@ -9,7 +9,7 @@ import java.util.Collection;
 
 public class MessageUtil {
 
-    private static String prefix = "&6&l\u2726 &eLabyRoyal &6&l\u2726 &7\u00bb &f";
+    private static String prefix = "&6&l\u2726 &eLabyRoyale &6&l\u2726 &7\u00bb &f";
 
     public static void setPrefix(String prefix) {
         MessageUtil.prefix = prefix;

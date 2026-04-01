@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class LabyRoyalPlugin extends JavaPlugin implements PluginMessageListener {
 
-    private static final String CHANNEL = "LabyRoyal";
+    private static final String CHANNEL = "LabyRoyale";
 
     private GameManager gameManager;
     private AntiCheatListener antiCheatListener;
@@ -37,7 +37,7 @@ public class LabyRoyalPlugin extends JavaPlugin implements PluginMessageListener
 
         // Set prefix from config
         String prefix = getConfig().getString("general.prefix",
-                "&6&l\u2726 &eLabyRoyal &6&l\u2726 &7\u00bb &f");
+                "&6&l\u2726 &eLabyRoyale &6&l\u2726 &7\u00bb &f");
         MessageUtil.setPrefix(prefix);
 
         // Initialize managers
@@ -55,11 +55,11 @@ public class LabyRoyalPlugin extends JavaPlugin implements PluginMessageListener
 
         // Register commands
         LabyRoyalCommand cmd = new LabyRoyalCommand(this);
-        getCommand("labyroyal").setExecutor(cmd);
-        getCommand("labyroyal").setTabCompleter(cmd);
+        getCommand("labyroyale").setExecutor(cmd);
+        getCommand("labyroyale").setTabCompleter(cmd);
 
         getLogger().info("========================================");
-        getLogger().info("  LabyRoyal v" + getDescription().getVersion());
+        getLogger().info("  LabyRoyale v" + getDescription().getVersion());
         getLogger().info("  Mode de jeu Battle Royale en Labyrinthe");
         getLogger().info("  PastequeWorld Network");
         getLogger().info("========================================");
@@ -78,7 +78,7 @@ public class LabyRoyalPlugin extends JavaPlugin implements PluginMessageListener
             gameManager.shutdownAll();
         }
 
-        getLogger().info("LabyRoyal desactive.");
+        getLogger().info("LabyRoyale desactive.");
     }
 
     /**
@@ -108,7 +108,7 @@ public class LabyRoyalPlugin extends JavaPlugin implements PluginMessageListener
             }
 
         } catch (IOException e) {
-            getLogger().severe("Erreur lecture plugin message LabyRoyal: " + e.getMessage());
+            getLogger().severe("Erreur lecture plugin message LabyRoyale: " + e.getMessage());
         } catch (IllegalArgumentException e) {
             getLogger().severe("UUID invalide dans plugin message: " + e.getMessage());
         }

@@ -20,21 +20,21 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Plugin BungeeCord qui fait le pont entre le Hub et le serveur LabyRoyal.
+ * Plugin BungeeCord qui fait le pont entre le Hub et le serveur LabyRoyale.
  *
  * Flux :
- * 1. Le Hub envoie un plugin message sur le channel "LabyRoyal" avec "SOLO" ou "DUO"
- * 2. Ce plugin intercepte, stocke le mode, et connecte le joueur au serveur LabyRoyal
- * 3. Une fois connecte, il forward le mode au serveur LabyRoyal via plugin message
- * 4. Le plugin Spigot LabyRoyal recoit et auto-queue le joueur
+ * 1. Le Hub envoie un plugin message sur le channel "LabyRoyale" avec "SOLO" ou "DUO"
+ * 2. Ce plugin intercepte, stocke le mode, et connecte le joueur au serveur LabyRoyale
+ * 3. Une fois connecte, il forward le mode au serveur LabyRoyale via plugin message
+ * 4. Le plugin Spigot LabyRoyale recoit et auto-queue le joueur
  */
 public class LabyRoyalBungee extends Plugin implements Listener {
 
     // Channel utilise pour la communication Hub -> Bungee et Bungee -> Spigot
-    private static final String CHANNEL = "LabyRoyal";
+    private static final String CHANNEL = "LabyRoyale";
 
-    // Nom du serveur LabyRoyal dans la config BungeeCord (config.yml de bungee)
-    private static final String GAME_SERVER = "labyroyal";
+    // Nom du serveur LabyRoyale dans la config BungeeCord (config.yml de bungee)
+    private static final String GAME_SERVER = "labyroyale";
 
     // Stocke le mode en attente : UUID -> "SOLO" ou "DUO"
     private final Map<UUID, String> pendingQueue = new ConcurrentHashMap<UUID, String>();
@@ -45,7 +45,7 @@ public class LabyRoyalBungee extends Plugin implements Listener {
         getProxy().registerChannel(CHANNEL);
         getProxy().getPluginManager().registerListener(this, this);
 
-        getLogger().info("LabyRoyalBungee active !");
+        getLogger().info("LabyRoyaleBungee active !");
         getLogger().info("Channel: " + CHANNEL + " | Serveur cible: " + GAME_SERVER);
     }
 
@@ -53,7 +53,7 @@ public class LabyRoyalBungee extends Plugin implements Listener {
     public void onDisable() {
         getProxy().unregisterChannel(CHANNEL);
         pendingQueue.clear();
-        getLogger().info("LabyRoyalBungee desactive.");
+        getLogger().info("LabyRoyaleBungee desactive.");
     }
 
     /**
@@ -87,12 +87,12 @@ public class LabyRoyalBungee extends Plugin implements Listener {
             // Stocker le mode en attente
             pendingQueue.put(player.getUniqueId(), mode);
 
-            // Connecter le joueur au serveur LabyRoyal
+            // Connecter le joueur au serveur LabyRoyale
             ServerInfo server = getProxy().getServerInfo(GAME_SERVER);
             if (server == null) {
                 getLogger().severe("Serveur '" + GAME_SERVER + "' introuvable dans la config BungeeCord !");
                 player.sendMessage(net.md_5.bungee.api.chat.TextComponent.fromLegacyText(
-                        "\u00a7c\u00a7lErreur: \u00a77Le serveur LabyRoyal est indisponible."));
+                        "\u00a7c\u00a7lErreur: \u00a77Le serveur LabyRoyale est indisponible."));
                 pendingQueue.remove(player.getUniqueId());
                 return;
             }
@@ -113,7 +113,7 @@ public class LabyRoyalBungee extends Plugin implements Listener {
     }
 
     /**
-     * Quand le joueur arrive sur le serveur LabyRoyal,
+     * Quand le joueur arrive sur le serveur LabyRoyale,
      * on forward le mode de jeu au serveur Spigot.
      */
     @EventHandler
@@ -123,7 +123,7 @@ public class LabyRoyalBungee extends Plugin implements Listener {
 
         if (mode == null) return;
 
-        // Verifier que le joueur arrive bien sur le serveur LabyRoyal
+        // Verifier que le joueur arrive bien sur le serveur LabyRoyale
         if (!event.getServer().getInfo().getName().equalsIgnoreCase(GAME_SERVER)) return;
 
         // Envoyer le mode au serveur Spigot via plugin message
@@ -139,7 +139,7 @@ public class LabyRoyalBungee extends Plugin implements Listener {
                     out.writeUTF(mode);
                     server.sendData(CHANNEL, b.toByteArray());
                 } catch (IOException e) {
-                    getLogger().severe("Erreur envoi mode a LabyRoyal: " + e.getMessage());
+                    getLogger().severe("Erreur envoi mode a LabyRoyale: " + e.getMessage());
                 }
             }
         }, 500, TimeUnit.MILLISECONDS);

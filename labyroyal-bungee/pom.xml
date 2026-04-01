@@ -5,12 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>fr.pastequeworld</groupId>
-    <artifactId>labyroyal-bungee</artifactId>
+    <artifactId>labyroyale-bungee</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>LabyRoyalBungee</name>
-    <description>BungeeCord bridge for LabyRoyal - routes players to game queues</description>
+    <name>LabyRoyaleBungee</name>
+    <description>BungeeCord bridge for LabyRoyale - routes players to game queues</description>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -35,6 +35,6 @@
     </dependencies>
 
     <build>
-        <finalName>LabyRoyalBungee</finalName>
+        <finalName>LabyRoyaleBungee</finalName>
     </build>
 </project>
