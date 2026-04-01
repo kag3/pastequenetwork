@@ -10,7 +10,7 @@ general:
 solo:
   min-players: 6
   max-players: 8
-  maze-cells: 20
+  maze-cells: 21
   preparation-time: 300
   pvp-time: 420
   storm-start-delay: 60
@@ -21,7 +21,7 @@ solo:
 duo:
   min-players: 8
   max-players: 16
-  maze-cells: 28
+  maze-cells: 30
   preparation-time: 360
   pvp-time: 480
   storm-start-delay: 60

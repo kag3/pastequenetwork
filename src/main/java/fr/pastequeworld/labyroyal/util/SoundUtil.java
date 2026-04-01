@@ -18,15 +18,15 @@ public class SoundUtil {
     }
 
     public static void countdown(Player player) {
-        play(player, Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 1.0f);
+        play(player, Sound.BLOCK_NOTE_HAT, 1.0f, 1.0f);
     }
 
     public static void countdownFinal(Player player) {
-        play(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 2.0f);
+        play(player, Sound.BLOCK_NOTE_PLING, 1.0f, 2.0f);
     }
 
     public static void gameStart(Player player) {
-        play(player, Sound.ENTITY_ENDER_DRAGON_GROWL, 0.8f, 1.2f);
+        play(player, Sound.ENTITY_ENDERDRAGON_GROWL, 0.8f, 1.2f);
     }
 
     public static void phaseChange(Player player) {
@@ -38,7 +38,7 @@ public class SoundUtil {
     }
 
     public static void death(Player player) {
-        play(player, Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.8f, 0.8f);
+        play(player, Sound.ENTITY_LIGHTNING_THUNDER, 0.8f, 0.8f);
     }
 
     public static void elimination(Player player) {
@@ -46,7 +46,7 @@ public class SoundUtil {
     }
 
     public static void victory(Player player) {
-        play(player, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+        play(player, Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
     }
 
     public static void stormWarning(Player player) {
@@ -54,11 +54,11 @@ public class SoundUtil {
     }
 
     public static void playerJoin(Player player) {
-        play(player, Sound.BLOCK_NOTE_BLOCK_CHIME, 1.0f, 1.5f);
+        play(player, Sound.BLOCK_NOTE_CHIME, 1.0f, 1.5f);
     }
 
     public static void playerLeave(Player player) {
-        play(player, Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 0.5f);
+        play(player, Sound.BLOCK_NOTE_BASS, 1.0f, 0.5f);
     }
 
     public static void chestOpen(Player player) {
@@ -66,6 +66,6 @@ public class SoundUtil {
     }
 
     public static void tick(Player player) {
-        play(player, Sound.BLOCK_NOTE_BLOCK_BELL, 0.5f, 1.8f);
+        play(player, Sound.BLOCK_NOTE_BELL, 0.5f, 1.8f);
     }
 }

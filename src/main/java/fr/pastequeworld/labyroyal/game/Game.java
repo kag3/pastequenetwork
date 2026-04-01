@@ -35,8 +35,8 @@ public class Game {
     private StormManager stormManager;
     private ScoreboardManager scoreboardManager;
 
-    private final Map<UUID, PlayerData> players = new LinkedHashMap<>();
-    private final List<Team> teams = new ArrayList<>();
+    private final Map<UUID, PlayerData> players = new LinkedHashMap<UUID, PlayerData>();
+    private final List<Team> teams = new ArrayList<Team>();
     private int nextTeamId = 1;
 
     private BukkitTask countdownTask;
@@ -44,7 +44,6 @@ public class Game {
     private BukkitTask waitTimeoutTask;
     private int countdown;
 
-    // Config values
     private final int minPlayers;
     private final int maxPlayers;
     private final int mazeCells;
@@ -63,6 +62,7 @@ public class Game {
     private final int lobbySize;
 
     private int phaseTimer;
+    private int elapsedTime;
     private boolean stormStarted;
 
     public Game(String id, LabyGameMode gameMode, LabyRoyalPlugin plugin) {
@@ -71,8 +71,8 @@ public class Game {
         this.plugin = plugin;
         this.state = GameState.WAITING;
         this.stormStarted = false;
+        this.elapsedTime = 0;
 
-        // Load config
         String modePath = gameMode.name().toLowerCase();
         this.minPlayers = plugin.getConfig().getInt(modePath + ".min-players");
         this.maxPlayers = plugin.getConfig().getInt(modePath + ".max-players");
@@ -96,6 +96,7 @@ public class Game {
 
     // ==================== WORLD CREATION ====================
 
+    @SuppressWarnings("deprecation")
     public boolean createWorld() {
         String worldName = "labyroyal_" + id;
 
@@ -108,28 +109,24 @@ public class Game {
         if (world == null) return false;
 
         world.setDifficulty(Difficulty.NORMAL);
-        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
-        world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
-        world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
-        world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
-        world.setGameRule(GameRule.DO_FIRE_TICK, false);
-        world.setGameRule(GameRule.MOB_GRIEFING, false);
-        world.setGameRule(GameRule.SHOW_DEATH_MESSAGES, false);
-        world.setGameRule(GameRule.NATURAL_REGENERATION, true);
-        world.setGameRule(GameRule.KEEP_INVENTORY, false);
-        world.setGameRule(GameRule.DO_IMMEDIATE_RESPAWN, true);
-        world.setTime(6000); // Noon
+        world.setGameRuleValue("doDaylightCycle", "false");
+        world.setGameRuleValue("doWeatherCycle", "false");
+        world.setGameRuleValue("doMobSpawning", "false");
+        world.setGameRuleValue("announceAdvancements", "false");
+        world.setGameRuleValue("doFireTick", "false");
+        world.setGameRuleValue("mobGriefing", "false");
+        world.setGameRuleValue("showDeathMessages", "false");
+        world.setGameRuleValue("naturalRegeneration", "true");
+        world.setGameRuleValue("keepInventory", "false");
+        world.setTime(6000);
         world.setStorm(false);
 
-        // Generate maze
         mazeGenerator = new MazeGenerator(mazeCells, wallHeight, baseY, oreChance, specialRooms, bonusChests);
         mazeGenerator.generate(world);
 
-        // Build lobby
         lobbyBuilder = new LobbyBuilder(lobbyY, lobbySize);
         lobbyBuilder.build(world);
 
-        // Set world border to maze size initially (large)
         WorldBorder border = world.getWorldBorder();
         border.setCenter(0, 0);
         border.setSize(mazeGenerator.getMazeBlockSize() + 10);
@@ -151,7 +148,6 @@ public class Game {
         PlayerData data = new PlayerData(player.getUniqueId(), player.getName());
         players.put(player.getUniqueId(), data);
 
-        // Handle team assignment for duo
         if (gameMode == LabyGameMode.DUO) {
             Team availableTeam = findAvailableTeam();
             if (availableTeam == null) {
@@ -162,20 +158,15 @@ public class Game {
             data.setTeam(availableTeam);
         }
 
-        // Teleport to lobby
         preparePlayer(player);
         player.teleport(lobbyBuilder.getSpawnLocation(world));
 
-        // Broadcast join message
         String joinMsg = "&a+ &f" + player.getName() + " &7a rejoint la partie &8(&e"
                 + players.size() + "&7/&e" + maxPlayers + "&8)";
         broadcast(joinMsg);
-        SoundUtil.playAll(getOnlinePlayers(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_CHIME, 1.0f, 1.5f);
+        SoundUtil.playAll(getOnlinePlayers(), Sound.BLOCK_NOTE_CHIME, 1.0f, 1.5f);
 
-        // Update scoreboards
         scoreboardManager.updateAll(getOnlinePlayers());
-
-        // Check if we can start
         checkStartConditions();
 
         return true;
@@ -186,7 +177,6 @@ public class Game {
         if (data == null) return;
 
         if (state == GameState.WAITING || state == GameState.STARTING) {
-            // Remove from team
             if (data.getTeam() != null) {
                 data.getTeam().removeMember(player.getUniqueId());
                 if (data.getTeam().isEmpty()) {
@@ -198,9 +188,8 @@ public class Game {
             String leaveMsg = "&c- &f" + player.getName() + " &7a quitte la partie &8(&e"
                     + players.size() + "&7/&e" + maxPlayers + "&8)";
             broadcast(leaveMsg);
-            SoundUtil.playAll(getOnlinePlayers(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 0.5f);
+            SoundUtil.playAll(getOnlinePlayers(), Sound.BLOCK_NOTE_BASS, 1.0f, 0.5f);
 
-            // Cancel countdown if not enough players
             if (players.size() < minPlayers && countdownTask != null) {
                 cancelCountdown();
                 broadcast("&cPas assez de joueurs ! Compte a rebours annule.");
@@ -211,7 +200,6 @@ public class Game {
             scoreboardManager.remove(player);
             scoreboardManager.updateAll(getOnlinePlayers());
 
-            // If no players left, cleanup
             if (players.isEmpty()) {
                 plugin.getGameManager().removeGame(this);
             }
@@ -235,10 +223,8 @@ public class Game {
         if (state != GameState.WAITING) return;
 
         if (players.size() >= maxPlayers) {
-            // Full - start countdown immediately
             startCountdown();
         } else if (players.size() >= minPlayers) {
-            // Enough players - start wait timeout if not already running
             if (waitTimeoutTask == null) {
                 broadcast("&eAssez de joueurs ! La partie commence dans &6" + waitTimeout + "s &esi personne d'autre ne rejoint.");
                 startWaitTimeout();
@@ -298,8 +284,7 @@ public class Game {
                     String color = countdown <= 3 ? "&c&l" : "&e&l";
                     MessageUtil.broadcastTitle(online,
                             color + countdown,
-                            "&7Preparez-vous...",
-                            5, 15, 5);
+                            "&7Preparez-vous...");
 
                     for (Player p : online) {
                         if (countdown <= 3) {
@@ -326,6 +311,7 @@ public class Game {
     private void startGame() {
         state = GameState.PREPARATION;
         phaseTimer = preparationTime;
+        elapsedTime = 0;
 
         List<Location> spawns = mazeGenerator.getSpawnPoints(world, players.size());
 
@@ -339,13 +325,12 @@ public class Game {
             player.teleport(spawn);
             index++;
 
-            // Place starter chest next to each player
             mazeGenerator.placeStarterChest(spawn);
 
-            // Freeze for 5 seconds
             player.setWalkSpeed(0);
             player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 60, 0, false, false));
-            player.setGameMode(org.bukkit.GameMode.SURVIVAL);
+            player.setGameMode(GameMode.SURVIVAL);
+            player.setMaxHealth(20);
             player.setHealth(20);
             player.setFoodLevel(20);
             player.setSaturation(20);
@@ -354,7 +339,6 @@ public class Game {
             player.setExp(0);
         }
 
-        // Countdown 5-4-3-2-1-GO
         new BukkitRunnable() {
             int tick = 5;
 
@@ -365,14 +349,12 @@ public class Game {
                 if (tick > 0) {
                     MessageUtil.broadcastTitle(online,
                             "&e&l" + tick,
-                            "&7Vos marques...",
-                            0, 25, 0);
-                    SoundUtil.playAll(online, Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 1.0f);
+                            "&7Vos marques...");
+                    SoundUtil.playAll(online, Sound.BLOCK_NOTE_HAT, 1.0f, 1.0f);
                 } else {
                     MessageUtil.broadcastTitle(online,
                             "&a&lPARTEZ !",
-                            "&6Bonne chance !",
-                            0, 40, 10);
+                            "&6Bonne chance !");
 
                     for (Player p : online) {
                         p.setWalkSpeed(0.2f);
@@ -403,9 +385,9 @@ public class Game {
                 }
 
                 phaseTimer--;
+                elapsedTime++;
                 Collection<Player> online = getOnlinePlayers();
 
-                // Time announcements
                 if (phaseTimer == 60) {
                     broadcast("&c&l\u26a0 &eLa phase de combat commence dans &c60 secondes &e!");
                     SoundUtil.playAll(online, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
@@ -418,9 +400,8 @@ public class Game {
                 } else if (phaseTimer <= 5 && phaseTimer > 0) {
                     MessageUtil.broadcastTitle(online,
                             "&c&l" + phaseTimer,
-                            "&7Phase de combat imminente...",
-                            0, 25, 0);
-                    SoundUtil.playAll(online, Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 2.0f);
+                            "&7Phase de combat imminente...");
+                    SoundUtil.playAll(online, Sound.BLOCK_NOTE_PLING, 1.0f, 2.0f);
                 }
 
                 if (phaseTimer <= 0) {
@@ -429,10 +410,8 @@ public class Game {
                     return;
                 }
 
-                // Update scoreboards
                 scoreboardManager.updateAll(online);
 
-                // Action bar timer
                 MessageUtil.broadcastActionBar(online,
                         "&6\u2694 Preparation &7- &e" + MessageUtil.formatTime(phaseTimer));
             }
@@ -448,20 +427,17 @@ public class Game {
 
         MessageUtil.broadcastTitle(online,
                 "&c&l\u2694 COMBAT ! \u2694",
-                "&7Eliminez tous vos adversaires !",
-                10, 60, 20);
+                "&7Eliminez tous vos adversaires !");
 
         broadcast("&c&l\u2694 &4Phase de Combat &c&l\u2694");
         broadcast("&7Les minerais ne sont plus exploitables !");
         broadcast("&7La tempete va bientot se rapprocher...");
 
-        // Apply mining fatigue to prevent mining
         for (Player p : online) {
             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_DIGGING, Integer.MAX_VALUE, 2, false, false));
             SoundUtil.phaseChange(p);
         }
 
-        // Initialize storm manager
         stormManager = new StormManager(world, mazeGenerator.getMazeBlockSize());
 
         gameTask = new BukkitRunnable() {
@@ -473,10 +449,9 @@ public class Game {
                 }
 
                 phaseTimer--;
+                elapsedTime++;
                 Collection<Player> online = getOnlinePlayers();
 
-                // Start storm after delay
-                int stormCountdown = pvpTime - stormStartDelay - (pvpTime - phaseTimer);
                 if (!stormStarted && phaseTimer <= pvpTime - stormStartDelay) {
                     stormStarted = true;
                     stormManager.startShrinking(stormDuration);
@@ -484,13 +459,11 @@ public class Game {
                     SoundUtil.playAll(online, Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.5f, 1.2f);
                 }
 
-                // Storm warning
                 if (!stormStarted && (pvpTime - stormStartDelay - phaseTimer) == -10) {
                     broadcast("&5\u26a1 &dLa tempete arrive dans &510 secondes&d !");
                     SoundUtil.playAll(online, Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.3f, 1.5f);
                 }
 
-                // Time announcements
                 if (phaseTimer == 60) {
                     broadcast("&c\u26a0 Il reste &660 secondes &cde combat !");
                 } else if (phaseTimer == 30) {
@@ -501,12 +474,10 @@ public class Game {
 
                 if (phaseTimer <= 0) {
                     cancel();
-                    // Force end - smallest border, damage everyone outside
                     broadcast("&4&lTemps ecoule ! La tempete consume tout !");
                     return;
                 }
 
-                // Apply storm damage to players outside border
                 if (stormStarted) {
                     stormManager.applyDamage(getAlivePlayers());
                 }
@@ -539,7 +510,6 @@ public class Game {
                 broadcast("&c\u2620 &f" + player.getName() + " &7a ete tue par &e" + killer.getName()
                         + " &8[&e" + alive + " restants&8]");
 
-                // Kill feed events
                 int kills = killerData.getKills();
                 if (kills == 3) {
                     broadcast("&6\u2b50 &e" + killer.getName() + " &6est en serie de kills ! &7(3 kills)");
@@ -551,14 +521,11 @@ public class Game {
             broadcast("&c\u2620 &f" + player.getName() + " &7a ete elimine &8[&e" + alive + " restants&8]");
         }
 
-        // Death effects
-        SoundUtil.playAll(getOnlinePlayers(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.5f, 0.8f);
+        SoundUtil.playAll(getOnlinePlayers(), Sound.ENTITY_LIGHTNING_THUNDER, 0.5f, 0.8f);
 
-        // Set spectator
-        player.setGameMode(org.bukkit.GameMode.SPECTATOR);
+        player.setGameMode(GameMode.SPECTATOR);
         player.removePotionEffect(PotionEffectType.SLOW_DIGGING);
 
-        // Check for duo team elimination
         if (gameMode == LabyGameMode.DUO && data.getTeam() != null) {
             if (data.getTeam().isEliminated(players)) {
                 broadcast("&4\u2620 &cL'equipe " + data.getTeam().getId() + " a ete eliminee !");
@@ -578,15 +545,15 @@ public class Game {
                 endGame(winner);
             }
         } else {
-            // Duo: check if only one team remains
-            List<Team> aliveTeams = teams.stream()
-                    .filter(t -> !t.isEliminated(players))
-                    .collect(Collectors.toList());
+            List<Team> aliveTeams = new ArrayList<Team>();
+            for (Team t : teams) {
+                if (!t.isEliminated(players)) {
+                    aliveTeams.add(t);
+                }
+            }
             if (aliveTeams.size() <= 1) {
                 if (aliveTeams.size() == 1) {
-                    // Winning team
-                    Team winTeam = aliveTeams.get(0);
-                    endGame(winTeam);
+                    endGame(aliveTeams.get(0));
                 } else {
                     endGame((PlayerData) null);
                 }
@@ -609,8 +576,7 @@ public class Game {
 
             MessageUtil.broadcastTitle(online,
                     "&6&l\u2726 VICTOIRE \u2726",
-                    "&e" + winName + " &7remporte le LabyRoyal !",
-                    10, 80, 20);
+                    "&e" + winName + " &7remporte le LabyRoyal !");
 
             broadcast(MessageUtil.line());
             broadcast("&6&l       \u2726 LABYROYAL - VICTOIRE \u2726");
@@ -627,17 +593,15 @@ public class Game {
         } else {
             MessageUtil.broadcastTitle(online,
                     "&6&l\u2726 FIN DE PARTIE \u2726",
-                    "&7Aucun gagnant",
-                    10, 80, 20);
+                    "&7Aucun gagnant");
         }
 
-        SoundUtil.playAll(online, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+        SoundUtil.playAll(online, Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
 
-        // Teleport all back to hub after 10 seconds
         new BukkitRunnable() {
             @Override
             public void run() {
-                for (UUID uuid : new ArrayList<>(players.keySet())) {
+                for (UUID uuid : new ArrayList<UUID>(players.keySet())) {
                     Player p = Bukkit.getPlayer(uuid);
                     if (p != null) {
                         resetPlayer(p);
@@ -647,7 +611,6 @@ public class Game {
                 }
                 players.clear();
 
-                // Cleanup world after a short delay
                 new BukkitRunnable() {
                     @Override
                     public void run() {
@@ -656,7 +619,7 @@ public class Game {
                     }
                 }.runTaskLater(plugin, 40L);
             }
-        }.runTaskLater(plugin, 200L); // 10 seconds
+        }.runTaskLater(plugin, 200L);
     }
 
     private void endGame(Team winTeam) {
@@ -677,8 +640,7 @@ public class Game {
 
         MessageUtil.broadcastTitle(online,
                 "&6&l\u2726 VICTOIRE \u2726",
-                "&eEquipe " + winTeam.getId() + " &7remporte le LabyRoyal !",
-                10, 80, 20);
+                "&eEquipe " + winTeam.getId() + " &7remporte le LabyRoyal !");
 
         broadcast(MessageUtil.line());
         broadcast("&6&l       \u2726 LABYROYAL - VICTOIRE \u2726");
@@ -692,12 +654,12 @@ public class Game {
             spawnFireworks(p.getLocation());
         }
 
-        SoundUtil.playAll(online, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+        SoundUtil.playAll(online, Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
 
         new BukkitRunnable() {
             @Override
             public void run() {
-                for (UUID uuid : new ArrayList<>(players.keySet())) {
+                for (UUID uuid : new ArrayList<UUID>(players.keySet())) {
                     Player p = Bukkit.getPlayer(uuid);
                     if (p != null) {
                         resetPlayer(p);
@@ -752,7 +714,7 @@ public class Game {
     }
 
     public Collection<Player> getOnlinePlayers() {
-        List<Player> online = new ArrayList<>();
+        List<Player> online = new ArrayList<Player>();
         for (UUID uuid : players.keySet()) {
             Player p = Bukkit.getPlayer(uuid);
             if (p != null && p.isOnline()) {
@@ -763,7 +725,7 @@ public class Game {
     }
 
     public List<Player> getAlivePlayers() {
-        List<Player> alive = new ArrayList<>();
+        List<Player> alive = new ArrayList<Player>();
         for (Map.Entry<UUID, PlayerData> entry : players.entrySet()) {
             if (entry.getValue().isAlive()) {
                 Player p = Bukkit.getPlayer(entry.getKey());
@@ -791,7 +753,8 @@ public class Game {
     }
 
     private void preparePlayer(Player player) {
-        player.setGameMode(org.bukkit.GameMode.ADVENTURE);
+        player.setGameMode(GameMode.ADVENTURE);
+        player.setMaxHealth(20);
         player.setHealth(20);
         player.setFoodLevel(20);
         player.setSaturation(20);
@@ -799,13 +762,15 @@ public class Game {
         player.setLevel(0);
         player.setExp(0);
         player.setWalkSpeed(0.2f);
-        player.getActivePotionEffects().forEach(e -> player.removePotionEffect(e.getType()));
-
+        for (PotionEffect effect : player.getActivePotionEffects()) {
+            player.removePotionEffect(effect.getType());
+        }
         scoreboardManager.setup(player);
     }
 
     private void resetPlayer(Player player) {
-        player.setGameMode(org.bukkit.GameMode.ADVENTURE);
+        player.setGameMode(GameMode.ADVENTURE);
+        player.setMaxHealth(20);
         player.setHealth(20);
         player.setFoodLevel(20);
         player.setSaturation(20);
@@ -813,7 +778,9 @@ public class Game {
         player.setWalkSpeed(0.2f);
         player.setLevel(0);
         player.setExp(0);
-        player.getActivePotionEffects().forEach(e -> player.removePotionEffect(e.getType()));
+        for (PotionEffect effect : player.getActivePotionEffects()) {
+            player.removePotionEffect(effect.getType());
+        }
         player.setFireTicks(0);
     }
 
@@ -835,12 +802,10 @@ public class Game {
         cancelAllTasks();
         if (world != null) {
             String worldName = world.getName();
-            // Move remaining players out
             for (Player p : world.getPlayers()) {
                 sendToHub(p);
             }
             Bukkit.unloadWorld(world, false);
-            // Delete world folder
             deleteWorldFolder(new File(Bukkit.getWorldContainer(), worldName));
         }
     }
@@ -872,6 +837,7 @@ public class Game {
     public int getMinPlayers() { return minPlayers; }
     public int getMaxPlayers() { return maxPlayers; }
     public int getPhaseTimer() { return phaseTimer; }
+    public int getElapsedTime() { return elapsedTime; }
     public int getCountdown() { return countdown; }
     public boolean isStormStarted() { return stormStarted; }
     public ScoreboardManager getScoreboardManager() { return scoreboardManager; }

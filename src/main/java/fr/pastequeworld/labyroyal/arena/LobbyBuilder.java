@@ -14,17 +14,18 @@ public class LobbyBuilder {
         this.size = size;
     }
 
+    @SuppressWarnings("deprecation")
     public void build(World world) {
         int half = size / 2;
 
-        // Floor - polished blackstone with pattern
         for (int x = -half; x <= half; x++) {
             for (int z = -half; z <= half; z++) {
+                // Floor - nether brick with quartz pattern
                 Material floor;
                 if ((Math.abs(x) + Math.abs(z)) % 2 == 0) {
-                    floor = Material.POLISHED_BLACKSTONE;
+                    floor = Material.NETHER_BRICK;
                 } else {
-                    floor = Material.POLISHED_BLACKSTONE_BRICKS;
+                    floor = Material.QUARTZ_BLOCK;
                 }
                 world.getBlockAt(x, yLevel, z).setType(floor);
 
@@ -36,8 +37,9 @@ public class LobbyBuilder {
                     world.getBlockAt(x, y, z).setType(Material.AIR);
                 }
 
-                // Glass ceiling
-                world.getBlockAt(x, yLevel + 6, z).setType(Material.TINTED_GLASS);
+                // Glass ceiling (black stained glass = data 15)
+                world.getBlockAt(x, yLevel + 6, z).setType(Material.STAINED_GLASS);
+                world.getBlockAt(x, yLevel + 6, z).setData((byte) 15);
             }
         }
 
@@ -53,26 +55,26 @@ public class LobbyBuilder {
             }
         }
 
-        // Corner pillars - gilded blackstone
+        // Corner pillars - gold blocks
         for (int y = yLevel + 1; y <= yLevel + 5; y++) {
-            world.getBlockAt(-half, y, -half).setType(Material.GILDED_BLACKSTONE);
-            world.getBlockAt(half, y, -half).setType(Material.GILDED_BLACKSTONE);
-            world.getBlockAt(-half, y, half).setType(Material.GILDED_BLACKSTONE);
-            world.getBlockAt(half, y, half).setType(Material.GILDED_BLACKSTONE);
+            world.getBlockAt(-half, y, -half).setType(Material.GOLD_BLOCK);
+            world.getBlockAt(half, y, -half).setType(Material.GOLD_BLOCK);
+            world.getBlockAt(-half, y, half).setType(Material.GOLD_BLOCK);
+            world.getBlockAt(half, y, half).setType(Material.GOLD_BLOCK);
         }
 
         // Lanterns for lighting
         for (int x = -half + 2; x <= half - 2; x += 4) {
             for (int z = -half + 2; z <= half - 2; z += 4) {
-                world.getBlockAt(x, yLevel + 5, z).setType(Material.SOUL_LANTERN);
+                world.getBlockAt(x, yLevel + 5, z).setType(Material.SEA_LANTERN);
             }
         }
 
-        // Central decoration - gold block pedestal
+        // Central decoration
         world.getBlockAt(0, yLevel + 1, 0).setType(Material.GOLD_BLOCK);
-        world.getBlockAt(0, yLevel + 2, 0).setType(Material.SOUL_LANTERN);
+        world.getBlockAt(0, yLevel + 2, 0).setType(Material.SEA_LANTERN);
 
-        // Barrier ceiling above glass to prevent escaping
+        // Barrier ceiling above glass
         for (int x = -half - 1; x <= half + 1; x++) {
             for (int z = -half - 1; z <= half + 1; z++) {
                 world.getBlockAt(x, yLevel + 7, z).setType(Material.BARRIER);
@@ -83,13 +85,9 @@ public class LobbyBuilder {
     private void placeWallBlock(World world, int x, int y, int z) {
         Material mat;
         if (y == yLevel + 1 || y == yLevel + 5) {
-            mat = Material.CHISELED_POLISHED_BLACKSTONE;
-        } else if (y == yLevel + 3) {
-            mat = Material.POLISHED_BLACKSTONE_BRICK_SLAB;
-            world.getBlockAt(x, y, z).setType(Material.POLISHED_BLACKSTONE_BRICKS);
-            return;
+            mat = Material.NETHER_BRICK;
         } else {
-            mat = Material.POLISHED_BLACKSTONE_BRICKS;
+            mat = Material.SMOOTH_BRICK; // Stone bricks
         }
         world.getBlockAt(x, y, z).setType(mat);
     }

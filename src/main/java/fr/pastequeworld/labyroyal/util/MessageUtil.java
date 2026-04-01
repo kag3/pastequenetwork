@@ -27,12 +27,13 @@ public class MessageUtil {
         player.sendMessage(color(message));
     }
 
-    public static void sendTitle(Player player, String title, String subtitle, int fadeIn, int stay, int fadeOut) {
-        player.sendTitle(color(title), color(subtitle), fadeIn, stay, fadeOut);
+    public static void sendTitle(Player player, String title, String subtitle) {
+        player.sendTitle(color(title), color(subtitle));
     }
 
     public static void sendActionBar(Player player, String message) {
-        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(color(message)));
+        player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+                TextComponent.fromLegacyText(color(message)));
     }
 
     public static void broadcast(Collection<? extends Player> players, String message) {
@@ -49,11 +50,11 @@ public class MessageUtil {
         }
     }
 
-    public static void broadcastTitle(Collection<? extends Player> players, String title, String subtitle, int fadeIn, int stay, int fadeOut) {
+    public static void broadcastTitle(Collection<? extends Player> players, String title, String subtitle) {
         String coloredTitle = color(title);
         String coloredSub = color(subtitle);
         for (Player player : players) {
-            player.sendTitle(coloredTitle, coloredSub, fadeIn, stay, fadeOut);
+            player.sendTitle(coloredTitle, coloredSub);
         }
     }
 
@@ -66,13 +67,9 @@ public class MessageUtil {
     public static String formatTime(int seconds) {
         int min = seconds / 60;
         int sec = seconds % 60;
-        if (min > 0) {
-            return min + "m " + String.format("%02d", sec) + "s";
-        }
-        return sec + "s";
+        return String.format("%02d:%02d", min, sec);
     }
 
-    // Decorative line for chat
     public static String line() {
         return "&8&m                                                            ";
     }

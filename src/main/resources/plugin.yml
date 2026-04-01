@@ -1,7 +1,6 @@
 name: LabyRoyal
 version: 1.0.0
 main: fr.pastequeworld.labyroyal.LabyRoyalPlugin
-api-version: '1.19'
 description: Mode de jeu LabyRoyal - Battle Royale en Labyrinthe pour PastequeWorld
 author: PastequeWorld
 commands:

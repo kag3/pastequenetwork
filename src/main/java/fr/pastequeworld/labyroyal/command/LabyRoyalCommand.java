@@ -14,7 +14,6 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
 
@@ -26,23 +25,39 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player player)) {
+        if (!(sender instanceof Player)) {
             sender.sendMessage("Cette commande est reservee aux joueurs.");
             return true;
         }
+        Player player = (Player) sender;
 
         if (args.length == 0) {
             sendHelp(player);
             return true;
         }
 
-        switch (args[0].toLowerCase()) {
-            case "solo" -> joinGame(player, LabyGameMode.SOLO);
-            case "duo" -> joinGame(player, LabyGameMode.DUO);
-            case "leave", "quit", "quitter" -> leaveGame(player);
-            case "stats" -> showStats(player);
-            case "admin" -> handleAdmin(player, args);
-            default -> sendHelp(player);
+        String sub = args[0].toLowerCase();
+        switch (sub) {
+            case "solo":
+                joinGame(player, LabyGameMode.SOLO);
+                break;
+            case "duo":
+                joinGame(player, LabyGameMode.DUO);
+                break;
+            case "leave":
+            case "quit":
+            case "quitter":
+                leaveGame(player);
+                break;
+            case "stats":
+                showStats(player);
+                break;
+            case "admin":
+                handleAdmin(player, args);
+                break;
+            default:
+                sendHelp(player);
+                break;
         }
 
         return true;
@@ -96,8 +111,9 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        switch (args[1].toLowerCase()) {
-            case "list" -> {
+        String adminSub = args[1].toLowerCase();
+        switch (adminSub) {
+            case "list":
                 MessageUtil.send(player, "&6Parties actives:");
                 for (Game game : plugin.getGameManager().getGames()) {
                     MessageUtil.sendRaw(player, "  &e#" + game.getId()
@@ -108,8 +124,8 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
                 if (plugin.getGameManager().getActiveGameCount() == 0) {
                     MessageUtil.sendRaw(player, "  &7Aucune partie active.");
                 }
-            }
-            case "forcestart" -> {
+                break;
+            case "forcestart":
                 Game game = plugin.getGameManager().getPlayerGame(player.getUniqueId());
                 if (game == null) {
                     MessageUtil.send(player, "&cVous devez etre dans une partie.");
@@ -120,19 +136,20 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
                     return;
                 }
                 MessageUtil.send(player, "&aForce start de la partie #" + game.getId());
-                // Trigger start by temporarily lowering min players requirement
                 game.broadcast("&c&l[ADMIN] &eForce start par " + player.getName());
-            }
-            case "stop" -> {
+                break;
+            case "stop":
                 MessageUtil.send(player, "&cArret de toutes les parties...");
                 plugin.getGameManager().shutdownAll();
                 MessageUtil.send(player, "&aToutes les parties ont ete arretees.");
-            }
-            case "reload" -> {
+                break;
+            case "reload":
                 plugin.reloadConfig();
                 MessageUtil.send(player, "&aConfiguration rechargee !");
-            }
-            default -> sendAdminHelp(player);
+                break;
+            default:
+                sendAdminHelp(player);
+                break;
         }
     }
 
@@ -164,7 +181,7 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        List<String> completions = new ArrayList<>();
+        List<String> completions = new ArrayList<String>();
 
         if (args.length == 1) {
             completions.addAll(Arrays.asList("solo", "duo", "leave", "stats"));
@@ -176,8 +193,12 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
         }
 
         String input = args[args.length - 1].toLowerCase();
-        return completions.stream()
-                .filter(c -> c.toLowerCase().startsWith(input))
-                .collect(Collectors.toList());
+        List<String> filtered = new ArrayList<String>();
+        for (String c : completions) {
+            if (c.toLowerCase().startsWith(input)) {
+                filtered.add(c);
+            }
+        }
+        return filtered;
     }
 }

@@ -3,6 +3,7 @@ package fr.pastequeworld.labyroyal;
 import fr.pastequeworld.labyroyal.command.LabyRoyalCommand;
 import fr.pastequeworld.labyroyal.game.GameManager;
 import fr.pastequeworld.labyroyal.listener.AntiCheatListener;
+import fr.pastequeworld.labyroyal.listener.ChatListener;
 import fr.pastequeworld.labyroyal.listener.GameListener;
 import fr.pastequeworld.labyroyal.util.MessageUtil;
 
@@ -31,6 +32,7 @@ public class LabyRoyalPlugin extends JavaPlugin {
         antiCheatListener = new AntiCheatListener(this);
         Bukkit.getPluginManager().registerEvents(new GameListener(this), this);
         Bukkit.getPluginManager().registerEvents(antiCheatListener, this);
+        Bukkit.getPluginManager().registerEvents(new ChatListener(this), this);
 
         // Register commands
         LabyRoyalCommand cmd = new LabyRoyalCommand(this);

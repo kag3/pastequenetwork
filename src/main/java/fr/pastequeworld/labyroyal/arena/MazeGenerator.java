@@ -4,13 +4,13 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
 
+@SuppressWarnings("deprecation")
 public class MazeGenerator {
 
     private final int cells;
@@ -20,13 +20,12 @@ public class MazeGenerator {
     private final int specialRoomCount;
     private final int bonusChestCount;
 
-    private boolean[][] grid; // true = passage, false = wall
+    private boolean[][] grid;
     private int gridSize;
     private final Random random = new Random();
-    private final List<int[]> deadEnds = new ArrayList<>();
-    private final List<int[]> specialRoomCells = new ArrayList<>();
+    private final List<int[]> deadEnds = new ArrayList<int[]>();
+    private final List<int[]> specialRoomCells = new ArrayList<int[]>();
 
-    // Block size per grid cell
     private static final int CELL_BLOCK_SIZE = 3;
 
     public MazeGenerator(int cells, int wallHeight, int baseY, double oreChance, int specialRoomCount, int bonusChestCount) {
@@ -52,7 +51,7 @@ public class MazeGenerator {
         grid = new boolean[gridSize][gridSize];
         boolean[][] visited = new boolean[cells][cells];
 
-        Deque<int[]> stack = new ArrayDeque<>();
+        Deque<int[]> stack = new ArrayDeque<int[]>();
         int startX = random.nextInt(cells);
         int startZ = random.nextInt(cells);
 
@@ -68,7 +67,6 @@ public class MazeGenerator {
                 stack.pop();
             } else {
                 int[] next = neighbors.get(random.nextInt(neighbors.size()));
-                // Remove wall between current and next
                 int wallGX = 2 * current[0] + 1 + (next[0] - current[0]);
                 int wallGZ = 2 * current[1] + 1 + (next[1] - current[1]);
                 grid[wallGX][wallGZ] = true;
@@ -80,7 +78,7 @@ public class MazeGenerator {
     }
 
     private List<int[]> getUnvisitedNeighbors(int cx, int cz, boolean[][] visited) {
-        List<int[]> neighbors = new ArrayList<>();
+        List<int[]> neighbors = new ArrayList<int[]>();
         int[][] dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
         for (int[] d : dirs) {
             int nx = cx + d[0];
@@ -112,7 +110,7 @@ public class MazeGenerator {
 
     private void selectSpecialRooms() {
         specialRoomCells.clear();
-        List<int[]> candidates = new ArrayList<>(deadEnds);
+        List<int[]> candidates = new ArrayList<int[]>(deadEnds);
         Collections.shuffle(candidates, random);
         int count = Math.min(specialRoomCount, candidates.size());
         for (int i = 0; i < count; i++) {
@@ -133,10 +131,8 @@ public class MazeGenerator {
                 int blockStartZ = gz * CELL_BLOCK_SIZE + offset;
 
                 if (grid[gx][gz]) {
-                    // Passage
                     placePassage(world, blockStartX, blockStartZ);
                 } else {
-                    // Wall
                     placeWall(world, blockStartX, blockStartZ, gx, gz);
                 }
             }
@@ -150,8 +146,7 @@ public class MazeGenerator {
                 int z = startZ + dz;
 
                 // Floor
-                Material floorMat = getPassageFloorBlock();
-                world.getBlockAt(x, baseY, z).setType(floorMat);
+                world.getBlockAt(x, baseY, z).setType(getPassageFloorBlock());
 
                 // Air above
                 for (int y = baseY + 1; y < baseY + wallHeight - 1; y++) {
@@ -161,7 +156,7 @@ public class MazeGenerator {
                 // Ceiling
                 world.getBlockAt(x, baseY + wallHeight - 1, z).setType(Material.BEDROCK);
 
-                // Bedrock under floor to prevent digging down
+                // Bedrock under floor
                 world.getBlockAt(x, baseY - 1, z).setType(Material.BEDROCK);
             }
         }
@@ -180,13 +175,10 @@ public class MazeGenerator {
 
                 for (int y = baseY - 1; y <= baseY + wallHeight - 1; y++) {
                     if (isOuterWall || isCenter || (y == baseY - 1) || (y == baseY + wallHeight - 1)) {
-                        // Bedrock core: outer walls, center of inner walls, floor, ceiling
                         world.getBlockAt(x, y, z).setType(Material.BEDROCK);
                     } else if (isCross) {
-                        // Cross pattern: obsidian (very hard to mine)
                         world.getBlockAt(x, y, z).setType(Material.OBSIDIAN);
                     } else {
-                        // Decorative blocks with ores
                         world.getBlockAt(x, y, z).setType(getWallBlock());
                     }
                 }
@@ -199,29 +191,28 @@ public class MazeGenerator {
         if (roll < oreChance) {
             return getRandomOre();
         }
-        // Base wall blocks - dark and stylish
+        // Dark wall blocks for 1.9.4
         double baseRoll = random.nextDouble();
-        if (baseRoll < 0.35) return Material.DEEPSLATE_BRICKS;
-        if (baseRoll < 0.55) return Material.DEEPSLATE_TILES;
-        if (baseRoll < 0.70) return Material.POLISHED_DEEPSLATE;
-        if (baseRoll < 0.80) return Material.CRACKED_DEEPSLATE_BRICKS;
-        if (baseRoll < 0.88) return Material.COBBLED_DEEPSLATE;
-        if (baseRoll < 0.93) return Material.CHISELED_DEEPSLATE;
-        if (baseRoll < 0.96) return Material.TUFF;
-        return Material.STONE_BRICKS;
+        if (baseRoll < 0.30) return Material.SMOOTH_BRICK;     // Stone bricks
+        if (baseRoll < 0.50) return Material.NETHER_BRICK;     // Nether bricks (dark)
+        if (baseRoll < 0.65) return Material.STONE;             // Stone
+        if (baseRoll < 0.78) return Material.COAL_BLOCK;        // Coal block (very dark)
+        if (baseRoll < 0.88) return Material.COBBLESTONE;       // Cobblestone
+        if (baseRoll < 0.94) return Material.ENDER_STONE;       // End stone
+        return Material.MOSSY_COBBLESTONE;                       // Mossy cobblestone
     }
 
     private Material getRandomOre() {
         double roll = random.nextDouble();
-        if (roll < 0.25) return Material.DEEPSLATE_COAL_ORE;
-        if (roll < 0.48) return Material.DEEPSLATE_IRON_ORE;
-        if (roll < 0.63) return Material.OAK_LOG;
-        if (roll < 0.75) return Material.DEEPSLATE_GOLD_ORE;
-        if (roll < 0.83) return Material.DEEPSLATE_LAPIS_ORE;
+        if (roll < 0.25) return Material.COAL_ORE;
+        if (roll < 0.48) return Material.IRON_ORE;
+        if (roll < 0.63) return Material.LOG;                   // Oak log (wood)
+        if (roll < 0.75) return Material.GOLD_ORE;
+        if (roll < 0.83) return Material.LAPIS_ORE;
         if (roll < 0.89) return Material.COBBLESTONE;
-        if (roll < 0.94) return Material.DEEPSLATE_REDSTONE_ORE;
-        if (roll < 0.98) return Material.DEEPSLATE_DIAMOND_ORE;
-        return Material.DEEPSLATE_EMERALD_ORE;
+        if (roll < 0.94) return Material.REDSTONE_ORE;
+        if (roll < 0.98) return Material.DIAMOND_ORE;
+        return Material.EMERALD_ORE;
     }
 
     private Material getPassageFloorBlock() {
@@ -229,10 +220,10 @@ public class MazeGenerator {
         if (roll < 0.05) {
             return getRandomOre();
         }
-        if (roll < 0.50) return Material.DEEPSLATE_TILES;
-        if (roll < 0.75) return Material.DEEPSLATE_BRICKS;
-        if (roll < 0.90) return Material.POLISHED_DEEPSLATE;
-        return Material.STONE_BRICKS;
+        if (roll < 0.40) return Material.SMOOTH_BRICK;
+        if (roll < 0.65) return Material.STONE;
+        if (roll < 0.80) return Material.NETHER_BRICK;
+        return Material.COBBLESTONE;
     }
 
     private void placeSpecialRooms(World world) {
@@ -244,10 +235,10 @@ public class MazeGenerator {
             int centerZ = gz * CELL_BLOCK_SIZE + offset + CELL_BLOCK_SIZE / 2;
             int floorY = baseY + 1;
 
-            // Enchanting table in center
-            world.getBlockAt(centerX, floorY, centerZ).setType(Material.ENCHANTING_TABLE);
+            // Enchanting table
+            world.getBlockAt(centerX, floorY, centerZ).setType(Material.ENCHANTMENT_TABLE);
 
-            // Bookshelves around (where space allows)
+            // Bookshelves
             placeIfAir(world, centerX - 1, floorY, centerZ - 1, Material.BOOKSHELF);
             placeIfAir(world, centerX + 1, floorY, centerZ - 1, Material.BOOKSHELF);
             placeIfAir(world, centerX - 1, floorY, centerZ + 1, Material.BOOKSHELF);
@@ -258,13 +249,11 @@ public class MazeGenerator {
             placeIfAir(world, centerX + 1, floorY + 1, centerZ + 1, Material.BOOKSHELF);
 
             // Torches for light
-            Block torchBlock1 = world.getBlockAt(centerX, floorY + 2, centerZ - 1);
-            Block torchBlock2 = world.getBlockAt(centerX, floorY + 2, centerZ + 1);
-            if (torchBlock1.getType() == Material.AIR) torchBlock1.setType(Material.SOUL_LANTERN);
-            if (torchBlock2.getType() == Material.AIR) torchBlock2.setType(Material.SOUL_LANTERN);
+            placeIfAir(world, centerX, floorY + 2, centerZ - 1, Material.SEA_LANTERN);
+            placeIfAir(world, centerX, floorY + 2, centerZ + 1, Material.SEA_LANTERN);
 
-            // Crafting table nearby
-            placeIfAir(world, centerX, floorY, centerZ - 1, Material.CRAFTING_TABLE);
+            // Crafting table
+            placeIfAir(world, centerX, floorY, centerZ - 1, Material.WORKBENCH);
 
             // Anvil
             placeIfAir(world, centerX, floorY, centerZ + 1, Material.ANVIL);
@@ -280,14 +269,17 @@ public class MazeGenerator {
 
     private void placeBonusChests(World world) {
         int offset = getOffset();
-        List<int[]> candidates = new ArrayList<>(deadEnds);
-        // Remove cells already used for special rooms
-        candidates.removeIf(cell -> {
+        List<int[]> candidates = new ArrayList<int[]>(deadEnds);
+        Iterator<int[]> it = candidates.iterator();
+        while (it.hasNext()) {
+            int[] cell = it.next();
             for (int[] sr : specialRoomCells) {
-                if (sr[0] == cell[0] && sr[1] == cell[1]) return true;
+                if (sr[0] == cell[0] && sr[1] == cell[1]) {
+                    it.remove();
+                    break;
+                }
             }
-            return false;
-        });
+        }
         Collections.shuffle(candidates, random);
 
         int count = Math.min(bonusChestCount, candidates.size());
@@ -302,33 +294,33 @@ public class MazeGenerator {
             Block chestBlock = world.getBlockAt(cx, floorY, cz);
             chestBlock.setType(Material.CHEST);
 
-            if (chestBlock.getState() instanceof Chest chest) {
+            if (chestBlock.getState() instanceof Chest) {
+                Chest chest = (Chest) chestBlock.getState();
                 fillBonusChest(chest.getInventory());
             }
         }
     }
 
     private void fillBonusChest(Inventory inv) {
-        List<ItemStack> possibleLoot = new ArrayList<>(List.of(
-                new ItemStack(Material.IRON_INGOT, random.nextInt(3) + 1),
-                new ItemStack(Material.GOLD_INGOT, random.nextInt(2) + 1),
-                new ItemStack(Material.DIAMOND, 1),
-                new ItemStack(Material.GOLDEN_APPLE, random.nextInt(2) + 1),
-                new ItemStack(Material.ARROW, random.nextInt(8) + 4),
-                new ItemStack(Material.STRING, random.nextInt(2) + 2),
-                new ItemStack(Material.BOOK, random.nextInt(2) + 1),
-                new ItemStack(Material.LAPIS_LAZULI, random.nextInt(4) + 2),
-                new ItemStack(Material.EXPERIENCE_BOTTLE, random.nextInt(5) + 3),
-                new ItemStack(Material.OAK_PLANKS, random.nextInt(8) + 4),
-                new ItemStack(Material.COOKED_BEEF, random.nextInt(4) + 2),
-                new ItemStack(Material.IRON_HELMET, 1),
-                new ItemStack(Material.IRON_BOOTS, 1),
-                new ItemStack(Material.OBSIDIAN, random.nextInt(3) + 1),
-                new ItemStack(Material.ENDER_PEARL, 1)
-        ));
+        List<ItemStack> possibleLoot = new ArrayList<ItemStack>();
+        possibleLoot.add(new ItemStack(Material.IRON_INGOT, random.nextInt(3) + 1));
+        possibleLoot.add(new ItemStack(Material.GOLD_INGOT, random.nextInt(2) + 1));
+        possibleLoot.add(new ItemStack(Material.DIAMOND, 1));
+        possibleLoot.add(new ItemStack(Material.GOLDEN_APPLE, random.nextInt(2) + 1));
+        possibleLoot.add(new ItemStack(Material.ARROW, random.nextInt(8) + 4));
+        possibleLoot.add(new ItemStack(Material.STRING, random.nextInt(2) + 2));
+        possibleLoot.add(new ItemStack(Material.BOOK, random.nextInt(2) + 1));
+        possibleLoot.add(new ItemStack(Material.INK_SACK, random.nextInt(4) + 2, (short) 4)); // Lapis
+        possibleLoot.add(new ItemStack(Material.EXP_BOTTLE, random.nextInt(5) + 3));
+        possibleLoot.add(new ItemStack(Material.WOOD, random.nextInt(8) + 4));
+        possibleLoot.add(new ItemStack(Material.COOKED_BEEF, random.nextInt(4) + 2));
+        possibleLoot.add(new ItemStack(Material.IRON_HELMET, 1));
+        possibleLoot.add(new ItemStack(Material.IRON_BOOTS, 1));
+        possibleLoot.add(new ItemStack(Material.OBSIDIAN, random.nextInt(3) + 1));
+        possibleLoot.add(new ItemStack(Material.ENDER_PEARL, 1));
 
         Collections.shuffle(possibleLoot, random);
-        int itemCount = random.nextInt(4) + 3; // 3-6 items per chest
+        int itemCount = random.nextInt(4) + 3;
         for (int i = 0; i < itemCount && i < possibleLoot.size(); i++) {
             int slot = random.nextInt(27);
             inv.setItem(slot, possibleLoot.get(i));
@@ -336,14 +328,13 @@ public class MazeGenerator {
     }
 
     public List<Location> getSpawnPoints(World world, int count) {
-        List<Location> spawns = new ArrayList<>();
+        List<Location> spawns = new ArrayList<Location>();
         int offset = getOffset();
 
-        // Divide maze into sectors and find passage cells in each
         int sectorsPerSide = (int) Math.ceil(Math.sqrt(count));
         int cellsPerSector = cells / sectorsPerSide;
 
-        List<int[]> sectorCenters = new ArrayList<>();
+        List<int[]> sectorCenters = new ArrayList<int[]>();
         for (int sx = 0; sx < sectorsPerSide; sx++) {
             for (int sz = 0; sz < sectorsPerSide; sz++) {
                 int centerCX = sx * cellsPerSector + cellsPerSector / 2;
@@ -354,7 +345,6 @@ public class MazeGenerator {
             }
         }
 
-        // For each sector, find nearest passage cell to sector center
         Collections.shuffle(sectorCenters, random);
         for (int[] center : sectorCenters) {
             if (spawns.size() >= count) break;
@@ -370,7 +360,6 @@ public class MazeGenerator {
             }
         }
 
-        // Fallback: if not enough spawns, pick random passage cells
         while (spawns.size() < count) {
             int cx = random.nextInt(cells);
             int cz = random.nextInt(cells);
@@ -381,7 +370,6 @@ public class MazeGenerator {
                 int bz = gz * CELL_BLOCK_SIZE + offset + CELL_BLOCK_SIZE / 2;
                 Location loc = new Location(world, bx + 0.5, baseY + 1, bz + 0.5);
 
-                // Check minimum distance from existing spawns
                 boolean tooClose = false;
                 for (Location existing : spawns) {
                     if (existing.distance(loc) < 20) {
@@ -399,14 +387,12 @@ public class MazeGenerator {
     }
 
     private int[] findNearestPassageCell(int cx, int cz) {
-        // BFS from target to find nearest passage
         if (cx >= 0 && cx < cells && cz >= 0 && cz < cells) {
             int gx = 2 * cx + 1;
             int gz = 2 * cz + 1;
             if (grid[gx][gz]) return new int[]{cx, cz};
         }
 
-        // Spiral search
         for (int radius = 1; radius < cells; radius++) {
             for (int dx = -radius; dx <= radius; dx++) {
                 for (int dz = -radius; dz <= radius; dz++) {
@@ -432,6 +418,7 @@ public class MazeGenerator {
         return new Location(world, 0.5, baseY + 1, 0.5);
     }
 
+    @SuppressWarnings("deprecation")
     public void placeStarterChest(Location location) {
         World world = location.getWorld();
         if (world == null) return;
@@ -446,7 +433,8 @@ public class MazeGenerator {
 
         block.setType(Material.CHEST);
 
-        if (block.getState() instanceof Chest chest) {
+        if (block.getState() instanceof Chest) {
+            Chest chest = (Chest) block.getState();
             Inventory inv = chest.getInventory();
             inv.setItem(0, new ItemStack(Material.STONE_SWORD, 1));
             inv.setItem(1, new ItemStack(Material.STONE_PICKAXE, 1));
@@ -457,9 +445,9 @@ public class MazeGenerator {
             inv.setItem(6, new ItemStack(Material.LEATHER_BOOTS, 1));
             inv.setItem(9, new ItemStack(Material.COOKED_BEEF, 16));
             inv.setItem(10, new ItemStack(Material.GOLDEN_APPLE, 2));
-            inv.setItem(11, new ItemStack(Material.CRAFTING_TABLE, 1));
+            inv.setItem(11, new ItemStack(Material.WORKBENCH, 1));
             inv.setItem(12, new ItemStack(Material.TORCH, 8));
-            inv.setItem(13, new ItemStack(Material.OAK_PLANKS, 8));
+            inv.setItem(13, new ItemStack(Material.WOOD, 8));
             inv.setItem(14, new ItemStack(Material.COBBLESTONE, 16));
             inv.setItem(15, new ItemStack(Material.FURNACE, 1));
         }
