@@ -164,7 +164,7 @@ public class Game {
         String joinMsg = "&a+ &f" + player.getName() + " &7a rejoint la partie &8(&e"
                 + players.size() + "&7/&e" + maxPlayers + "&8)";
         broadcast(joinMsg);
-        SoundUtil.playAll(getOnlinePlayers(), Sound.BLOCK_NOTE_CHIME, 1.0f, 1.5f);
+        SoundUtil.playAll(getOnlinePlayers(), Sound.BLOCK_NOTE_HARP, 1.0f, 1.5f);
 
         scoreboardManager.updateAll(getOnlinePlayers());
         checkStartConditions();

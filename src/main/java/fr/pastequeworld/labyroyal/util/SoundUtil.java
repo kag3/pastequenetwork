@@ -54,7 +54,7 @@ public class SoundUtil {
     }
 
     public static void playerJoin(Player player) {
-        play(player, Sound.BLOCK_NOTE_CHIME, 1.0f, 1.5f);
+        play(player, Sound.BLOCK_NOTE_HARP, 1.0f, 1.5f);
     }
 
     public static void playerLeave(Player player) {
@@ -66,6 +66,6 @@ public class SoundUtil {
     }
 
     public static void tick(Player player) {
-        play(player, Sound.BLOCK_NOTE_BELL, 0.5f, 1.8f);
+        play(player, Sound.BLOCK_NOTE_HARP, 0.5f, 1.8f);
     }
 }
