@@ -115,6 +115,12 @@ public class GameListener implements Listener {
     }
 
     @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        // Verifier si le joueur a une auto-queue en attente (venant du Hub via BungeeCord)
+        plugin.checkPendingAutoQueue(event.getPlayer());
+    }
+
+    @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         Game game = plugin.getGameManager().getPlayerGame(player.getUniqueId());
