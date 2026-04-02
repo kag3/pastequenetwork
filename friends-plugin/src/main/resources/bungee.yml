@@ -1,0 +1,5 @@
+name: PastequeFriends
+main: fr.pastequeworld.friends.PastequeFriends
+version: 1.0.0
+author: PastequeWorld
+description: "Système d'amis cross-serveur pour PastequeWorld Network"
