@@ -438,7 +438,6 @@ public class Game {
         broadcast("&7La temp\u00eate va bient\u00f4t se rapprocher...");
 
         for (Player p : online) {
-            p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_DIGGING, Integer.MAX_VALUE, 2, false, false));
             SoundUtil.phaseChange(p);
         }
 
@@ -528,7 +527,6 @@ public class Game {
         SoundUtil.playAll(getOnlinePlayers(), Sound.ENTITY_LIGHTNING_THUNDER, 0.5f, 0.8f);
 
         player.setGameMode(GameMode.SPECTATOR);
-        player.removePotionEffect(PotionEffectType.SLOW_DIGGING);
 
         if (gameMode == LabyGameMode.DUO && data.getTeam() != null) {
             if (data.getTeam().isEliminated(players)) {

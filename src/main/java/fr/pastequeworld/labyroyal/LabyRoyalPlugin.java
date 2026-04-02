@@ -5,6 +5,7 @@ import fr.pastequeworld.labyroyal.command.LabyRoyalCommand;
 import fr.pastequeworld.labyroyal.game.GameManager;
 import fr.pastequeworld.labyroyal.listener.AntiCheatListener;
 import fr.pastequeworld.labyroyal.listener.ChatListener;
+import fr.pastequeworld.labyroyal.listener.CombatListener;
 import fr.pastequeworld.labyroyal.listener.GameListener;
 import fr.pastequeworld.labyroyal.listener.ModeSelectListener;
 import fr.pastequeworld.labyroyal.util.MessageUtil;
@@ -22,6 +23,7 @@ public class LabyRoyalPlugin extends JavaPlugin {
     private GameManager gameManager;
     private AntiCheatListener antiCheatListener;
     private ModeSelectListener modeSelectListener;
+    private CombatListener combatListener;
 
     @Override
     public void onEnable() {
@@ -50,10 +52,12 @@ public class LabyRoyalPlugin extends JavaPlugin {
         // Register listeners
         antiCheatListener = new AntiCheatListener(this);
         modeSelectListener = new ModeSelectListener(this);
+        combatListener = new CombatListener(this);
         Bukkit.getPluginManager().registerEvents(new GameListener(this), this);
         Bukkit.getPluginManager().registerEvents(antiCheatListener, this);
         Bukkit.getPluginManager().registerEvents(new ChatListener(this), this);
         Bukkit.getPluginManager().registerEvents(modeSelectListener, this);
+        Bukkit.getPluginManager().registerEvents(combatListener, this);
 
         // Register commands
         LabyRoyalCommand cmd = new LabyRoyalCommand(this);

@@ -179,6 +179,12 @@ public class GameListener implements Listener {
             return;
         }
 
+        if (game.getState() == GameState.PVP) {
+            event.setCancelled(true);
+            MessageUtil.sendActionBar(player, "&cLes minerais ne sont plus exploitables !");
+            return;
+        }
+
         if (game.getState() == GameState.PREPARATION) {
             Material type = event.getBlock().getType();
             if (type == Material.BEDROCK
