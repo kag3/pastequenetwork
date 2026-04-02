@@ -238,7 +238,7 @@ public class HubPlugin extends JavaPlugin implements Listener, PluginMessageList
         infoMeta.setDisplayName(color("&2&lpasteque&7.&d&lworld"));
         List<String> infoLore = new ArrayList<String>();
         infoLore.add("");
-        infoLore.add(color("&7Bienvenue sur le reseau"));
+        infoLore.add(color("&7Bienvenue sur le r\u00e9seau"));
         infoLore.add(color("&2pasteque&7.&dworld &7!"));
         infoLore.add("");
         infoLore.add(color("&7Choisis un mode de jeu"));
@@ -288,8 +288,8 @@ public class HubPlugin extends JavaPlugin implements Listener, PluginMessageList
         List<String> lore = new ArrayList<String>();
         lore.add("");
         lore.add(color("&7Un skyblock complet avec des"));
-        lore.add(color("&7fonctionnalites &ainedites &7et une"));
-        lore.add(color("&7dimension &etres sociale&7."));
+        lore.add(color("&7fonctionnalit\u00e9s &ain\u00e9dites &7et une"));
+        lore.add(color("&7dimension &etr\u00e8s sociale&7."));
         lore.add("");
         lore.add(color("&7Joueurs: &a" + getCount("pastequeskyblock")));
         lore.add("");
@@ -332,11 +332,11 @@ public class HubPlugin extends JavaPlugin implements Listener, PluginMessageList
 
         List<String> lore = new ArrayList<String>();
         lore.add("");
-        lore.add(color("&7La reproduction du jeu video"));
-        lore.add(color("&bRaft &7adaptee dans Minecraft !"));
+        lore.add(color("&7La reproduction du jeu vid\u00e9o"));
+        lore.add(color("&bRaft &7adapt\u00e9e dans Minecraft !"));
         lore.add(color("&7Survis sur ton radeau en pleine mer."));
         lore.add("");
-        lore.add(color("&8&oAcces en 1.16.5"));
+        lore.add(color("&8&oAcc\u00e8s en 1.16.5"));
         lore.add("");
         lore.add(color("&7Joueurs: &a" + getCount("raft")));
         lore.add("");
@@ -357,11 +357,11 @@ public class HubPlugin extends JavaPlugin implements Listener, PluginMessageList
         List<String> lore = new ArrayList<String>();
         lore.add("");
         lore.add(color("&7Battle Royale dans un &6labyrinthe"));
-        lore.add(color("&7genere aleatoirement ! Mine des"));
-        lore.add(color("&7ressources, equipe-toi et &celimine"));
+        lore.add(color("&7g\u00e9n\u00e9r\u00e9 al\u00e9atoirement ! Mine des"));
+        lore.add(color("&7ressources, \u00e9quipe-toi et &c\u00e9limine"));
         lore.add(color("&7tous tes adversaires. &cLast man standing."));
         lore.add("");
-        lore.add(color("&7Modes: &aSolo &7| &bDuo"));
+        lore.add(color("&7Modes: &aSolo &7| &6Duel 1v1 &7| &bDuo"));
         lore.add(color("&7Joueurs: &a" + getCount("labyroyale")));
         lore.add("");
         lore.add(color("&e\u25b6 Cliquez pour rejoindre"));
@@ -431,7 +431,7 @@ public class HubPlugin extends JavaPlugin implements Listener, PluginMessageList
 
     private void connectToServer(Player player, String server) {
         player.closeInventory();
-        player.sendMessage(color("&2&l\u2726 &aConnexion a &f" + server + "&a..."));
+        player.sendMessage(color("&2&l\u2726 &aConnexion \u00e0 &f" + server + "&a..."));
 
         try {
             ByteArrayOutputStream b = new ByteArrayOutputStream();
@@ -440,7 +440,7 @@ public class HubPlugin extends JavaPlugin implements Listener, PluginMessageList
             out.writeUTF(server);
             player.sendPluginMessage(this, "BungeeCord", b.toByteArray());
         } catch (IOException e) {
-            player.sendMessage(color("&c&l\u2726 &cErreur de connexion ! Reessayez."));
+            player.sendMessage(color("&c&l\u2726 &cErreur de connexion ! R\u00e9essayez."));
         }
     }
 

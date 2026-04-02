@@ -103,7 +103,7 @@ public class GameListener implements Listener {
                     && victimData.getTeam() != null && attackerData.getTeam() != null
                     && victimData.getTeam().getId() == attackerData.getTeam().getId()) {
                 event.setCancelled(true);
-                MessageUtil.send(attacker, "&cVous ne pouvez pas attaquer votre coequipier !");
+                MessageUtil.send(attacker, "&cVous ne pouvez pas attaquer votre co\u00e9quipier !");
                 return;
             }
         }

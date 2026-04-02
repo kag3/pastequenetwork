@@ -28,7 +28,6 @@ public class ChatListener implements Listener {
 
         if (game == null) {
             // Player is not in a game - remove all in-game players from recipients
-            // so they don't see global chat
             Iterator<Player> it = event.getRecipients().iterator();
             while (it.hasNext()) {
                 Player recipient = it.next();
@@ -47,14 +46,13 @@ public class ChatListener implements Listener {
 
         String prefix;
         if (data != null && !data.isAlive()) {
-            prefix = "&7[MORT] ";
+            prefix = "&7[\u2620 MORT] ";
         } else {
             prefix = "";
         }
 
         String formatted = MessageUtil.color(prefix + "&7" + playerName + " &8\u00bb &f" + event.getMessage());
 
-        // Send to all players in the same game
         for (Player recipient : game.getOnlinePlayers()) {
             recipient.sendMessage(formatted);
         }

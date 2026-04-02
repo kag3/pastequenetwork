@@ -27,13 +27,12 @@ public class AntiCheatListener implements Listener {
     public AntiCheatListener(LabyRoyalPlugin plugin) {
         this.plugin = plugin;
 
-        // Periodic check for suspicious behavior
         new BukkitRunnable() {
             @Override
             public void run() {
                 checkPlayers();
             }
-        }.runTaskTimer(plugin, 100L, 40L); // Every 2 seconds
+        }.runTaskTimer(plugin, 100L, 40L);
     }
 
     @EventHandler
@@ -53,10 +52,10 @@ public class AntiCheatListener implements Listener {
             flyViolations.put(player.getUniqueId(), violations);
 
             if (violations >= 3) {
-                kickPlayer(player, "&cVous avez ete expulse pour comportement suspect (fly).");
+                kickPlayer(player, "&cVous avez \u00e9t\u00e9 expuls\u00e9 pour comportement suspect (fly).");
                 game.eliminatePlayer(player, null, true);
             } else {
-                MessageUtil.send(player, "&c\u26a0 Comportement suspect detecte ! (" + violations + "/3)");
+                MessageUtil.send(player, "&c\u26a0 Comportement suspect d\u00e9tect\u00e9 ! (" + violations + "/3)");
             }
         }
     }
@@ -73,16 +72,13 @@ public class AntiCheatListener implements Listener {
         PlayerData data = game.getPlayers().get(player.getUniqueId());
         if (data == null || !data.isAlive()) return;
 
-        // Track ground time
         if (player.isOnGround()) {
             lastGroundTime.put(player.getUniqueId(), System.currentTimeMillis());
         }
 
-        // Check if above maze ceiling (y > 73 = suspicious)
         if (player.getLocation().getY() > 73) {
-            // Teleport back down
             player.teleport(player.getLocation().clone().subtract(0, player.getLocation().getY() - 65, 0));
-            MessageUtil.send(player, "&c\u26a0 Vous etes en dehors de la zone de jeu !");
+            MessageUtil.send(player, "&c\u26a0 Vous \u00eates en dehors de la zone de jeu !");
         }
     }
 
@@ -95,7 +91,6 @@ public class AntiCheatListener implements Listener {
             for (Player player : game.getAlivePlayers()) {
                 if (player.getGameMode() == GameMode.SPECTATOR) continue;
 
-                // Check if player hasn't touched ground for too long (10 seconds)
                 Long lastGround = lastGroundTime.get(player.getUniqueId());
                 if (lastGround != null && System.currentTimeMillis() - lastGround > 10000) {
                     if (!player.isOnGround() && player.getLocation().getY() > 62) {
@@ -103,7 +98,7 @@ public class AntiCheatListener implements Listener {
                         flyViolations.put(player.getUniqueId(), violations);
 
                         if (violations >= 5) {
-                            kickPlayer(player, "&cExpulse pour comportement suspect (fly prolonge).");
+                            kickPlayer(player, "&cExpuls\u00e9 pour comportement suspect (fly prolong\u00e9).");
                             game.eliminatePlayer(player, null, true);
                         }
                     }

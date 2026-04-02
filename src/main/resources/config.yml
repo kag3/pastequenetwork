@@ -30,6 +30,17 @@ duo:
   countdown: 15
   wait-timeout: 60
 
+duel:
+  min-players: 2
+  max-players: 2
+  maze-cells: 9
+  preparation-time: 150
+  pvp-time: 300
+  storm-start-delay: 45
+  storm-duration: 180
+  countdown: 10
+  wait-timeout: 30
+
 maze:
   wall-height: 8
   base-y: 60

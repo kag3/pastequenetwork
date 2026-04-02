@@ -423,14 +423,7 @@ public class MazeGenerator {
         World world = location.getWorld();
         if (world == null) return;
 
-        Block block = world.getBlockAt(location.getBlockX() + 1, location.getBlockY(), location.getBlockZ());
-        if (block.getType() != Material.AIR && block.getType() != Material.CHEST) {
-            block = world.getBlockAt(location.getBlockX() - 1, location.getBlockY(), location.getBlockZ());
-        }
-        if (block.getType() != Material.AIR && block.getType() != Material.CHEST) {
-            block = world.getBlockAt(location.getBlockX(), location.getBlockY(), location.getBlockZ() + 1);
-        }
-
+        Block block = findChestSpot(location);
         block.setType(Material.CHEST);
 
         if (block.getState() instanceof Chest) {
@@ -451,5 +444,51 @@ public class MazeGenerator {
             inv.setItem(14, new ItemStack(Material.COBBLESTONE, 16));
             inv.setItem(15, new ItemStack(Material.FURNACE, 1));
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    public void placeStarterChestDuel(Location location) {
+        World world = location.getWorld();
+        if (world == null) return;
+
+        Block block = findChestSpot(location);
+        block.setType(Material.CHEST);
+
+        if (block.getState() instanceof Chest) {
+            Chest chest = (Chest) block.getState();
+            Inventory inv = chest.getInventory();
+            // Armes
+            inv.setItem(0, new ItemStack(Material.IRON_SWORD, 1));
+            inv.setItem(1, new ItemStack(Material.IRON_PICKAXE, 1));
+            inv.setItem(2, new ItemStack(Material.IRON_AXE, 1));
+            inv.setItem(3, new ItemStack(Material.BOW, 1));
+            // Armure compl\u00e8te en fer
+            inv.setItem(4, new ItemStack(Material.IRON_HELMET, 1));
+            inv.setItem(5, new ItemStack(Material.IRON_CHESTPLATE, 1));
+            inv.setItem(6, new ItemStack(Material.IRON_LEGGINGS, 1));
+            inv.setItem(7, new ItemStack(Material.IRON_BOOTS, 1));
+            // Nourriture et utilitaires
+            inv.setItem(9, new ItemStack(Material.COOKED_BEEF, 32));
+            inv.setItem(10, new ItemStack(Material.GOLDEN_APPLE, 4));
+            inv.setItem(11, new ItemStack(Material.ARROW, 16));
+            inv.setItem(12, new ItemStack(Material.WORKBENCH, 1));
+            inv.setItem(13, new ItemStack(Material.WOOD, 16));
+            inv.setItem(14, new ItemStack(Material.COBBLESTONE, 32));
+            inv.setItem(15, new ItemStack(Material.FURNACE, 1));
+            inv.setItem(16, new ItemStack(Material.TORCH, 16));
+            inv.setItem(17, new ItemStack(Material.SHIELD, 1));
+        }
+    }
+
+    private Block findChestSpot(Location location) {
+        World world = location.getWorld();
+        Block block = world.getBlockAt(location.getBlockX() + 1, location.getBlockY(), location.getBlockZ());
+        if (block.getType() != Material.AIR && block.getType() != Material.CHEST) {
+            block = world.getBlockAt(location.getBlockX() - 1, location.getBlockY(), location.getBlockZ());
+        }
+        if (block.getType() != Material.AIR && block.getType() != Material.CHEST) {
+            block = world.getBlockAt(location.getBlockX(), location.getBlockY(), location.getBlockZ() + 1);
+        }
+        return block;
     }
 }

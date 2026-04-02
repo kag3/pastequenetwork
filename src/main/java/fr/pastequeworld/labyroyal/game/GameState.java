@@ -2,8 +2,8 @@ package fr.pastequeworld.labyroyal.game;
 
 public enum GameState {
     WAITING("En attente"),
-    STARTING("Demarrage"),
-    PREPARATION("Preparation"),
+    STARTING("D\u00e9marrage"),
+    PREPARATION("Pr\u00e9paration"),
     PVP("Combat"),
     ENDING("Fin");
 

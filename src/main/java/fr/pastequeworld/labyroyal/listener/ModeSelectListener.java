@@ -37,7 +37,6 @@ public class ModeSelectListener implements Listener {
 
     private final LabyRoyalPlugin plugin;
 
-    // Joueurs qui ont fait un choix (Solo, Duo, ou Retour Hub)
     private final Set<UUID> hasChosen = new HashSet<UUID>();
 
     public ModeSelectListener(LabyRoyalPlugin plugin) {
@@ -50,12 +49,10 @@ public class ModeSelectListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
-        // Si le joueur est deja dans une partie, pas de GUI
         if (plugin.getGameManager().getPlayerGame(player.getUniqueId()) != null) return;
 
         hasChosen.remove(player.getUniqueId());
 
-        // Teleporter dans la cabane + freeze + GUI
         Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
             @Override
             public void run() {
@@ -94,7 +91,6 @@ public class ModeSelectListener implements Listener {
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
 
-        // Bloquer uniquement les joueurs dans la phase de selection
         if (hasChosen.contains(player.getUniqueId())) return;
         if (plugin.getGameManager().getPlayerGame(player.getUniqueId()) != null) return;
 
@@ -102,7 +98,6 @@ public class ModeSelectListener implements Listener {
         Location to = event.getTo();
         if (to == null) return;
 
-        // Autoriser le mouvement de tete (yaw/pitch) mais pas le deplacement
         if (from.getX() != to.getX() || from.getY() != to.getY() || from.getZ() != to.getZ()) {
             event.setTo(new Location(from.getWorld(), from.getX(), from.getY(), from.getZ(),
                     to.getYaw(), to.getPitch()));
@@ -143,8 +138,9 @@ public class ModeSelectListener implements Listener {
         List<String> soloLore = new ArrayList<String>();
         soloLore.add("");
         soloLore.add(color("&7Mode: &fChacun pour soi"));
-        soloLore.add(color("&7Joueurs: &f6 a 8"));
-        soloLore.add(color("&7Labyrinthe: &f128x128"));
+        soloLore.add(color("&7Joueurs: &f6 \u00e0 8"));
+        soloLore.add(color("&7Labyrinthe: &fGrand"));
+        soloLore.add(color("&7Pr\u00e9paration: &f5 minutes"));
         soloLore.add("");
         soloLore.add(color("&e\u25b6 Cliquez pour rejoindre"));
         soloMeta.setLore(soloLore);
@@ -154,21 +150,25 @@ public class ModeSelectListener implements Listener {
         soloItem.setItemMeta(soloMeta);
         gui.setItem(11, soloItem);
 
-        // === INFO CENTRE (slot 13) ===
-        ItemStack infoItem = new ItemStack(Material.NETHER_STAR);
-        ItemMeta infoMeta = infoItem.getItemMeta();
-        infoMeta.setDisplayName(color("&6&lLabyRoyale"));
-        List<String> infoLore = new ArrayList<String>();
-        infoLore.add("");
-        infoLore.add(color("&7Battle Royale en Labyrinthe"));
-        infoLore.add(color("&7par &2pasteque&7.&dworld"));
-        infoLore.add("");
-        infoLore.add(color("&8Choisissez un mode"));
-        infoMeta.setLore(infoLore);
-        infoMeta.addEnchant(Enchantment.DURABILITY, 1, true);
-        infoMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-        infoItem.setItemMeta(infoMeta);
-        gui.setItem(13, infoItem);
+        // === DUEL (slot 13) ===
+        ItemStack duelItem = new ItemStack(Material.GOLD_SWORD);
+        ItemMeta duelMeta = duelItem.getItemMeta();
+        duelMeta.setDisplayName(color("&6&lDUEL &e&l1v1"));
+        List<String> duelLore = new ArrayList<String>();
+        duelLore.add("");
+        duelLore.add(color("&7Mode: &fAffrontement 1 contre 1"));
+        duelLore.add(color("&7Joueurs: &f2"));
+        duelLore.add(color("&7Labyrinthe: &fPetit"));
+        duelLore.add(color("&7Pr\u00e9paration: &f2 min 30"));
+        duelLore.add(color("&7\u00c9quipement: &fArmure en fer"));
+        duelLore.add("");
+        duelLore.add(color("&e\u25b6 Cliquez pour rejoindre"));
+        duelMeta.setLore(duelLore);
+        duelMeta.addEnchant(Enchantment.DURABILITY, 1, true);
+        duelMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        duelMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        duelItem.setItemMeta(duelMeta);
+        gui.setItem(13, duelItem);
 
         // === DUO (slot 15) ===
         ItemStack duoItem = new ItemStack(Material.DIAMOND_SWORD);
@@ -176,9 +176,10 @@ public class ModeSelectListener implements Listener {
         duoMeta.setDisplayName(color("&b&lDUO"));
         List<String> duoLore = new ArrayList<String>();
         duoLore.add("");
-        duoLore.add(color("&7Mode: &fEquipes de 2"));
-        duoLore.add(color("&7Joueurs: &f8 a 16"));
-        duoLore.add(color("&7Labyrinthe: &fPlus grand"));
+        duoLore.add(color("&7Mode: &f\u00c9quipes de 2"));
+        duoLore.add(color("&7Joueurs: &f8 \u00e0 16"));
+        duoLore.add(color("&7Labyrinthe: &fTr\u00e8s grand"));
+        duoLore.add(color("&7Pr\u00e9paration: &f6 minutes"));
         duoLore.add("");
         duoLore.add(color("&e\u25b6 Cliquez pour rejoindre"));
         duoMeta.setLore(duoLore);
@@ -228,6 +229,16 @@ public class ModeSelectListener implements Listener {
             if (joined) {
                 MessageUtil.send(player, "&aVous avez rejoint une partie Solo !");
             }
+        } else if (slot == 13) {
+            // DUEL
+            hasChosen.add(player.getUniqueId());
+            unfreezePlayer(player);
+            player.closeInventory();
+            MessageUtil.send(player, "&eRecherche d'un Duel 1v1...");
+            boolean joined = plugin.getGameManager().joinGame(player, LabyGameMode.DUEL);
+            if (joined) {
+                MessageUtil.send(player, "&aVous avez rejoint un Duel 1v1 !");
+            }
         } else if (slot == 15) {
             // DUO
             hasChosen.add(player.getUniqueId());
@@ -257,7 +268,6 @@ public class ModeSelectListener implements Listener {
         if (event.getView().getTitle() == null) return;
         if (!event.getView().getTitle().equals(GUI_TITLE)) return;
 
-        // Si pas de choix fait, re-ouvrir IMMEDIATEMENT (1 tick = minimum possible)
         if (!hasChosen.contains(player.getUniqueId())) {
             Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
                 @Override
@@ -268,7 +278,7 @@ public class ModeSelectListener implements Listener {
                         openModeSelectGUI(player);
                     }
                 }
-            }, 1L); // 1 tick = instantane
+            }, 1L);
         }
     }
 

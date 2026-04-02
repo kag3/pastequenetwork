@@ -22,7 +22,7 @@ public class GameManager {
     public boolean joinGame(Player player, LabyGameMode mode) {
         // Check if already in a game
         if (playerGameMap.containsKey(player.getUniqueId())) {
-            MessageUtil.send(player, "&cVous etes deja dans une partie !");
+            MessageUtil.send(player, "&cVous \u00eates d\u00e9j\u00e0 dans une partie !");
             return false;
         }
 
@@ -33,7 +33,7 @@ public class GameManager {
             // Create new game
             game = createGame(mode);
             if (game == null) {
-                MessageUtil.send(player, "&cErreur lors de la creation de la partie. Reessayez.");
+                MessageUtil.send(player, "&cErreur lors de la cr\u00e9ation de la partie. R\u00e9essayez.");
                 return false;
             }
         }
@@ -51,7 +51,7 @@ public class GameManager {
     public void leaveGame(Player player) {
         String gameId = playerGameMap.get(player.getUniqueId());
         if (gameId == null) {
-            MessageUtil.send(player, "&cVous n'etes dans aucune partie !");
+            MessageUtil.send(player, "&cVous n'\u00eates dans aucune partie !");
             return;
         }
 
@@ -60,7 +60,7 @@ public class GameManager {
             game.removePlayer(player);
         }
         playerGameMap.remove(player.getUniqueId());
-        MessageUtil.send(player, "&aVous avez quitte la partie.");
+        MessageUtil.send(player, "&aVous avez quitt\u00e9 la partie.");
     }
 
     private Game findAvailableGame(LabyGameMode mode) {
@@ -76,15 +76,18 @@ public class GameManager {
         String id = String.valueOf(nextId.getAndIncrement());
         Game game = new Game(id, mode, plugin);
 
-        plugin.getLogger().info("Creation du monde LabyRoyale #" + id + " (" + mode.getDisplayName() + ")...");
+        // Add to map BEFORE world creation so concurrent joins find this game
+        games.put(id, game);
+
+        plugin.getLogger().info("Cr\u00e9ation du monde LabyRoyale #" + id + " (" + mode.getDisplayName() + ")...");
 
         if (!game.createWorld()) {
-            plugin.getLogger().severe("Echec de la creation du monde pour la partie #" + id);
+            plugin.getLogger().severe("\u00c9chec de la cr\u00e9ation du monde pour la partie #" + id);
+            games.remove(id);
             return null;
         }
 
-        games.put(id, game);
-        plugin.getLogger().info("Partie LabyRoyale #" + id + " creee avec succes !");
+        plugin.getLogger().info("Partie LabyRoyale #" + id + " cr\u00e9\u00e9e avec succ\u00e8s !");
         return game;
     }
 
@@ -94,7 +97,8 @@ public class GameManager {
             playerGameMap.remove(uuid);
         }
         games.remove(game.getId());
-        plugin.getLogger().info("Partie LabyRoyale #" + game.getId() + " supprimee.");
+        game.cleanup();
+        plugin.getLogger().info("Partie LabyRoyale #" + game.getId() + " supprim\u00e9e.");
     }
 
     public Game getPlayerGame(UUID uuid) {

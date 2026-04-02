@@ -2,7 +2,8 @@ package fr.pastequeworld.labyroyal.game;
 
 public enum LabyGameMode {
     SOLO("Solo", 1),
-    DUO("Duo", 2);
+    DUO("Duo", 2),
+    DUEL("Duel", 1);
 
     private final String displayName;
     private final int teamSize;

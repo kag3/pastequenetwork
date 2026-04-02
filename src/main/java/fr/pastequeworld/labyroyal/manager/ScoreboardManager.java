@@ -36,7 +36,6 @@ public class ScoreboardManager {
         Objective obj = board.getObjective("labyroyale");
         if (obj == null) return;
 
-        // Clear old entries
         for (String entry : board.getEntries()) {
             board.resetScores(entry);
         }
@@ -49,26 +48,23 @@ public class ScoreboardManager {
 
         setScore(obj, "&8&m                    ", line--);
 
-        // Joueur
         setScore(obj, "&7Joueur: &f" + playerName, line--);
 
         setScore(obj, " ", line--);
 
-        // Serveur
         setScore(obj, "&7Serveur: &fLabyRoyale&2#" + game.getId(), line--);
 
         setScore(obj, "  ", line--);
 
-        // Phase
         switch (state) {
             case WAITING:
                 setScore(obj, "&7Phase: &eAttente", line--);
                 break;
             case STARTING:
-                setScore(obj, "&7Phase: &eDemarrage &f(" + game.getCountdown() + "s)", line--);
+                setScore(obj, "&7Phase: &eD\u00e9marrage &f(" + game.getCountdown() + "s)", line--);
                 break;
             case PREPARATION:
-                setScore(obj, "&7Phase: &2Preparation", line--);
+                setScore(obj, "&7Phase: &2Pr\u00e9paration", line--);
                 break;
             case PVP:
                 setScore(obj, "&7Phase: &cCombat", line--);
@@ -80,12 +76,10 @@ public class ScoreboardManager {
 
         setScore(obj, "   ", line--);
 
-        // Temps (elapsed timer counting up)
         setScore(obj, "&7Temps: &f" + MessageUtil.formatTime(game.getElapsedTime()), line--);
 
         setScore(obj, "    ", line--);
 
-        // Joueurs restants
         int alive = game.getAliveCount();
         int total = game.getMaxPlayers();
         if (state == GameState.WAITING || state == GameState.STARTING) {
@@ -109,7 +103,6 @@ public class ScoreboardManager {
 
     private void setScore(Objective obj, String text, int score) {
         String colored = color(text);
-        // Ensure uniqueness
         while (obj.getScoreboard().getEntries().contains(colored)) {
             colored += ChatColor.RESET;
         }

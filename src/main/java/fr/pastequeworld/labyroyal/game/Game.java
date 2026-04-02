@@ -185,14 +185,14 @@ public class Game {
             }
             players.remove(player.getUniqueId());
 
-            String leaveMsg = "&c- &f" + player.getName() + " &7a quitte la partie &8(&e"
+            String leaveMsg = "&c- &f" + player.getName() + " &7a quitt\u00e9 la partie &8(&e"
                     + players.size() + "&7/&e" + maxPlayers + "&8)";
             broadcast(leaveMsg);
             SoundUtil.playAll(getOnlinePlayers(), Sound.BLOCK_NOTE_BASS, 1.0f, 0.5f);
 
             if (players.size() < minPlayers && countdownTask != null) {
                 cancelCountdown();
-                broadcast("&cPas assez de joueurs ! Compte a rebours annule.");
+                broadcast("&cPas assez de joueurs ! Compte \u00e0 rebours annul\u00e9.");
             }
 
             resetPlayer(player);
@@ -284,7 +284,7 @@ public class Game {
                     String color = countdown <= 3 ? "&c&l" : "&e&l";
                     MessageUtil.broadcastTitle(online,
                             color + countdown,
-                            "&7Preparez-vous...");
+                            "&7Pr\u00e9parez-vous...");
 
                     for (Player p : online) {
                         if (countdown <= 3) {
@@ -325,7 +325,11 @@ public class Game {
             player.teleport(spawn);
             index++;
 
-            mazeGenerator.placeStarterChest(spawn);
+            if (gameMode == LabyGameMode.DUEL) {
+                mazeGenerator.placeStarterChestDuel(spawn);
+            } else {
+                mazeGenerator.placeStarterChest(spawn);
+            }
 
             player.setWalkSpeed(0);
             player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 60, 0, false, false));
@@ -369,10 +373,10 @@ public class Game {
             }
         }.runTaskTimer(plugin, 20L, 20L);
 
-        broadcast("&6&l\u2694 &ePhase de Preparation &6&l\u2694");
-        broadcast("&7Minez les murs pour recuperer des ressources !");
-        broadcast("&7Trouvez les salles d'enchantement cachees !");
-        broadcast("&7Ouvrez votre coffre de depart a cote de vous !");
+        broadcast("&6&l\u2694 &ePhase de Pr\u00e9paration &6&l\u2694");
+        broadcast("&7Minez les murs pour r\u00e9cup\u00e9rer des ressources !");
+        broadcast("&7Trouvez les salles d'enchantement cach\u00e9es !");
+        broadcast("&7Ouvrez votre coffre de d\u00e9part \u00e0 c\u00f4t\u00e9 de vous !");
     }
 
     private void startPreparationPhase() {
@@ -392,7 +396,7 @@ public class Game {
                     broadcast("&c&l\u26a0 &eLa phase de combat commence dans &c60 secondes &e!");
                     SoundUtil.playAll(online, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
                 } else if (phaseTimer == 30) {
-                    broadcast("&c&l\u26a0 &eCombat dans &c30 secondes &e! Preparez-vous !");
+                    broadcast("&c&l\u26a0 &eCombat dans &c30 secondes &e! Pr\u00e9parez-vous !");
                     SoundUtil.playAll(online, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.2f);
                 } else if (phaseTimer == 10) {
                     broadcast("&c&l\u26a0 &cCOMBAT DANS 10 SECONDES !");
@@ -413,7 +417,7 @@ public class Game {
                 scoreboardManager.updateAll(online);
 
                 MessageUtil.broadcastActionBar(online,
-                        "&6\u2694 Preparation &7- &e" + MessageUtil.formatTime(phaseTimer));
+                        "&6\u2694 Pr\u00e9paration &7- &e" + MessageUtil.formatTime(phaseTimer));
             }
         }.runTaskTimer(plugin, 20L, 20L);
     }
@@ -427,11 +431,11 @@ public class Game {
 
         MessageUtil.broadcastTitle(online,
                 "&c&l\u2694 COMBAT ! \u2694",
-                "&7Eliminez tous vos adversaires !");
+                "&7\u00c9liminez tous vos adversaires !");
 
         broadcast("&c&l\u2694 &4Phase de Combat &c&l\u2694");
         broadcast("&7Les minerais ne sont plus exploitables !");
-        broadcast("&7La tempete va bientot se rapprocher...");
+        broadcast("&7La temp\u00eate va bient\u00f4t se rapprocher...");
 
         for (Player p : online) {
             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_DIGGING, Integer.MAX_VALUE, 2, false, false));
@@ -455,12 +459,12 @@ public class Game {
                 if (!stormStarted && phaseTimer <= pvpTime - stormStartDelay) {
                     stormStarted = true;
                     stormManager.startShrinking(stormDuration);
-                    broadcast("&5&l\u26a1 &dLa tempete se rapproche ! &5&l\u26a1");
+                    broadcast("&5&l\u26a1 &dLa temp\u00eate se rapproche ! &5&l\u26a1");
                     SoundUtil.playAll(online, Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.5f, 1.2f);
                 }
 
                 if (!stormStarted && (pvpTime - stormStartDelay - phaseTimer) == -10) {
-                    broadcast("&5\u26a1 &dLa tempete arrive dans &510 secondes&d !");
+                    broadcast("&5\u26a1 &dLa temp\u00eate arrive dans &510 secondes&d !");
                     SoundUtil.playAll(online, Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.3f, 1.5f);
                 }
 
@@ -469,12 +473,12 @@ public class Game {
                 } else if (phaseTimer == 30) {
                     broadcast("&c\u26a0 &4Il reste 30 secondes !");
                 } else if (phaseTimer == 10) {
-                    broadcast("&c&l\u26a0 DERNIERES 10 SECONDES !");
+                    broadcast("&c&l\u26a0 DERNI\u00c8RES 10 SECONDES !");
                 }
 
                 if (phaseTimer <= 0) {
                     cancel();
-                    broadcast("&4&lTemps ecoule ! La tempete consume tout !");
+                    broadcast("&4&lTemps \u00e9coul\u00e9 ! La temp\u00eate consume tout !");
                     return;
                 }
 
@@ -486,7 +490,7 @@ public class Game {
 
                 MessageUtil.broadcastActionBar(online,
                         "&c\u2694 Combat &7- &e" + MessageUtil.formatTime(phaseTimer)
-                                + (stormStarted ? " &7| &5\u26a1 Tempete active" : ""));
+                                + (stormStarted ? " &7| &5\u26a1 Temp\u00eate active" : ""));
             }
         }.runTaskTimer(plugin, 20L, 20L);
     }
@@ -501,24 +505,24 @@ public class Game {
         int alive = getAliveCount();
 
         if (disconnected) {
-            broadcast("&c\u2620 &f" + player.getName() + " &7a ete elimine (deconnexion) &8[&e" + alive + " restants&8]");
+            broadcast("&c\u2620 &f" + player.getName() + " &7a \u00e9t\u00e9 \u00e9limin\u00e9 (d\u00e9connexion) &8[&e" + alive + " restants&8]");
         } else if (killer != null) {
             PlayerData killerData = players.get(killer.getUniqueId());
             if (killerData != null) {
                 killerData.incrementKills();
                 SoundUtil.kill(killer);
-                broadcast("&c\u2620 &f" + player.getName() + " &7a ete tue par &e" + killer.getName()
+                broadcast("&c\u2620 &f" + player.getName() + " &7a \u00e9t\u00e9 tu\u00e9 par &e" + killer.getName()
                         + " &8[&e" + alive + " restants&8]");
 
                 int kills = killerData.getKills();
                 if (kills == 3) {
-                    broadcast("&6\u2b50 &e" + killer.getName() + " &6est en serie de kills ! &7(3 kills)");
+                    broadcast("&6\u2b50 &e" + killer.getName() + " &6est en s\u00e9rie de kills ! &7(3 kills)");
                 } else if (kills == 5) {
-                    broadcast("&c\u2b50 &4" + killer.getName() + " &cest INARRETABLE ! &7(5 kills)");
+                    broadcast("&c\u2b50 &4" + killer.getName() + " &cest INARR\u00caTABLE ! &7(5 kills)");
                 }
             }
         } else {
-            broadcast("&c\u2620 &f" + player.getName() + " &7a ete elimine &8[&e" + alive + " restants&8]");
+            broadcast("&c\u2620 &f" + player.getName() + " &7a \u00e9t\u00e9 \u00e9limin\u00e9 &8[&e" + alive + " restants&8]");
         }
 
         SoundUtil.playAll(getOnlinePlayers(), Sound.ENTITY_LIGHTNING_THUNDER, 0.5f, 0.8f);
@@ -528,7 +532,7 @@ public class Game {
 
         if (gameMode == LabyGameMode.DUO && data.getTeam() != null) {
             if (data.getTeam().isEliminated(players)) {
-                broadcast("&4\u2620 &cL'equipe " + data.getTeam().getId() + " a ete eliminee !");
+                broadcast("&4\u2620 &cL'\u00e9quipe " + data.getTeam().getId() + " a \u00e9t\u00e9 \u00e9limin\u00e9e !");
                 SoundUtil.playAll(getOnlinePlayers(), Sound.ENTITY_BLAZE_DEATH, 1.0f, 1.0f);
             }
         }
@@ -538,7 +542,7 @@ public class Game {
     }
 
     private void checkWinCondition() {
-        if (gameMode == LabyGameMode.SOLO) {
+        if (gameMode == LabyGameMode.SOLO || gameMode == LabyGameMode.DUEL) {
             int alive = getAliveCount();
             if (alive <= 1) {
                 PlayerData winner = getLastAlivePlayer();
@@ -640,7 +644,7 @@ public class Game {
 
         MessageUtil.broadcastTitle(online,
                 "&6&l\u2726 VICTOIRE \u2726",
-                "&eEquipe " + winTeam.getId() + " &7remporte le LabyRoyale !");
+                "&e\u00c9quipe " + winTeam.getId() + " &7remporte le LabyRoyale !");
 
         broadcast(MessageUtil.line());
         broadcast("&6&l       \u2726 LABYROYALE - VICTOIRE \u2726");
@@ -803,6 +807,7 @@ public class Game {
             }
             Bukkit.unloadWorld(world, false);
             deleteWorldFolder(new File(Bukkit.getWorldContainer(), worldName));
+            world = null;
         }
     }
 

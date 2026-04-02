@@ -26,7 +26,7 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("Cette commande est reservee aux joueurs.");
+            sender.sendMessage("Cette commande est r\u00e9serv\u00e9e aux joueurs.");
             return true;
         }
         Player player = (Player) sender;
@@ -43,6 +43,9 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
                 break;
             case "duo":
                 joinGame(player, LabyGameMode.DUO);
+                break;
+            case "duel":
+                joinGame(player, LabyGameMode.DUEL);
                 break;
             case "leave":
             case "quit":
@@ -86,13 +89,13 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
         if (game != null) {
             MessageUtil.sendRaw(player, "  &fPartie: &e#" + game.getId()
                     + " &7(" + game.getGameMode().getDisplayName() + ")");
-            MessageUtil.sendRaw(player, "  &fEtat: &e" + game.getState().getDisplayName());
+            MessageUtil.sendRaw(player, "  &f\u00c9tat: &e" + game.getState().getDisplayName());
             MessageUtil.sendRaw(player, "  &fJoueurs: &a" + game.getPlayers().size()
                     + "&7/&a" + game.getMaxPlayers());
             MessageUtil.sendRaw(player, "  &fEn vie: &c" + game.getAliveCount());
         } else {
-            MessageUtil.sendRaw(player, "  &7Vous n'etes dans aucune partie.");
-            MessageUtil.sendRaw(player, "  &7Utilisez &e/lr solo &7ou &e/lr duo &7pour jouer !");
+            MessageUtil.sendRaw(player, "  &7Vous n'\u00eates dans aucune partie.");
+            MessageUtil.sendRaw(player, "  &7Utilisez &e/lr solo&7, &e/lr duo &7ou &e/lr duel &7pour jouer !");
         }
 
         MessageUtil.sendRaw(player, "");
@@ -129,7 +132,7 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
             case "forcestart":
                 Game game = plugin.getGameManager().getPlayerGame(player.getUniqueId());
                 if (game == null) {
-                    MessageUtil.send(player, "&cVous devez etre dans une partie.");
+                    MessageUtil.send(player, "&cVous devez \u00eatre dans une partie.");
                     return;
                 }
                 if (game.getPlayers().size() < 2) {
@@ -140,13 +143,13 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
                 game.broadcast("&c&l[ADMIN] &eForce start par " + player.getName());
                 break;
             case "stop":
-                MessageUtil.send(player, "&cArret de toutes les parties...");
+                MessageUtil.send(player, "&cArr\u00eat de toutes les parties...");
                 plugin.getGameManager().shutdownAll();
-                MessageUtil.send(player, "&aToutes les parties ont ete arretees.");
+                MessageUtil.send(player, "&aToutes les parties ont \u00e9t\u00e9 arr\u00eat\u00e9es.");
                 break;
             case "reload":
                 plugin.reloadConfig();
-                MessageUtil.send(player, "&aConfiguration rechargee !");
+                MessageUtil.send(player, "&aConfiguration recharg\u00e9e !");
                 break;
             default:
                 sendAdminHelp(player);
@@ -160,6 +163,7 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
         MessageUtil.sendRaw(player, "");
         MessageUtil.sendRaw(player, "  &e/lr solo &7- Rejoindre une partie solo");
         MessageUtil.sendRaw(player, "  &e/lr duo &7- Rejoindre une partie duo");
+        MessageUtil.sendRaw(player, "  &e/lr duel &7- Rejoindre un duel 1v1");
         MessageUtil.sendRaw(player, "  &e/lr leave &7- Quitter la partie");
         MessageUtil.sendRaw(player, "  &e/lr stats &7- Voir les informations");
         MessageUtil.sendRaw(player, "");
@@ -175,7 +179,7 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
         MessageUtil.sendRaw(player, "");
         MessageUtil.sendRaw(player, "  &c/lr admin list &7- Lister les parties");
         MessageUtil.sendRaw(player, "  &c/lr admin forcestart &7- Forcer le lancement");
-        MessageUtil.sendRaw(player, "  &c/lr admin stop &7- Arreter toutes les parties");
+        MessageUtil.sendRaw(player, "  &c/lr admin stop &7- Arr\u00eater toutes les parties");
         MessageUtil.sendRaw(player, "  &c/lr admin reload &7- Recharger la config");
         MessageUtil.sendRaw(player, MessageUtil.line());
     }
@@ -185,7 +189,7 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
         List<String> completions = new ArrayList<String>();
 
         if (args.length == 1) {
-            completions.addAll(Arrays.asList("solo", "duo", "leave", "stats"));
+            completions.addAll(Arrays.asList("solo", "duo", "duel", "leave", "stats"));
             if (sender.hasPermission("labyroyale.admin")) {
                 completions.add("admin");
             }
