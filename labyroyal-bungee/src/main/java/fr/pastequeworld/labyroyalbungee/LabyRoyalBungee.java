@@ -13,7 +13,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,12 +43,37 @@ public class LabyRoyalBungee extends Plugin implements Listener {
 
     @Override
     public void onEnable() {
+        // Creer le dossier du plugin pour confirmer le chargement
+        if (!getDataFolder().exists()) {
+            getDataFolder().mkdir();
+        }
+
+        // Sauvegarder un fichier config par defaut
+        File configFile = new File(getDataFolder(), "config.yml");
+        if (!configFile.exists()) {
+            try {
+                PrintWriter writer = new PrintWriter(configFile);
+                writer.println("# LabyRoyaleBungee - Configuration");
+                writer.println("# Nom du serveur cible dans la config BungeeCord");
+                writer.println("game-server: labyroyale");
+                writer.println("# Channel de communication");
+                writer.println("channel: LabyRoyale");
+                writer.close();
+            } catch (IOException e) {
+                getLogger().warning("Impossible de creer le fichier config: " + e.getMessage());
+            }
+        }
+
         // Enregistrer le channel des deux cotes
         getProxy().registerChannel(CHANNEL);
         getProxy().getPluginManager().registerListener(this, this);
 
-        getLogger().info("LabyRoyaleBungee active !");
-        getLogger().info("Channel: " + CHANNEL + " | Serveur cible: " + GAME_SERVER);
+        getLogger().info("=================================");
+        getLogger().info("  LabyRoyaleBungee v1.0.0");
+        getLogger().info("  Channel: " + CHANNEL);
+        getLogger().info("  Serveur cible: " + GAME_SERVER);
+        getLogger().info("=================================");
+        getLogger().info("Plugin charge avec succes !");
     }
 
     @Override
