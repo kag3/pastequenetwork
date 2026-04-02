@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -19,8 +20,10 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
+import org.bukkit.event.player.PlayerVelocityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
 
 /**
  * Full 1.8 PVP combat system bypass for 1.9.4.
@@ -32,6 +35,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 public class CombatListener implements Listener {
 
     private final LabyRoyalPlugin plugin;
+    private final java.util.Set<java.util.UUID> recentlyHit = new java.util.HashSet<java.util.UUID>();
 
     public CombatListener(LabyRoyalPlugin plugin) {
         this.plugin = plugin;
@@ -130,10 +134,10 @@ public class CombatListener implements Listener {
         }
     }
 
-    // ==================== 1.8 DAMAGE (NO COOLDOWN PENALTY) ====================
+    // ==================== 1.8 DAMAGE + KNOCKBACK ====================
 
     /**
-     * Cancel sweep attacks and ensure full damage on every hit.
+     * Cancel sweep attacks, ensure full damage, apply 1.8 knockback.
      */
     @EventHandler(priority = EventPriority.LOWEST)
     public void onEntityDamage(EntityDamageByEntityEvent event) {
@@ -150,6 +154,74 @@ public class CombatListener implements Listener {
             return;
         }
 
+        // Apply 1.8 knockback to the victim
+        if (event.getEntity() instanceof Player) {
+            final Player victim = (Player) event.getEntity();
+
+            // Mark victim so we cancel vanilla KB in PlayerVelocityEvent
+            recentlyHit.add(victim.getUniqueId());
+
+            // Calculate knockback enchant level
+            ItemStack weapon = attacker.getInventory().getItemInMainHand();
+            int kbLevel = 0;
+            if (weapon != null && weapon.containsEnchantment(Enchantment.KNOCKBACK)) {
+                kbLevel = weapon.getEnchantmentLevel(Enchantment.KNOCKBACK);
+            }
+
+            // Sprint hitting adds +1 KB level in 1.8
+            final boolean sprinting = attacker.isSprinting();
+            final int finalKbLevel = kbLevel + (sprinting ? 1 : 0);
+
+            // Apply custom KB on next tick (overrides vanilla)
+            final double attackerX = attacker.getLocation().getX();
+            final double attackerZ = attacker.getLocation().getZ();
+
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    recentlyHit.remove(victim.getUniqueId());
+                    if (!victim.isOnline() || !attacker.isOnline()) return;
+
+                    // Direction from attacker to victim (horizontal only)
+                    double dx = victim.getLocation().getX() - attackerX;
+                    double dz = victim.getLocation().getZ() - attackerZ;
+                    double dist = Math.sqrt(dx * dx + dz * dz);
+
+                    if (dist < 0.001) {
+                        // Fallback: use attacker's look direction
+                        Vector dir = attacker.getLocation().getDirection();
+                        dx = dir.getX();
+                        dz = dir.getZ();
+                        dist = Math.sqrt(dx * dx + dz * dz);
+                    }
+
+                    // Normalize
+                    dx /= dist;
+                    dz /= dist;
+
+                    // 1.8 base knockback values
+                    double horizontalKB = 0.4;
+                    double verticalKB = 0.36;
+
+                    // Each KB level adds 0.45 horizontal and a bit of vertical
+                    horizontalKB += finalKbLevel * 0.45;
+                    verticalKB += finalKbLevel * 0.08;
+
+                    // Cap vertical KB
+                    if (verticalKB > 0.5) verticalKB = 0.5;
+
+                    Vector kb = new Vector(dx * horizontalKB, verticalKB, dz * horizontalKB);
+
+                    // Combine with victim's current velocity slightly (1.8 feel)
+                    Vector current = victim.getVelocity();
+                    kb.setX(kb.getX() + current.getX() * 0.15);
+                    kb.setZ(kb.getZ() + current.getZ() * 0.15);
+
+                    victim.setVelocity(kb);
+                }
+            }.runTaskLater(plugin, 1L);
+        }
+
         // Reset attack cooldown after each hit for seamless jitterclick
         new BukkitRunnable() {
             @Override
@@ -159,5 +231,15 @@ public class CombatListener implements Listener {
                 }
             }
         }.runTaskLater(plugin, 1L);
+    }
+
+    /**
+     * Cancel vanilla velocity changes from combat so our custom KB takes over.
+     */
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onVelocity(PlayerVelocityEvent event) {
+        if (recentlyHit.contains(event.getPlayer().getUniqueId())) {
+            event.setCancelled(true);
+        }
     }
 }
