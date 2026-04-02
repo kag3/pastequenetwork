@@ -135,8 +135,6 @@ public class HubPlugin extends JavaPlugin implements Listener, PluginMessageList
     }
 
     private void giveCompass(Player player) {
-        player.getInventory().clear();
-
         ItemStack compass = new ItemStack(Material.COMPASS);
         ItemMeta meta = compass.getItemMeta();
         meta.setDisplayName(color("&2&lpasteque&7.&d&lworld"));
