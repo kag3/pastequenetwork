@@ -39,6 +39,7 @@ public class LabyRoyalPlugin extends JavaPlugin {
         // Construire la cabane de selection dans le monde par defaut
         org.bukkit.World defaultWorld = Bukkit.getWorlds().get(0);
         if (defaultWorld != null) {
+            defaultWorld.setGameRuleValue("doFireTick", "false");
             SelectRoomBuilder.buildIfNeeded(defaultWorld);
             getLogger().info("Cabane de selection construite dans " + defaultWorld.getName());
         }
