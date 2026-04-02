@@ -148,10 +148,14 @@ public class CombatListener implements Listener {
         if (game == null) return;
         if (game.getState() != GameState.PREPARATION && game.getState() != GameState.PVP) return;
 
-        // Cancel sweep attack damage entirely (1.9 mechanic)
-        if (event.getCause() == EntityDamageEvent.DamageCause.ENTITY_SWEEP_ATTACK) {
-            event.setCancelled(true);
-            return;
+        // Cancel sweep attack damage (1.11+ cause, safe check for 1.9.4)
+        try {
+            if (event.getCause() == EntityDamageEvent.DamageCause.valueOf("ENTITY_SWEEP_ATTACK")) {
+                event.setCancelled(true);
+                return;
+            }
+        } catch (IllegalArgumentException ignored) {
+            // ENTITY_SWEEP_ATTACK doesn't exist in 1.9.4
         }
 
         // Apply 1.8 knockback to the victim
