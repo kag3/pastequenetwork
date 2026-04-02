@@ -171,10 +171,9 @@ public class MazeGenerator {
     private void placeBlocks(World world) {
         int offset = getOffset();
 
+        // Build ALL cells normally (no skipping) - the center arena will overwrite on top
         for (int gx = 0; gx < gridSize; gx++) {
             for (int gz = 0; gz < gridSize; gz++) {
-                if (isCenterArea(gx, gz)) continue;
-
                 int blockStartX = gx * CELL_BLOCK_SIZE + offset;
                 int blockStartZ = gz * CELL_BLOCK_SIZE + offset;
 

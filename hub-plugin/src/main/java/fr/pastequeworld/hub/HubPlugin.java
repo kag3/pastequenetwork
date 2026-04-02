@@ -12,6 +12,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -122,6 +123,7 @@ public class HubPlugin extends JavaPlugin implements Listener, PluginMessageList
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
+        event.setJoinMessage(null);
         Player player = event.getPlayer();
 
         // Petit delai pour que le joueur soit charge
@@ -132,6 +134,11 @@ public class HubPlugin extends JavaPlugin implements Listener, PluginMessageList
                 giveCompass(player);
             }
         }.runTaskLater(this, 5L);
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        event.setQuitMessage(null);
     }
 
     private void giveCompass(Player player) {

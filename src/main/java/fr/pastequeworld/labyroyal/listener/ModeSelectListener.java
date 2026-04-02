@@ -47,6 +47,7 @@ public class ModeSelectListener implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
+        event.setJoinMessage(null);
         Player player = event.getPlayer();
 
         if (plugin.getGameManager().getPlayerGame(player.getUniqueId()) != null) return;

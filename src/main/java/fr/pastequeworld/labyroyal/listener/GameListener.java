@@ -116,6 +116,7 @@ public class GameListener implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
+        event.setQuitMessage(null);
         Player player = event.getPlayer();
         Game game = plugin.getGameManager().getPlayerGame(player.getUniqueId());
         if (game == null) return;
