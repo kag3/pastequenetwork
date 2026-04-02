@@ -785,11 +785,7 @@ public class Game {
     }
 
     private void sendToHub(Player player) {
-        String hubWorldName = plugin.getConfig().getString("general.hub-world", "world");
-        World hubWorld = Bukkit.getWorld(hubWorldName);
-        if (hubWorld != null) {
-            player.teleport(hubWorld.getSpawnLocation());
-        }
+        plugin.sendToHub(player);
     }
 
     private void cancelAllTasks() {

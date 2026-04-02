@@ -9,7 +9,12 @@ import fr.pastequeworld.labyroyal.listener.ModeSelectListener;
 import fr.pastequeworld.labyroyal.util.MessageUtil;
 
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
 public class LabyRoyalPlugin extends JavaPlugin {
 
@@ -26,6 +31,9 @@ public class LabyRoyalPlugin extends JavaPlugin {
         String prefix = getConfig().getString("general.prefix",
                 "&6&l\u2726 &eLabyRoyale &6&l\u2726 &7\u00bb &f");
         MessageUtil.setPrefix(prefix);
+
+        // Register BungeeCord channel for server transfers
+        getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 
         // Initialize managers
         gameManager = new GameManager(this);
@@ -72,5 +80,22 @@ public class LabyRoyalPlugin extends JavaPlugin {
 
     public ModeSelectListener getModeSelectListener() {
         return modeSelectListener;
+    }
+
+    /**
+     * Envoie un joueur vers le serveur hub via BungeeCord.
+     */
+    public void sendToHub(Player player) {
+        String hubServer = getConfig().getString("general.hub-server", "hub");
+        try {
+            ByteArrayOutputStream b = new ByteArrayOutputStream();
+            DataOutputStream out = new DataOutputStream(b);
+            out.writeUTF("Connect");
+            out.writeUTF(hubServer);
+            player.sendPluginMessage(this, "BungeeCord", b.toByteArray());
+        } catch (IOException e) {
+            getLogger().severe("Erreur envoi vers le hub: " + e.getMessage());
+            player.kickPlayer(MessageUtil.color("&cImpossible de vous renvoyer au hub."));
+        }
     }
 }

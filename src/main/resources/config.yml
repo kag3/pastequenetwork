@@ -5,7 +5,8 @@
 
 general:
   prefix: "&6&l\u2726 &eLabyRoyale &6&l\u2726 &7\u00bb &f"
-  hub-world: "world"
+  # Nom du serveur hub dans la config BungeeCord
+  hub-server: "hub"
 
 solo:
   min-players: 6

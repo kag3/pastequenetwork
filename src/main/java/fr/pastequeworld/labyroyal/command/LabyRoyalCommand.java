@@ -73,6 +73,7 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
 
     private void leaveGame(Player player) {
         plugin.getGameManager().leaveGame(player);
+        plugin.sendToHub(player);
     }
 
     private void showStats(Player player) {
