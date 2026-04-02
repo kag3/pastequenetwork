@@ -1,0 +1,5 @@
+name: PastequeHub
+version: 1.0.0
+main: fr.pastequeworld.hub.HubPlugin
+description: Plugin Hub pour PastequeWorld Network
+author: PastequeWorld
