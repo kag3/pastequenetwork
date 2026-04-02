@@ -10,11 +10,13 @@ public class StormManager {
 
     private final World world;
     private final double initialSize;
+    private final double finalSize;
     private boolean active;
 
-    public StormManager(World world, double mazeBlockSize) {
+    public StormManager(World world, double mazeBlockSize, double centerDiameter) {
         this.world = world;
         this.initialSize = mazeBlockSize + 10;
+        this.finalSize = Math.max(centerDiameter, 10);
         this.active = false;
     }
 
@@ -23,8 +25,8 @@ public class StormManager {
         WorldBorder border = world.getWorldBorder();
         border.setCenter(0, 0);
 
-        // Shrink to a 10x10 area in the center over the duration
-        border.setSize(10, durationSeconds);
+        // Shrink to the center arena size over the duration
+        border.setSize(finalSize, durationSeconds);
     }
 
     public void applyDamage(List<Player> alivePlayers) {

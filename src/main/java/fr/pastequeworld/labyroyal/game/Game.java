@@ -442,7 +442,7 @@ public class Game {
             SoundUtil.phaseChange(p);
         }
 
-        stormManager = new StormManager(world, mazeGenerator.getMazeBlockSize());
+        stormManager = new StormManager(world, mazeGenerator.getMazeBlockSize(), mazeGenerator.getCenterBlockDiameter());
 
         gameTask = new BukkitRunnable() {
             @Override

@@ -42,7 +42,7 @@ duel:
   wait-timeout: 30
 
 maze:
-  wall-height: 8
+  wall-height: 12
   base-y: 60
   special-rooms: 4
   ore-chance: 0.15

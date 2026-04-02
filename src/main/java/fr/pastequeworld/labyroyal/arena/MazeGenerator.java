@@ -21,12 +21,14 @@ public class MazeGenerator {
     private final int bonusChestCount;
 
     private boolean[][] grid;
+    private boolean[][] centerArea;
     private int gridSize;
+    private int centerRadius;
     private final Random random = new Random();
     private final List<int[]> deadEnds = new ArrayList<int[]>();
     private final List<int[]> specialRoomCells = new ArrayList<int[]>();
 
-    private static final int CELL_BLOCK_SIZE = 3;
+    private static final int CELL_BLOCK_SIZE = 5;
 
     public MazeGenerator(int cells, int wallHeight, int baseY, double oreChance, int specialRoomCount, int bonusChestCount) {
         this.cells = cells;
@@ -36,13 +38,16 @@ public class MazeGenerator {
         this.specialRoomCount = specialRoomCount;
         this.bonusChestCount = bonusChestCount;
         this.gridSize = 2 * cells + 1;
+        this.centerRadius = Math.max(2, cells / 7);
     }
 
     public void generate(World world) {
         generateMazeGrid();
+        openCenterArea();
         findDeadEnds();
         selectSpecialRooms();
         placeBlocks(world);
+        placeCenterArena(world);
         placeSpecialRooms(world);
         placeBonusChests(world);
     }
@@ -75,6 +80,47 @@ public class MazeGenerator {
                 stack.push(next);
             }
         }
+    }
+
+    private void openCenterArea() {
+        centerArea = new boolean[gridSize][gridSize];
+        int centerCell = cells / 2;
+
+        for (int cx = centerCell - centerRadius; cx <= centerCell + centerRadius; cx++) {
+            for (int cz = centerCell - centerRadius; cz <= centerCell + centerRadius; cz++) {
+                if (cx < 0 || cx >= cells || cz < 0 || cz >= cells) continue;
+
+                int dx = Math.abs(cx - centerCell);
+                int dz = Math.abs(cz - centerCell);
+                if (dx + dz > (int)(centerRadius * 1.4)) continue;
+
+                int gx = 2 * cx + 1;
+                int gz = 2 * cz + 1;
+                grid[gx][gz] = true;
+                centerArea[gx][gz] = true;
+
+                // Open walls to adjacent center cells
+                if (cx > 0) {
+                    int ngx = 2 * (cx - 1) + 1;
+                    int ndx = Math.abs((cx - 1) - centerCell);
+                    if (ndx + dz <= (int)(centerRadius * 1.4) && (cx - 1) >= centerCell - centerRadius) {
+                        grid[gx - 1][gz] = true;
+                        centerArea[gx - 1][gz] = true;
+                    }
+                }
+                if (cz > 0) {
+                    int ndz = Math.abs((cz - 1) - centerCell);
+                    if (dx + ndz <= (int)(centerRadius * 1.4) && (cz - 1) >= centerCell - centerRadius) {
+                        grid[gx][gz - 1] = true;
+                        centerArea[gx][gz - 1] = true;
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean isCenterArea(int gx, int gz) {
+        return gx >= 0 && gx < gridSize && gz >= 0 && gz < gridSize && centerArea[gx][gz];
     }
 
     private List<int[]> getUnvisitedNeighbors(int cx, int cz, boolean[][] visited) {
@@ -127,11 +173,13 @@ public class MazeGenerator {
 
         for (int gx = 0; gx < gridSize; gx++) {
             for (int gz = 0; gz < gridSize; gz++) {
+                if (isCenterArea(gx, gz)) continue;
+
                 int blockStartX = gx * CELL_BLOCK_SIZE + offset;
                 int blockStartZ = gz * CELL_BLOCK_SIZE + offset;
 
                 if (grid[gx][gz]) {
-                    placePassage(world, blockStartX, blockStartZ);
+                    placePassage(world, blockStartX, blockStartZ, gx, gz);
                 } else {
                     placeWall(world, blockStartX, blockStartZ, gx, gz);
                 }
@@ -139,7 +187,9 @@ public class MazeGenerator {
         }
     }
 
-    private void placePassage(World world, int startX, int startZ) {
+    private void placePassage(World world, int startX, int startZ, int gx, int gz) {
+        boolean hasLight = ((gx + gz) % 4 == 0);
+
         for (int dx = 0; dx < CELL_BLOCK_SIZE; dx++) {
             for (int dz = 0; dz < CELL_BLOCK_SIZE; dz++) {
                 int x = startX + dx;
@@ -153,8 +203,14 @@ public class MazeGenerator {
                     world.getBlockAt(x, y, z).setType(Material.AIR);
                 }
 
-                // Ceiling
-                world.getBlockAt(x, baseY + wallHeight - 1, z).setType(Material.BEDROCK);
+                // Ceiling with lighting
+                boolean isLightSpot = hasLight && dx == CELL_BLOCK_SIZE / 2 && dz == CELL_BLOCK_SIZE / 2;
+                if (isLightSpot) {
+                    world.getBlockAt(x, baseY + wallHeight - 1, z).setType(Material.SEA_LANTERN);
+                    world.getBlockAt(x, baseY + wallHeight - 2, z).setType(Material.SEA_LANTERN);
+                } else {
+                    world.getBlockAt(x, baseY + wallHeight - 1, z).setType(Material.BEDROCK);
+                }
 
                 // Bedrock under floor
                 world.getBlockAt(x, baseY - 1, z).setType(Material.BEDROCK);
@@ -225,6 +281,112 @@ public class MazeGenerator {
         if (roll < 0.80) return Material.NETHER_BRICK;
         return Material.COBBLESTONE;
     }
+
+    // ==================== CENTER ARENA ====================
+
+    private void placeCenterArena(World world) {
+        int blockRadius = centerRadius * CELL_BLOCK_SIZE + CELL_BLOCK_SIZE / 2;
+        int ceilY = baseY + wallHeight - 1;
+
+        // Build the arena floor, air, and ceiling
+        for (int bx = -blockRadius - 2; bx <= blockRadius + 2; bx++) {
+            for (int bz = -blockRadius - 2; bz <= blockRadius + 2; bz++) {
+                double dist = Math.sqrt(bx * bx + bz * bz);
+                if (dist > blockRadius + 2) continue;
+
+                // Sub-floor
+                world.getBlockAt(bx, baseY - 1, bz).setType(Material.BEDROCK);
+
+                // Floor pattern
+                Material floor;
+                if (dist <= 2) {
+                    floor = Material.GOLD_BLOCK;
+                } else if (dist <= blockRadius * 0.35) {
+                    floor = Material.QUARTZ_BLOCK;
+                } else if (dist <= blockRadius * 0.7) {
+                    if ((Math.abs(bx) + Math.abs(bz)) % 2 == 0) {
+                        floor = Material.QUARTZ_BLOCK;
+                    } else {
+                        floor = Material.SMOOTH_BRICK;
+                    }
+                } else {
+                    floor = Material.SMOOTH_BRICK;
+                }
+
+                // Nether brick cross inlay (N-S and E-W axes)
+                if ((Math.abs(bx) <= 1 || Math.abs(bz) <= 1) && dist > 3 && dist <= blockRadius * 0.9) {
+                    if (Math.abs(bx) <= 1 && bz != 0) floor = Material.NETHER_BRICK;
+                    if (Math.abs(bz) <= 1 && bx != 0) floor = Material.NETHER_BRICK;
+                }
+
+                // SEA_LANTERN ring in floor at edge
+                if (dist >= blockRadius - 1 && dist <= blockRadius && ((bx + bz) % 3 == 0)) {
+                    floor = Material.SEA_LANTERN;
+                }
+
+                world.getBlockAt(bx, baseY, bz).setType(floor);
+
+                // Air
+                for (int y = baseY + 1; y < ceilY; y++) {
+                    world.getBlockAt(bx, y, bz).setType(Material.AIR);
+                }
+
+                // Ceiling with dense lights
+                if ((bx % 3 == 0 && bz % 3 == 0) || dist <= 4) {
+                    world.getBlockAt(bx, ceilY, bz).setType(Material.SEA_LANTERN);
+                } else {
+                    world.getBlockAt(bx, ceilY, bz).setType(Material.BEDROCK);
+                }
+            }
+        }
+
+        // Center platform (5x5 raised 1 block)
+        for (int px = -2; px <= 2; px++) {
+            for (int pz = -2; pz <= 2; pz++) {
+                double d = Math.sqrt(px * px + pz * pz);
+                if (d > 2.5) continue;
+                world.getBlockAt(px, baseY + 1, pz).setType(Material.QUARTZ_BLOCK);
+                if (px == 0 && pz == 0) {
+                    world.getBlockAt(px, baseY + 1, pz).setType(Material.SEA_LANTERN);
+                    world.getBlockAt(px, baseY + 2, pz).setType(Material.SEA_LANTERN);
+                }
+            }
+        }
+        // Gold accents on platform cardinal points
+        world.getBlockAt(0, baseY + 1, -2).setType(Material.GOLD_BLOCK);
+        world.getBlockAt(0, baseY + 1, 2).setType(Material.GOLD_BLOCK);
+        world.getBlockAt(-2, baseY + 1, 0).setType(Material.GOLD_BLOCK);
+        world.getBlockAt(2, baseY + 1, 0).setType(Material.GOLD_BLOCK);
+
+        // 8 pillars in octagonal pattern
+        int pillarDist = (int)(blockRadius * 0.7);
+        int[][] pillarOffsets = {
+            {pillarDist, 0}, {-pillarDist, 0}, {0, pillarDist}, {0, -pillarDist},
+            {(int)(pillarDist * 0.71), (int)(pillarDist * 0.71)},
+            {(int)(pillarDist * 0.71), -(int)(pillarDist * 0.71)},
+            {-(int)(pillarDist * 0.71), (int)(pillarDist * 0.71)},
+            {-(int)(pillarDist * 0.71), -(int)(pillarDist * 0.71)}
+        };
+
+        for (int[] po : pillarOffsets) {
+            int px = po[0];
+            int pz = po[1];
+            // Pillar base to ceiling
+            for (int y = baseY; y <= ceilY; y++) {
+                world.getBlockAt(px, y, pz).setType(Material.SMOOTH_BRICK);
+            }
+            // Lantern at mid-height and top
+            world.getBlockAt(px, baseY + 2, pz).setType(Material.SEA_LANTERN);
+            world.getBlockAt(px, ceilY - 1, pz).setType(Material.SEA_LANTERN);
+            world.getBlockAt(px, ceilY, pz).setType(Material.GOLD_BLOCK);
+        }
+    }
+
+    public int getCenterBlockDiameter() {
+        return centerRadius * CELL_BLOCK_SIZE * 2 + CELL_BLOCK_SIZE;
+    }
+
+    // ==================== SPECIAL ROOMS ====================
 
     private void placeSpecialRooms(World world) {
         int offset = getOffset();

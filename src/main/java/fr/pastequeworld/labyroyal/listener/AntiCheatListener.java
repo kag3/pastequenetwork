@@ -76,8 +76,11 @@ public class AntiCheatListener implements Listener {
             lastGroundTime.put(player.getUniqueId(), System.currentTimeMillis());
         }
 
-        if (player.getLocation().getY() > 73) {
-            player.teleport(player.getLocation().clone().subtract(0, player.getLocation().getY() - 65, 0));
+        int maxY = plugin.getConfig().getInt("maze.base-y", 60)
+                + plugin.getConfig().getInt("maze.wall-height", 12) + 5;
+        int teleportY = plugin.getConfig().getInt("maze.base-y", 60) + 5;
+        if (player.getLocation().getY() > maxY) {
+            player.teleport(player.getLocation().clone().subtract(0, player.getLocation().getY() - teleportY, 0));
             MessageUtil.send(player, "&c\u26a0 Vous \u00eates en dehors de la zone de jeu !");
         }
     }

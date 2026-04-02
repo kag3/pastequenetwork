@@ -202,7 +202,9 @@ public class GameListener implements Listener {
             return;
         }
 
-        if (event.getBlock().getY() >= 68) {
+        int maxBuildY = plugin.getConfig().getInt("maze.base-y", 60)
+                + plugin.getConfig().getInt("maze.wall-height", 12);
+        if (event.getBlock().getY() >= maxBuildY) {
             event.setCancelled(true);
             MessageUtil.sendActionBar(player, "&cVous ne pouvez pas placer de blocs ici !");
         }
