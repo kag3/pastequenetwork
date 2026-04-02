@@ -1,5 +1,6 @@
 package fr.pastequeworld.labyroyal;
 
+import fr.pastequeworld.labyroyal.arena.SelectRoomBuilder;
 import fr.pastequeworld.labyroyal.command.LabyRoyalCommand;
 import fr.pastequeworld.labyroyal.game.GameManager;
 import fr.pastequeworld.labyroyal.listener.AntiCheatListener;
@@ -34,6 +35,13 @@ public class LabyRoyalPlugin extends JavaPlugin {
 
         // Register BungeeCord channel for server transfers
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+
+        // Construire la cabane de selection dans le monde par defaut
+        org.bukkit.World defaultWorld = Bukkit.getWorlds().get(0);
+        if (defaultWorld != null) {
+            SelectRoomBuilder.buildIfNeeded(defaultWorld);
+            getLogger().info("Cabane de selection construite dans " + defaultWorld.getName());
+        }
 
         // Initialize managers
         gameManager = new GameManager(this);

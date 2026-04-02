@@ -1,19 +1,24 @@
 package fr.pastequeworld.labyroyal.listener;
 
 import fr.pastequeworld.labyroyal.LabyRoyalPlugin;
+import fr.pastequeworld.labyroyal.arena.SelectRoomBuilder;
 import fr.pastequeworld.labyroyal.game.LabyGameMode;
 import fr.pastequeworld.labyroyal.util.MessageUtil;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -32,44 +37,91 @@ public class ModeSelectListener implements Listener {
 
     private final LabyRoyalPlugin plugin;
 
-    // Joueurs qui ont fait un choix (pour ne pas re-ouvrir le GUI)
+    // Joueurs qui ont fait un choix (Solo, Duo, ou Retour Hub)
     private final Set<UUID> hasChosen = new HashSet<UUID>();
 
     public ModeSelectListener(LabyRoyalPlugin plugin) {
         this.plugin = plugin;
     }
 
+    // ===== JOUEUR REJOINT LE SERVEUR =====
+
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
-        // Si le joueur est deja dans une partie, on ne montre pas le GUI
+        // Si le joueur est deja dans une partie, pas de GUI
         if (plugin.getGameManager().getPlayerGame(player.getUniqueId()) != null) return;
 
         hasChosen.remove(player.getUniqueId());
 
-        // Ouvrir le GUI de selection apres un petit delai
+        // Teleporter dans la cabane + freeze + GUI
         Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
             @Override
             public void run() {
-                if (player.isOnline() && !hasChosen.contains(player.getUniqueId())) {
-                    openModeSelectGUI(player);
-                }
+                if (!player.isOnline()) return;
+                if (hasChosen.contains(player.getUniqueId())) return;
+
+                teleportToCabin(player);
+                freezePlayer(player);
+                openModeSelectGUI(player);
             }
-        }, 15L);
+        }, 10L);
     }
+
+    // ===== TELEPORTATION CABANE + FREEZE =====
+
+    private void teleportToCabin(Player player) {
+        World world = Bukkit.getWorlds().get(0);
+        if (world == null) return;
+        Location loc = SelectRoomBuilder.getSpawnLocation(world);
+        player.teleport(loc);
+    }
+
+    private void freezePlayer(Player player) {
+        player.setWalkSpeed(0f);
+        player.setFlySpeed(0f);
+    }
+
+    private void unfreezePlayer(Player player) {
+        player.setWalkSpeed(0.2f);
+        player.setFlySpeed(0.1f);
+    }
+
+    // ===== EMPECHER TOUT MOUVEMENT =====
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onPlayerMove(PlayerMoveEvent event) {
+        Player player = event.getPlayer();
+
+        // Bloquer uniquement les joueurs dans la phase de selection
+        if (hasChosen.contains(player.getUniqueId())) return;
+        if (plugin.getGameManager().getPlayerGame(player.getUniqueId()) != null) return;
+
+        Location from = event.getFrom();
+        Location to = event.getTo();
+        if (to == null) return;
+
+        // Autoriser le mouvement de tete (yaw/pitch) mais pas le deplacement
+        if (from.getX() != to.getX() || from.getY() != to.getY() || from.getZ() != to.getZ()) {
+            event.setTo(new Location(from.getWorld(), from.getX(), from.getY(), from.getZ(),
+                    to.getYaw(), to.getPitch()));
+        }
+    }
+
+    // ===== CONSTRUIRE ET OUVRIR LE GUI =====
 
     @SuppressWarnings("deprecation")
     public void openModeSelectGUI(Player player) {
         Inventory gui = Bukkit.createInventory(null, 27, GUI_TITLE);
 
-        // Fond en vitres noires
+        // Fond : vitres noires
         ItemStack filler = createGlass((short) 15, " ");
         for (int i = 0; i < 27; i++) {
             gui.setItem(i, filler);
         }
 
-        // Bordure verte en haut et en bas
+        // Bordure verte haut et bas
         ItemStack border = createGlass((short) 13, " ");
         for (int i = 0; i < 9; i++) {
             gui.setItem(i, border);
@@ -77,6 +129,12 @@ public class ModeSelectListener implements Listener {
         for (int i = 18; i < 27; i++) {
             gui.setItem(i, border);
         }
+        // Coins lime
+        ItemStack lime = createGlass((short) 5, " ");
+        gui.setItem(0, lime);
+        gui.setItem(8, lime);
+        gui.setItem(18, lime);
+        gui.setItem(26, lime);
 
         // === SOLO (slot 11) ===
         ItemStack soloItem = new ItemStack(Material.IRON_SWORD);
@@ -130,7 +188,7 @@ public class ModeSelectListener implements Listener {
         duoItem.setItemMeta(duoMeta);
         gui.setItem(15, duoItem);
 
-        // === RETOUR AU HUB (slot 22, centre bas) ===
+        // === RETOUR HUB (slot 22, centre bas) ===
         ItemStack backItem = new ItemStack(Material.BARRIER);
         ItemMeta backMeta = backItem.getItemMeta();
         backMeta.setDisplayName(color("&c&lRetour au Hub"));
@@ -163,6 +221,7 @@ public class ModeSelectListener implements Listener {
         if (slot == 11) {
             // SOLO
             hasChosen.add(player.getUniqueId());
+            unfreezePlayer(player);
             player.closeInventory();
             MessageUtil.send(player, "&eRecherche d'une partie Solo...");
             boolean joined = plugin.getGameManager().joinGame(player, LabyGameMode.SOLO);
@@ -172,6 +231,7 @@ public class ModeSelectListener implements Listener {
         } else if (slot == 15) {
             // DUO
             hasChosen.add(player.getUniqueId());
+            unfreezePlayer(player);
             player.closeInventory();
             MessageUtil.send(player, "&eRecherche d'une partie Duo...");
             boolean joined = plugin.getGameManager().joinGame(player, LabyGameMode.DUO);
@@ -181,12 +241,13 @@ public class ModeSelectListener implements Listener {
         } else if (slot == 22) {
             // RETOUR AU HUB
             hasChosen.add(player.getUniqueId());
+            unfreezePlayer(player);
             player.closeInventory();
             plugin.sendToHub(player);
         }
     }
 
-    // ===== FERMETURE DU GUI SANS CHOISIR → RE-OUVRIR =====
+    // ===== FERMETURE GUI = RE-OUVRIR INSTANTANEMENT =====
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
@@ -196,7 +257,7 @@ public class ModeSelectListener implements Listener {
         if (event.getView().getTitle() == null) return;
         if (!event.getView().getTitle().equals(GUI_TITLE)) return;
 
-        // Si le joueur n'a pas fait de choix, re-ouvrir apres un petit delai
+        // Si pas de choix fait, re-ouvrir IMMEDIATEMENT (1 tick = minimum possible)
         if (!hasChosen.contains(player.getUniqueId())) {
             Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
                 @Override
@@ -207,7 +268,7 @@ public class ModeSelectListener implements Listener {
                         openModeSelectGUI(player);
                     }
                 }
-            }, 20L); // 1 seconde
+            }, 1L); // 1 tick = instantane
         }
     }
 
