@@ -52,6 +52,9 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
             case "quitter":
                 leaveGame(player);
                 break;
+            case "partywait":
+                handlePartyWait(player, args);
+                break;
             case "stats":
                 showStats(player);
                 break;
@@ -64,6 +67,28 @@ public class LabyRoyalCommand implements CommandExecutor, TabCompleter {
         }
 
         return true;
+    }
+
+    /**
+     * Called by BungeeCord PastequeParty via forced chat command.
+     * Registers this player as waiting for the party leader's mode choice.
+     * Usage: /lr partywait <leaderName>
+     */
+    private void handlePartyWait(Player player, String[] args) {
+        if (args.length < 2) return;
+        String leaderName = args[1];
+
+        // Mark as chosen so the cabin doesn't open
+        plugin.getModeSelectListener().markChosen(player.getUniqueId());
+
+        // Register as waiting for leader's mode choice
+        plugin.getModeSelectListener().addPartyWaiter(player.getUniqueId(), leaderName);
+
+        // Freeze and show waiting message
+        player.setWalkSpeed(0f);
+        player.setFlySpeed(0f);
+        player.closeInventory();
+        MessageUtil.send(player, "&d\u25B6 &7En attente du choix de &e" + leaderName + "&7...");
     }
 
     private void joinGame(Player player, LabyGameMode mode) {

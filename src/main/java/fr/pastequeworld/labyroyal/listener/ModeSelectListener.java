@@ -24,11 +24,9 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ModeSelectListener implements Listener {
 
@@ -39,8 +37,53 @@ public class ModeSelectListener implements Listener {
 
     private final Set<UUID> hasChosen = new HashSet<UUID>();
 
+    // Party system: member UUID -> leader name (waiting for leader's mode choice)
+    private final Map<UUID, String> partyWaiters = new HashMap<UUID, String>();
+
     public ModeSelectListener(LabyRoyalPlugin plugin) {
         this.plugin = plugin;
+    }
+
+    // ===== PARTY SYSTEM =====
+
+    public void addPartyWaiter(UUID memberUuid, String leaderName) {
+        partyWaiters.put(memberUuid, leaderName);
+    }
+
+    /**
+     * Called when a leader picks a mode. Auto-join all party members waiting for this leader.
+     */
+    private void autoJoinPartyWaiters(Player leader, LabyGameMode mode) {
+        List<UUID> toJoin = new ArrayList<UUID>();
+        for (Map.Entry<UUID, String> entry : partyWaiters.entrySet()) {
+            if (entry.getValue().equalsIgnoreCase(leader.getName())) {
+                toJoin.add(entry.getKey());
+            }
+        }
+
+        for (final UUID memberUuid : toJoin) {
+            partyWaiters.remove(memberUuid);
+
+            Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    Player member = Bukkit.getPlayer(memberUuid);
+                    if (member == null || !member.isOnline()) return;
+
+                    // Unfreeze
+                    member.setWalkSpeed(0.2f);
+                    member.setFlySpeed(0.1f);
+
+                    // Auto-join
+                    MessageUtil.send(member, "&d\u25B6 &e" + leader.getName() + " &7a choisi &e" + mode.getDisplayName() + " &7!");
+                    MessageUtil.send(member, "&eRejoindre la partie...");
+                    boolean joined = plugin.getGameManager().joinGame(member, mode);
+                    if (joined) {
+                        MessageUtil.send(member, "&aVous avez rejoint la partie !");
+                    }
+                }
+            }, 5L);
+        }
     }
 
     // ===== JOUEUR REJOINT LE SERVEUR =====
@@ -59,20 +102,6 @@ public class ModeSelectListener implements Listener {
             public void run() {
                 if (!player.isOnline()) return;
                 if (hasChosen.contains(player.getUniqueId())) return;
-
-                // Check if this player is a party member arriving for auto-join
-                LabyGameMode autoJoinMode = plugin.getPartyChannelListener().getAndClearAutoJoin(player);
-                if (autoJoinMode != null) {
-                    // Skip cabin entirely - auto-join the leader's chosen mode
-                    hasChosen.add(player.getUniqueId());
-                    MessageUtil.send(player, "&d\u25B6 &7Votre chef de groupe a choisi &e" + autoJoinMode.getDisplayName() + " &7!");
-                    MessageUtil.send(player, "&eRejoindre la partie " + autoJoinMode.getDisplayName() + "...");
-                    boolean joined = plugin.getGameManager().joinGame(player, autoJoinMode);
-                    if (joined) {
-                        MessageUtil.send(player, "&aVous avez rejoint la partie !");
-                    }
-                    return;
-                }
 
                 // Normal flow: cabin + GUI
                 teleportToCabin(player);
@@ -244,7 +273,7 @@ public class ModeSelectListener implements Listener {
             boolean joined = plugin.getGameManager().joinGame(player, LabyGameMode.SOLO);
             if (joined) {
                 MessageUtil.send(player, "&aVous avez rejoint une partie Solo !");
-                plugin.getPartyChannelListener().autoJoinPartyMembers(player.getUniqueId(), LabyGameMode.SOLO);
+                autoJoinPartyWaiters(player, LabyGameMode.SOLO);
             }
         } else if (slot == 13) {
             // DUEL
@@ -255,7 +284,7 @@ public class ModeSelectListener implements Listener {
             boolean joined = plugin.getGameManager().joinGame(player, LabyGameMode.DUEL);
             if (joined) {
                 MessageUtil.send(player, "&aVous avez rejoint un Duel 1v1 !");
-                plugin.getPartyChannelListener().autoJoinPartyMembers(player.getUniqueId(), LabyGameMode.DUEL);
+                autoJoinPartyWaiters(player, LabyGameMode.DUEL);
             }
         } else if (slot == 15) {
             // DUO
@@ -266,7 +295,7 @@ public class ModeSelectListener implements Listener {
             boolean joined = plugin.getGameManager().joinGame(player, LabyGameMode.DUO);
             if (joined) {
                 MessageUtil.send(player, "&aVous avez rejoint une partie Duo !");
-                plugin.getPartyChannelListener().autoJoinPartyMembers(player.getUniqueId(), LabyGameMode.DUO);
+                autoJoinPartyWaiters(player, LabyGameMode.DUO);
             }
         } else if (slot == 22) {
             // RETOUR AU HUB
