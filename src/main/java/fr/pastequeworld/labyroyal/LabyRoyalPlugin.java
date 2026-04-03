@@ -38,6 +38,10 @@ public class LabyRoyalPlugin extends JavaPlugin {
         // Register BungeeCord channel for server transfers
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 
+        // Register PastequeParty channel for party integration
+        getServer().getMessenger().registerOutgoingPluginChannel(this, "PastequeParty");
+        getServer().getMessenger().registerIncomingPluginChannel(this, "PastequeParty", new fr.pastequeworld.labyroyal.listener.PartyChannelListener(this));
+
         // Construire la cabane de selection dans le monde par defaut
         org.bukkit.World defaultWorld = Bukkit.getWorlds().get(0);
         if (defaultWorld != null) {

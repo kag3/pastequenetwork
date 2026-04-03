@@ -1,0 +1,5 @@
+name: PastequeParty
+main: fr.pastequeworld.party.PastequeParty
+version: 1.0.0
+author: PastequeWorld
+description: "Système de groupe/party cross-serveur pour PastequeWorld Network"
