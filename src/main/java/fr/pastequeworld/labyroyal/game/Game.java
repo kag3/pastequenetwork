@@ -66,6 +66,7 @@ public class Game {
     private int phaseTimer;
     private int elapsedTime;
     private boolean stormStarted;
+    private boolean countdownFrozen;
 
     public Game(String id, LabyGameMode gameMode, LabyRoyalPlugin plugin) {
         this.id = id;
@@ -73,6 +74,7 @@ public class Game {
         this.plugin = plugin;
         this.state = GameState.WAITING;
         this.stormStarted = false;
+        this.countdownFrozen = false;
         this.elapsedTime = 0;
 
         String modePath = gameMode.name().toLowerCase();
@@ -342,7 +344,9 @@ public class Game {
             }
 
             player.setWalkSpeed(0);
+            player.setFlySpeed(0);
             player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 60, 0, false, false));
+            player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 140, 128, false, false));
             player.setGameMode(GameMode.SURVIVAL);
             player.setMaxHealth(20);
             player.setHealth(20);
@@ -352,6 +356,8 @@ public class Game {
             player.setLevel(0);
             player.setExp(0);
         }
+
+        countdownFrozen = true;
 
         new BukkitRunnable() {
             int tick = 5;
@@ -370,9 +376,12 @@ public class Game {
                             "&a&lPARTEZ !",
                             "&6Bonne chance !");
 
+                    countdownFrozen = false;
                     for (Player p : online) {
                         p.setWalkSpeed(0.2f);
+                        p.setFlySpeed(0.1f);
                         p.removePotionEffect(PotionEffectType.BLINDNESS);
+                        p.removePotionEffect(PotionEffectType.JUMP);
                         SoundUtil.gameStart(p);
                     }
 
@@ -914,6 +923,7 @@ public class Game {
     public int getElapsedTime() { return elapsedTime; }
     public int getCountdown() { return countdown; }
     public boolean isStormStarted() { return stormStarted; }
+    public boolean isCountdownFrozen() { return countdownFrozen; }
     public ScoreboardManager getScoreboardManager() { return scoreboardManager; }
 
     public boolean hasPlayer(UUID uuid) {

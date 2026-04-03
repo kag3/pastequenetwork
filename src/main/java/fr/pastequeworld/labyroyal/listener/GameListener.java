@@ -254,6 +254,29 @@ public class GameListener implements Listener {
     }
 
     @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        Player player = event.getPlayer();
+        Game game = plugin.getGameManager().getPlayerGame(player.getUniqueId());
+        if (game == null) return;
+
+        // Block chest/container opening during countdown freeze
+        if (game.isCountdownFrozen()) {
+            if (event.getAction() == org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK
+                    && event.getClickedBlock() != null) {
+                Material type = event.getClickedBlock().getType();
+                if (type == Material.CHEST || type == Material.TRAPPED_CHEST
+                        || type == Material.ENDER_CHEST || type == Material.FURNACE
+                        || type == Material.CRAFTING_TABLE || type == Material.ENCHANTING_TABLE
+                        || type == Material.ANVIL || type == Material.HOPPER
+                        || type == Material.DROPPER || type == Material.DISPENSER) {
+                    event.setCancelled(true);
+                    MessageUtil.sendActionBar(player, "&cAttendez le signal de d\u00e9part !");
+                }
+            }
+        }
+    }
+
+    @EventHandler
     public void onCraftItem(CraftItemEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
         Player player = (Player) event.getWhoClicked();
