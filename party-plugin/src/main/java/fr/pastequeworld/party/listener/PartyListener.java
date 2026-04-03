@@ -79,16 +79,27 @@ public class PartyListener implements Listener {
     private void teleportPartyToServer(Party party, ProxiedPlayer leader, ServerInfo server) {
         String displayName = getDisplayServerName(server.getName());
 
+        int delay = 0;
         for (UUID memberUuid : party.getMembers()) {
             if (memberUuid.equals(leader.getUniqueId())) continue;
 
-            ProxiedPlayer member = plugin.getProxy().getPlayer(memberUuid);
+            final ProxiedPlayer member = plugin.getProxy().getPlayer(memberUuid);
             if (member == null || !member.isConnected()) continue;
 
             if (member.getServer() != null && member.getServer().getInfo().equals(server)) continue;
 
-            Msg.send(member, "&d\u25B6 &7Téléportation vers &a" + displayName + " &7(groupe de &e" + leader.getName() + "&7)");
-            member.connect(server);
+            final String display = displayName;
+            final String leaderName = leader.getName();
+            plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    if (member.isConnected()) {
+                        Msg.send(member, "&d\u25B6 &7Téléportation vers &a" + display + " &7(groupe de &e" + leaderName + "&7)");
+                        member.connect(server);
+                    }
+                }
+            }, delay, TimeUnit.MILLISECONDS);
+            delay += 1000;
         }
     }
 
@@ -122,27 +133,30 @@ public class PartyListener implements Listener {
             pendingLabyMembers.put(uuid, leader.getName());
         }
 
-        plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
-            @Override
-            public void run() {
-                for (UUID uuid : memberUuids) {
+        // Stagger connections: 1 second apart to avoid "connection throttled"
+        int delay = 2000;
+        for (final UUID uuid : memberUuids) {
+            final String leaderName = leader.getName();
+            plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
+                @Override
+                public void run() {
                     ProxiedPlayer member = plugin.getProxy().getPlayer(uuid);
                     if (member == null || !member.isConnected()) {
                         pendingLabyMembers.remove(uuid);
-                        continue;
+                        return;
                     }
                     // Don't send if already on this server
                     if (member.getServer() != null && member.getServer().getInfo().equals(server)) {
-                        // Already there - force the command directly
-                        member.chat("/lr partywait " + leader.getName());
+                        member.chat("/lr partywait " + leaderName);
                         pendingLabyMembers.remove(uuid);
-                        continue;
+                        return;
                     }
                     Msg.send(member, "&d\u25B6 &7Téléportation vers &dLabyRoyale&7...");
                     member.connect(server);
                 }
-            }
-        }, 2, TimeUnit.SECONDS);
+            }, delay, TimeUnit.MILLISECONDS);
+            delay += 1000;
+        }
 
         // Auto-expire pending entries after 30 seconds
         plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
