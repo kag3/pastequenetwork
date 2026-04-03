@@ -82,17 +82,19 @@ public class PartyListener implements Listener {
     //
 
     private void handleLabyRoyaleJoin(final Party party, final ProxiedPlayer leader, final ServerInfo server) {
-        // Notify party members
+        // Notify party members - they stay where they are
         for (UUID memberUuid : party.getMembers()) {
             if (memberUuid.equals(leader.getUniqueId())) continue;
             ProxiedPlayer member = plugin.getProxy().getPlayer(memberUuid);
             if (member != null) {
-                Msg.send(member, "&e" + leader.getName() + " &7rejoint &dLabyRoyale&7...");
-                Msg.send(member, "&7Vous serez téléportés dès qu'il aura choisi un mode !");
+                Msg.send(member, "&e" + leader.getName() + " &7choisit un mode de jeu sur &dLabyRoyale&7...");
+                Msg.send(member, "&7Vous serez téléportés automatiquement !");
             }
         }
 
-        // Step 1: Send PARTY_INFO to the Spigot server (after leader is loaded)
+        // Send PARTY_INFO to the LabyRoyale Spigot server (BungeeCord->Spigot)
+        // The Spigot server stores this and when the leader picks a mode,
+        // it uses BungeeCord "ConnectOther" to TP members directly to the game
         plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
             @Override
             public void run() {
@@ -100,23 +102,9 @@ public class PartyListener implements Listener {
             }
         }, 1, TimeUnit.SECONDS);
 
-        // Step 2: Send members to LabyRoyale (after party info is sent)
-        plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
-            @Override
-            public void run() {
-                for (UUID memberUuid : party.getMembers()) {
-                    if (memberUuid.equals(leader.getUniqueId())) continue;
-
-                    ProxiedPlayer member = plugin.getProxy().getPlayer(memberUuid);
-                    if (member == null || !member.isConnected()) continue;
-
-                    if (member.getServer() != null && member.getServer().getInfo().equals(server)) continue;
-
-                    Msg.send(member, "&d\u25B6 &7Téléportation vers &aLabyRoyale &7en attente du choix de &e" + leader.getName() + "&7...");
-                    member.connect(server);
-                }
-            }
-        }, 2, TimeUnit.SECONDS);
+        // Members DO NOT get sent here - they stay on their current server
+        // They will be teleported by the Spigot plugin via "ConnectOther"
+        // only AFTER the leader has chosen a game mode
     }
 
     /**
@@ -136,16 +124,20 @@ public class PartyListener implements Listener {
             out.writeUTF("PARTY_INFO");
             out.writeUTF(leaderUuid.toString());
 
-            List<UUID> members = new ArrayList<UUID>();
+            // Collect member UUIDs and names (needed for ConnectOther on Spigot side)
+            List<String[]> members = new ArrayList<String[]>(); // [uuid, name]
             for (UUID uuid : party.getMembers()) {
-                if (!uuid.equals(leaderUuid)) {
-                    members.add(uuid);
+                if (uuid.equals(leaderUuid)) continue;
+                ProxiedPlayer member = plugin.getProxy().getPlayer(uuid);
+                if (member != null) {
+                    members.add(new String[]{uuid.toString(), member.getName()});
                 }
             }
 
             out.writeInt(members.size());
-            for (UUID uuid : members) {
-                out.writeUTF(uuid.toString());
+            for (String[] entry : members) {
+                out.writeUTF(entry[0]); // UUID
+                out.writeUTF(entry[1]); // Name
             }
 
             server.sendData(PastequeParty.CHANNEL, b.toByteArray());

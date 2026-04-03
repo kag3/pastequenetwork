@@ -7,6 +7,8 @@ general:
   prefix: "&6&l\u2726 &eLabyRoyale &6&l\u2726 &7\u00bb &f"
   # Nom du serveur hub dans la config BungeeCord
   hub-server: "hub"
+  # Nom de CE serveur dans la config BungeeCord (pour ConnectOther)
+  server-name: "labyroyale"
 
 solo:
   min-players: 6

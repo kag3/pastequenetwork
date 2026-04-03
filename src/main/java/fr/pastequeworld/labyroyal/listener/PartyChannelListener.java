@@ -8,32 +8,31 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Receives PARTY_INFO from BungeeCord PastequeParty plugin.
- * Stores party data so that when the leader picks a mode,
- * all party members auto-join the same mode.
  *
  * Flow:
- * 1. BungeeCord sends PARTY_INFO (leader UUID + member UUIDs)
- * 2. Members arrive on the server and get the cabin GUI
- * 3. Leader picks a mode -> ModeSelectListener calls autoJoinPartyMembers()
- * 4. All members skip the cabin and join the same mode
+ * 1. BungeeCord sends PARTY_INFO (leader UUID + member UUIDs + member names)
+ * 2. Members stay on their current server (Hub etc.) - NOT teleported yet
+ * 3. Leader picks a mode in the cabin
+ * 4. ModeSelectListener calls autoJoinPartyMembers()
+ * 5. This class uses BungeeCord "ConnectOther" to TP members to this server
+ * 6. When members arrive (PlayerJoinEvent), they are auto-joined to the mode
+ *    and NEVER see the cabin
  */
 public class PartyChannelListener implements PluginMessageListener {
 
     private final LabyRoyalPlugin plugin;
 
-    // Leader UUID -> list of member UUIDs (awaiting mode choice)
-    private final Map<UUID, List<UUID>> pendingParties = new ConcurrentHashMap<UUID, List<UUID>>();
+    // Leader UUID -> list of member names (for ConnectOther)
+    private final Map<UUID, List<String>> pendingParties = new ConcurrentHashMap<UUID, List<String>>();
 
-    // Member UUID -> Leader UUID (reverse lookup)
-    private final Map<UUID, UUID> memberToLeader = new ConcurrentHashMap<UUID, UUID>();
+    // Member UUID -> mode to auto-join when they arrive on this server
+    private final Map<UUID, LabyGameMode> pendingAutoJoin = new ConcurrentHashMap<UUID, LabyGameMode>();
 
     public PartyChannelListener(LabyRoyalPlugin plugin) {
         this.plugin = plugin;
@@ -52,24 +51,25 @@ public class PartyChannelListener implements PluginMessageListener {
                 UUID leaderUuid = UUID.fromString(leaderUuidStr);
 
                 int memberCount = in.readInt();
-                List<UUID> members = new ArrayList<UUID>();
+                List<String> memberNames = new ArrayList<String>();
                 for (int i = 0; i < memberCount; i++) {
-                    UUID memberUuid = UUID.fromString(in.readUTF());
-                    members.add(memberUuid);
-                    memberToLeader.put(memberUuid, leaderUuid);
+                    String memberUuid = in.readUTF();
+                    String memberName = in.readUTF();
+                    memberNames.add(memberName);
                 }
 
-                pendingParties.put(leaderUuid, members);
+                pendingParties.put(leaderUuid, memberNames);
                 plugin.getLogger().info("Party reçue: leader=" + leaderUuidStr
-                        + ", " + memberCount + " membre(s)");
+                        + ", " + memberCount + " membre(s): " + memberNames);
 
-                // Auto-expire after 60 seconds (in case leader never picks)
+                // Auto-expire after 120 seconds
+                final UUID expireLeader = leaderUuid;
                 Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
                     @Override
                     public void run() {
-                        cleanupParty(leaderUuid);
+                        pendingParties.remove(expireLeader);
                     }
-                }, 1200L); // 60 seconds
+                }, 2400L);
             }
         } catch (IOException e) {
             plugin.getLogger().warning("Erreur lecture message PastequeParty: " + e.getMessage());
@@ -78,63 +78,74 @@ public class PartyChannelListener implements PluginMessageListener {
 
     /**
      * Called by ModeSelectListener when the leader picks a mode.
-     * Auto-joins all party members to the same mode.
+     * Uses BungeeCord "ConnectOther" to teleport members to this server,
+     * then auto-joins them when they arrive.
      */
     public void autoJoinPartyMembers(UUID leaderUuid, LabyGameMode mode) {
-        List<UUID> members = pendingParties.remove(leaderUuid);
-        if (members == null || members.isEmpty()) return;
+        List<String> memberNames = pendingParties.remove(leaderUuid);
+        if (memberNames == null || memberNames.isEmpty()) return;
 
-        for (final UUID memberUuid : members) {
-            memberToLeader.remove(memberUuid);
+        Player leader = Bukkit.getPlayer(leaderUuid);
+        if (leader == null) return;
 
-            // Small delay to let them load fully
-            Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
-                @Override
-                public void run() {
-                    Player member = Bukkit.getPlayer(memberUuid);
-                    if (member == null || !member.isOnline()) return;
+        // Get the name of THIS server (for ConnectOther)
+        // We need any online player to send the plugin message
+        String thisServer = plugin.getConfig().getString("general.server-name", "labyroyale");
 
-                    // Mark as chosen so cabin doesn't reopen
-                    plugin.getModeSelectListener().markChosen(memberUuid);
+        for (final String memberName : memberNames) {
+            // Store pending auto-join for when the member arrives
+            // We use name-based lookup since we might not have their UUID yet
+            pendingAutoJoin.put(nameToTempUUID(memberName), mode);
 
-                    // Unfreeze
-                    member.setWalkSpeed(0.2f);
-                    member.setFlySpeed(0.1f);
-                    member.closeInventory();
+            // Send ConnectOther via BungeeCord channel
+            try {
+                ByteArrayOutputStream b = new ByteArrayOutputStream();
+                DataOutputStream out = new DataOutputStream(b);
+                out.writeUTF("ConnectOther");
+                out.writeUTF(memberName);
+                out.writeUTF(thisServer);
+                leader.sendPluginMessage(plugin, "BungeeCord", b.toByteArray());
 
-                    // Auto-join
-                    MessageUtil.send(member, "&d\u25B6 &7Votre chef a choisi &e" + mode.getDisplayName() + " &7!");
-                    MessageUtil.send(member, "&eRejoindre la partie " + mode.getDisplayName() + "...");
-
-                    boolean joined = plugin.getGameManager().joinGame(member, mode);
-                    if (joined) {
-                        MessageUtil.send(member, "&aVous avez rejoint la partie !");
-                    }
-                }
-            }, 10L);
-        }
-    }
-
-    /**
-     * Check if a player is a party member waiting for leader's choice.
-     */
-    public boolean isPartyMember(UUID playerUuid) {
-        return memberToLeader.containsKey(playerUuid);
-    }
-
-    /**
-     * Get the leader UUID for a party member.
-     */
-    public UUID getLeaderOf(UUID memberUuid) {
-        return memberToLeader.get(memberUuid);
-    }
-
-    private void cleanupParty(UUID leaderUuid) {
-        List<UUID> members = pendingParties.remove(leaderUuid);
-        if (members != null) {
-            for (UUID uuid : members) {
-                memberToLeader.remove(uuid);
+                plugin.getLogger().info("ConnectOther: " + memberName + " -> " + thisServer);
+            } catch (IOException e) {
+                plugin.getLogger().warning("Erreur ConnectOther pour " + memberName + ": " + e.getMessage());
             }
         }
+
+        // Auto-expire pending auto-joins after 30 seconds
+        Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+            @Override
+            public void run() {
+                for (String name : memberNames) {
+                    pendingAutoJoin.remove(nameToTempUUID(name));
+                }
+            }
+        }, 600L);
+    }
+
+    /**
+     * Called by ModeSelectListener.onPlayerJoin to check if this player
+     * should skip the cabin and auto-join a game mode.
+     * Returns the mode to auto-join, or null if not a party member.
+     */
+    public LabyGameMode getAndClearAutoJoin(Player player) {
+        // Check by name (case-insensitive)
+        UUID key = nameToTempUUID(player.getName());
+        return pendingAutoJoin.remove(key);
+    }
+
+    /**
+     * Check if a player has a pending auto-join.
+     */
+    public boolean hasPendingAutoJoin(Player player) {
+        return pendingAutoJoin.containsKey(nameToTempUUID(player.getName()));
+    }
+
+    /**
+     * Create a deterministic UUID from a player name for lookup.
+     * This is just for our internal map, not a real UUID.
+     */
+    private UUID nameToTempUUID(String name) {
+        return UUID.nameUUIDFromBytes(("party:" + name.toLowerCase()).getBytes());
     }
 }

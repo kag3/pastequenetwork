@@ -48,7 +48,7 @@ public class ModeSelectListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         event.setJoinMessage(null);
-        Player player = event.getPlayer();
+        final Player player = event.getPlayer();
 
         if (plugin.getGameManager().getPlayerGame(player.getUniqueId()) != null) return;
 
@@ -60,6 +60,21 @@ public class ModeSelectListener implements Listener {
                 if (!player.isOnline()) return;
                 if (hasChosen.contains(player.getUniqueId())) return;
 
+                // Check if this player is a party member arriving for auto-join
+                LabyGameMode autoJoinMode = plugin.getPartyChannelListener().getAndClearAutoJoin(player);
+                if (autoJoinMode != null) {
+                    // Skip cabin entirely - auto-join the leader's chosen mode
+                    hasChosen.add(player.getUniqueId());
+                    MessageUtil.send(player, "&d\u25B6 &7Votre chef de groupe a choisi &e" + autoJoinMode.getDisplayName() + " &7!");
+                    MessageUtil.send(player, "&eRejoindre la partie " + autoJoinMode.getDisplayName() + "...");
+                    boolean joined = plugin.getGameManager().joinGame(player, autoJoinMode);
+                    if (joined) {
+                        MessageUtil.send(player, "&aVous avez rejoint la partie !");
+                    }
+                    return;
+                }
+
+                // Normal flow: cabin + GUI
                 teleportToCabin(player);
                 freezePlayer(player);
                 openModeSelectGUI(player);
