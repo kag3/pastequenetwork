@@ -40,20 +40,56 @@ public class ModeSelectListener implements Listener {
     // Party system: member UUID -> leader name (waiting for leader's mode choice)
     private final Map<UUID, String> partyWaiters = new HashMap<UUID, String>();
 
+    // Leader name -> chosen mode (so late-arriving members can auto-join)
+    private final Map<String, LabyGameMode> leaderChosenMode = new HashMap<String, LabyGameMode>();
+
     public ModeSelectListener(LabyRoyalPlugin plugin) {
         this.plugin = plugin;
     }
 
     // ===== PARTY SYSTEM =====
 
-    public void addPartyWaiter(UUID memberUuid, String leaderName) {
+    public void addPartyWaiter(final UUID memberUuid, final String leaderName) {
+        // Check if leader already chose a mode (member arrived late due to staggered transfer)
+        final LabyGameMode alreadyChosen = leaderChosenMode.get(leaderName.toLowerCase());
+        if (alreadyChosen != null) {
+            // Auto-join immediately
+            Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    Player member = Bukkit.getPlayer(memberUuid);
+                    if (member == null || !member.isOnline()) return;
+                    member.setWalkSpeed(0.2f);
+                    member.setFlySpeed(0.1f);
+                    MessageUtil.send(member, "&d\u25B6 &e" + leaderName + " &7a choisi &e" + alreadyChosen.getDisplayName() + " &7!");
+                    MessageUtil.send(member, "&eRejoindre la file d'attente...");
+                    boolean joined = plugin.getGameManager().joinGame(member, alreadyChosen);
+                    if (joined) {
+                        MessageUtil.send(member, "&aVous avez rejoint la partie !");
+                    }
+                }
+            }, 10L);
+            return;
+        }
         partyWaiters.put(memberUuid, leaderName);
     }
 
     /**
      * Called when a leader picks a mode. Auto-join all party members waiting for this leader.
      */
-    private void autoJoinPartyWaiters(Player leader, LabyGameMode mode) {
+    private void autoJoinPartyWaiters(final Player leader, final LabyGameMode mode) {
+        // Store leader's choice so late-arriving members can auto-join
+        leaderChosenMode.put(leader.getName().toLowerCase(), mode);
+
+        // Clean up after 60 seconds
+        Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+            @Override
+            public void run() {
+                leaderChosenMode.remove(leader.getName().toLowerCase());
+            }
+        }, 1200L);
+
+        // Auto-join all members currently waiting
         List<UUID> toJoin = new ArrayList<UUID>();
         for (Map.Entry<UUID, String> entry : partyWaiters.entrySet()) {
             if (entry.getValue().equalsIgnoreCase(leader.getName())) {
@@ -70,13 +106,11 @@ public class ModeSelectListener implements Listener {
                     Player member = Bukkit.getPlayer(memberUuid);
                     if (member == null || !member.isOnline()) return;
 
-                    // Unfreeze
                     member.setWalkSpeed(0.2f);
                     member.setFlySpeed(0.1f);
 
-                    // Auto-join
                     MessageUtil.send(member, "&d\u25B6 &e" + leader.getName() + " &7a choisi &e" + mode.getDisplayName() + " &7!");
-                    MessageUtil.send(member, "&eRejoindre la partie...");
+                    MessageUtil.send(member, "&eRejoindre la file d'attente...");
                     boolean joined = plugin.getGameManager().joinGame(member, mode);
                     if (joined) {
                         MessageUtil.send(member, "&aVous avez rejoint la partie !");

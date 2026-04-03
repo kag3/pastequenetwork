@@ -21,7 +21,7 @@ public class PartyListener implements Listener {
 
     private final PastequeParty plugin;
 
-    // Member UUID -> leader name (for members sent to LabyRoyale waiting for leader's choice)
+    // Member UUID -> leader name (pending transfer to LabyRoyale)
     private final Map<UUID, String> pendingLabyMembers = new ConcurrentHashMap<UUID, String>();
 
     public PartyListener(PastequeParty plugin) {
@@ -41,13 +41,13 @@ public class PartyListener implements Listener {
         ServerInfo targetServer = player.getServer().getInfo();
         String serverName = targetServer.getName().toLowerCase();
 
-        // LabyRoyale: special handling - send members after delay, they run /lr partywait
+        // LabyRoyale: special handling
         if (serverName.contains("labyroyale") || serverName.contains("laby")) {
             handleLabyRoyaleJoin(party, player, targetServer);
             return;
         }
 
-        // For all other servers: teleport party members immediately
+        // Other servers: staggered teleport
         teleportPartyToServer(party, player, targetServer);
     }
 
@@ -62,8 +62,7 @@ public class PartyListener implements Listener {
         String serverName = event.getServer().getInfo().getName().toLowerCase();
         if (!serverName.contains("labyroyale") && !serverName.contains("laby")) return;
 
-        // Force the member to execute /lr partywait <leaderName> after a short delay
-        // so the Spigot server has time to register the player
+        // Wait for Spigot to fully register the player, then force /lr partywait
         plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
             @Override
             public void run() {
@@ -71,50 +70,51 @@ public class PartyListener implements Listener {
                     member.chat("/lr partywait " + leaderName);
                 }
             }
-        }, 500, TimeUnit.MILLISECONDS);
+        }, 1, TimeUnit.SECONDS);
     }
 
     // ==================== STANDARD SERVER FOLLOW ====================
 
-    private void teleportPartyToServer(Party party, ProxiedPlayer leader, ServerInfo server) {
-        String displayName = getDisplayServerName(server.getName());
+    private void teleportPartyToServer(final Party party, final ProxiedPlayer leader, final ServerInfo server) {
+        final String displayName = getDisplayServerName(server.getName());
+        final List<UUID> toSend = new ArrayList<UUID>();
 
-        int delay = 0;
         for (UUID memberUuid : party.getMembers()) {
             if (memberUuid.equals(leader.getUniqueId())) continue;
-
-            final ProxiedPlayer member = plugin.getProxy().getPlayer(memberUuid);
+            ProxiedPlayer member = plugin.getProxy().getPlayer(memberUuid);
             if (member == null || !member.isConnected()) continue;
-
             if (member.getServer() != null && member.getServer().getInfo().equals(server)) continue;
+            toSend.add(memberUuid);
+        }
 
-            final String display = displayName;
-            final String leaderName = leader.getName();
+        // Send members one by one, 5 seconds apart (BungeeCord connection_throttle = 4000ms)
+        for (int i = 0; i < toSend.size(); i++) {
+            final UUID uuid = toSend.get(i);
+            long delay = i * 5;
             plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
                 @Override
                 public void run() {
-                    if (member.isConnected()) {
-                        Msg.send(member, "&d\u25B6 &7Téléportation vers &a" + display + " &7(groupe de &e" + leaderName + "&7)");
+                    ProxiedPlayer member = plugin.getProxy().getPlayer(uuid);
+                    if (member != null && member.isConnected()) {
+                        Msg.send(member, "&d\u25B6 &7T\u00e9l\u00e9portation vers &a" + displayName + " &7(groupe de &e" + leader.getName() + "&7)");
                         member.connect(server);
                     }
                 }
-            }, delay, TimeUnit.MILLISECONDS);
-            delay += 1000;
+            }, delay, TimeUnit.SECONDS);
         }
     }
 
     // ==================== LABYROYALE INTEGRATION ====================
     //
-    // Flow (zero plugin messaging):
-    // 1. Leader joins LabyRoyale -> notify members, wait 2s
-    // 2. Send members to LabyRoyale server
-    // 3. On ServerConnectedEvent: force member.chat("/lr partywait <leaderName>")
-    // 4. Spigot side: /lr partywait marks member as waiting, freezes them (NO cabin)
-    // 5. When leader picks a mode, ModeSelectListener auto-joins all waiters
+    // Flow:
+    // 1. Leader joins LabyRoyale -> notify members (stay on Hub)
+    // 2. Send members one by one with 5s gap (avoids connection throttled)
+    // 3. On ServerConnectedEvent: force member.chat("/lr partywait <leader>")
+    // 4. Spigot: /lr partywait marks member as waiting, freezes, skips cabin
+    // 5. Leader picks mode -> autoJoinPartyWaiters() puts them in the queue
     //
 
     private void handleLabyRoyaleJoin(final Party party, final ProxiedPlayer leader, final ServerInfo server) {
-        // Collect members to send
         final List<UUID> memberUuids = new ArrayList<UUID>();
         for (UUID memberUuid : party.getMembers()) {
             if (memberUuid.equals(leader.getUniqueId())) continue;
@@ -122,21 +122,23 @@ public class PartyListener implements Listener {
             if (member != null && member.isConnected()) {
                 memberUuids.add(memberUuid);
                 Msg.send(member, "&e" + leader.getName() + " &7choisit un mode de jeu sur &dLabyRoyale&7...");
-                Msg.send(member, "&7Vous serez téléportés automatiquement !");
+                Msg.send(member, "&7Vous serez t\u00e9l\u00e9port\u00e9s automatiquement !");
             }
         }
 
         if (memberUuids.isEmpty()) return;
 
-        // Register pending members and send them after 2 seconds
+        // Mark all as pending
         for (UUID uuid : memberUuids) {
             pendingLabyMembers.put(uuid, leader.getName());
         }
 
-        // Stagger connections: 1 second apart to avoid "connection throttled"
-        int delay = 2000;
-        for (final UUID uuid : memberUuids) {
+        // Send members one by one, 5 seconds apart, starting after 3 seconds
+        for (int i = 0; i < memberUuids.size(); i++) {
+            final UUID uuid = memberUuids.get(i);
             final String leaderName = leader.getName();
+            long delay = 3 + (i * 5);
+
             plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
                 @Override
                 public void run() {
@@ -145,20 +147,19 @@ public class PartyListener implements Listener {
                         pendingLabyMembers.remove(uuid);
                         return;
                     }
-                    // Don't send if already on this server
                     if (member.getServer() != null && member.getServer().getInfo().equals(server)) {
+                        // Already on LabyRoyale
                         member.chat("/lr partywait " + leaderName);
                         pendingLabyMembers.remove(uuid);
                         return;
                     }
-                    Msg.send(member, "&d\u25B6 &7Téléportation vers &dLabyRoyale&7...");
+                    Msg.send(member, "&d\u25B6 &7T\u00e9l\u00e9portation vers &dLabyRoyale&7...");
                     member.connect(server);
                 }
-            }, delay, TimeUnit.MILLISECONDS);
-            delay += 1000;
+            }, delay, TimeUnit.SECONDS);
         }
 
-        // Auto-expire pending entries after 30 seconds
+        // Cleanup pending after 60 seconds
         plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
             @Override
             public void run() {
@@ -166,7 +167,7 @@ public class PartyListener implements Listener {
                     pendingLabyMembers.remove(uuid);
                 }
             }
-        }, 30, TimeUnit.SECONDS);
+        }, 60, TimeUnit.SECONDS);
     }
 
     // ==================== DISCONNECT ====================
@@ -190,10 +191,10 @@ public class PartyListener implements Listener {
             for (UUID memberUuid : remaining.getMembers()) {
                 ProxiedPlayer member = plugin.getProxy().getPlayer(memberUuid);
                 if (member != null) {
-                    Msg.send(member, "&c- &e" + playerName + " &7s'est déconnecté et a quitté le groupe. &8(" + remaining.getSize() + ")");
+                    Msg.send(member, "&c- &e" + playerName + " &7s'est d\u00e9connect\u00e9 et a quitt\u00e9 le groupe. &8(" + remaining.getSize() + ")");
 
                     if (wasLeader && remaining.isLeader(memberUuid)) {
-                        Msg.send(member, "&6\u2605 &eVous êtes maintenant le chef du groupe !");
+                        Msg.send(member, "&6\u2605 &eVous \u00eates maintenant le chef du groupe !");
                     }
                 }
             }
