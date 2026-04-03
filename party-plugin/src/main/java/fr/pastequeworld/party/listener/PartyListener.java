@@ -8,12 +8,13 @@ import fr.pastequeworld.party.util.Msg;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
-import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.event.ServerSwitchEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -38,18 +39,9 @@ public class PartyListener implements Listener {
         ServerInfo targetServer = player.getServer().getInfo();
         String serverName = targetServer.getName().toLowerCase();
 
-        // If the leader is going to LabyRoyale, do NOT teleport party yet.
-        // We wait for the Spigot plugin to send us the mode choice.
+        // LabyRoyale: special handling - send party info to Spigot, then send members
         if (serverName.contains("labyroyale") || serverName.contains("laby")) {
-            // Notify party that leader is choosing a mode
-            for (UUID memberUuid : party.getMembers()) {
-                if (memberUuid.equals(player.getUniqueId())) continue;
-                ProxiedPlayer member = plugin.getProxy().getPlayer(memberUuid);
-                if (member != null) {
-                    Msg.send(member, "&e" + player.getName() + " &7choisit un mode de jeu sur &dLabyRoyale&7...");
-                    Msg.send(member, "&7Vous serez téléportés automatiquement !");
-                }
-            }
+            handleLabyRoyaleJoin(party, player, targetServer);
             return;
         }
 
@@ -57,9 +49,8 @@ public class PartyListener implements Listener {
         teleportPartyToServer(party, player, targetServer);
     }
 
-    /**
-     * Teleport all party members (except leader) to the given server.
-     */
+    // ==================== STANDARD SERVER FOLLOW ====================
+
     private void teleportPartyToServer(Party party, ProxiedPlayer leader, ServerInfo server) {
         String displayName = getDisplayServerName(server.getName());
 
@@ -69,7 +60,6 @@ public class PartyListener implements Listener {
             ProxiedPlayer member = plugin.getProxy().getPlayer(memberUuid);
             if (member == null || !member.isConnected()) continue;
 
-            // Don't teleport if already on that server
             if (member.getServer() != null && member.getServer().getInfo().equals(server)) continue;
 
             Msg.send(member, "&d\u25B6 &7Téléportation vers &a" + displayName + " &7(groupe de &e" + leader.getName() + "&7)");
@@ -78,79 +68,90 @@ public class PartyListener implements Listener {
     }
 
     // ==================== LABYROYALE INTEGRATION ====================
-    // When the leader picks a mode in LabyRoyale, the Spigot plugin sends
-    // a plugin message on channel "PastequeParty" with:
-    //   - UTF: leader UUID
-    //   - UTF: game mode (SOLO/DUO/DUEL)
-    // We then send all party members to the LabyRoyale server, and forward
-    // a message for each member so they auto-join the same mode.
+    //
+    // Flow:
+    // 1. Leader joins LabyRoyale -> we notify members
+    // 2. After 1 second, we send PARTY_INFO to the Spigot server
+    //    (BungeeCord -> Spigot direction, which works reliably)
+    //    containing: leader UUID + all member UUIDs
+    // 3. After 2 seconds, we send all members to LabyRoyale
+    // 4. On Spigot side: members arrive, ModeSelectListener freezes them in cabin
+    //    BUT the PartyChannelListener has stored the party info
+    // 5. When the leader picks a mode, ModeSelectListener checks for party members
+    //    and auto-joins them to the same mode (skipping their cabin GUI)
+    //
 
-    @EventHandler
-    public void onPluginMessage(PluginMessageEvent event) {
-        if (!event.getTag().equals(PastequeParty.CHANNEL)) return;
-
-        // Read the message
-        DataInputStream in = new DataInputStream(new ByteArrayInputStream(event.getData()));
-        try {
-            String subChannel = in.readUTF();
-
-            if ("MODE_CHOSEN".equals(subChannel)) {
-                String leaderUuidStr = in.readUTF();
-                String gameMode = in.readUTF();
-                UUID leaderUuid = UUID.fromString(leaderUuidStr);
-
-                handleLeaderModeChosen(leaderUuid, gameMode);
+    private void handleLabyRoyaleJoin(final Party party, final ProxiedPlayer leader, final ServerInfo server) {
+        // Notify party members
+        for (UUID memberUuid : party.getMembers()) {
+            if (memberUuid.equals(leader.getUniqueId())) continue;
+            ProxiedPlayer member = plugin.getProxy().getPlayer(memberUuid);
+            if (member != null) {
+                Msg.send(member, "&e" + leader.getName() + " &7rejoint &dLabyRoyale&7...");
+                Msg.send(member, "&7Vous serez téléportés dès qu'il aura choisi un mode !");
             }
-        } catch (IOException e) {
-            plugin.getLogger().warning("Erreur lecture message plugin: " + e.getMessage());
         }
+
+        // Step 1: Send PARTY_INFO to the Spigot server (after leader is loaded)
+        plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
+            @Override
+            public void run() {
+                sendPartyInfoToServer(party, leader.getUniqueId(), server);
+            }
+        }, 1, TimeUnit.SECONDS);
+
+        // Step 2: Send members to LabyRoyale (after party info is sent)
+        plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
+            @Override
+            public void run() {
+                for (UUID memberUuid : party.getMembers()) {
+                    if (memberUuid.equals(leader.getUniqueId())) continue;
+
+                    ProxiedPlayer member = plugin.getProxy().getPlayer(memberUuid);
+                    if (member == null || !member.isConnected()) continue;
+
+                    if (member.getServer() != null && member.getServer().getInfo().equals(server)) continue;
+
+                    Msg.send(member, "&d\u25B6 &7Téléportation vers &aLabyRoyale &7en attente du choix de &e" + leader.getName() + "&7...");
+                    member.connect(server);
+                }
+            }
+        }, 2, TimeUnit.SECONDS);
     }
 
-    private void handleLeaderModeChosen(UUID leaderUuid, String gameMode) {
-        PartyManager pm = plugin.getPartyManager();
-        Party party = pm.getPartyByLeader(leaderUuid);
+    /**
+     * Send party info to the Spigot server via plugin messaging.
+     * Direction: BungeeCord -> Spigot (reliable, used by LabyRoyalBungee already).
+     *
+     * Format:
+     *   UTF: "PARTY_INFO"
+     *   UTF: leader UUID
+     *   INT: number of members (excluding leader)
+     *   UTF[]: member UUIDs
+     */
+    private void sendPartyInfoToServer(Party party, UUID leaderUuid, ServerInfo server) {
+        try {
+            ByteArrayOutputStream b = new ByteArrayOutputStream();
+            DataOutputStream out = new DataOutputStream(b);
+            out.writeUTF("PARTY_INFO");
+            out.writeUTF(leaderUuid.toString());
 
-        if (party == null) return;
-
-        ProxiedPlayer leader = plugin.getProxy().getPlayer(leaderUuid);
-        if (leader == null || leader.getServer() == null) return;
-
-        ServerInfo labyServer = leader.getServer().getInfo();
-        String leaderName = leader.getName();
-
-        for (UUID memberUuid : party.getMembers()) {
-            if (memberUuid.equals(leaderUuid)) continue;
-
-            ProxiedPlayer member = plugin.getProxy().getPlayer(memberUuid);
-            if (member == null || !member.isConnected()) continue;
-
-            Msg.send(member, "&d\u25B6 &e" + leaderName + " &7a choisi &d" + gameMode
-                    + " &7! Téléportation vers &aLabyRoyale&7...");
-
-            // Send member to LabyRoyale server
-            member.connect(labyServer);
-
-            // After a short delay, send a plugin message to the Spigot server
-            // telling it to auto-join this player to the chosen mode
-            final UUID memUuid = memberUuid;
-            final String mode = gameMode;
-            final ServerInfo server = labyServer;
-
-            plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        ByteArrayOutputStream b = new ByteArrayOutputStream();
-                        DataOutputStream out = new DataOutputStream(b);
-                        out.writeUTF("PARTY_JOIN");
-                        out.writeUTF(memUuid.toString());
-                        out.writeUTF(mode);
-                        server.sendData(PastequeParty.CHANNEL, b.toByteArray());
-                    } catch (IOException e) {
-                        plugin.getLogger().warning("Erreur envoi PARTY_JOIN: " + e.getMessage());
-                    }
+            List<UUID> members = new ArrayList<UUID>();
+            for (UUID uuid : party.getMembers()) {
+                if (!uuid.equals(leaderUuid)) {
+                    members.add(uuid);
                 }
-            }, 1, TimeUnit.SECONDS);
+            }
+
+            out.writeInt(members.size());
+            for (UUID uuid : members) {
+                out.writeUTF(uuid.toString());
+            }
+
+            server.sendData(PastequeParty.CHANNEL, b.toByteArray());
+            plugin.getLogger().info("PARTY_INFO envoyé: leader=" + leaderUuid + ", membres=" + members.size());
+        } catch (IOException e) {
+            plugin.getLogger().warning("Erreur envoi PARTY_INFO: " + e.getMessage());
         }
     }
 

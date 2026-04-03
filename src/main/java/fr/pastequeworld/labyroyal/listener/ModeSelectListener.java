@@ -24,9 +24,6 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -228,33 +225,33 @@ public class ModeSelectListener implements Listener {
             hasChosen.add(player.getUniqueId());
             unfreezePlayer(player);
             player.closeInventory();
-            notifyPartyModeChosen(player, "SOLO");
             MessageUtil.send(player, "&eRecherche d'une partie Solo...");
             boolean joined = plugin.getGameManager().joinGame(player, LabyGameMode.SOLO);
             if (joined) {
                 MessageUtil.send(player, "&aVous avez rejoint une partie Solo !");
+                plugin.getPartyChannelListener().autoJoinPartyMembers(player.getUniqueId(), LabyGameMode.SOLO);
             }
         } else if (slot == 13) {
             // DUEL
             hasChosen.add(player.getUniqueId());
             unfreezePlayer(player);
             player.closeInventory();
-            notifyPartyModeChosen(player, "DUEL");
             MessageUtil.send(player, "&eRecherche d'un Duel 1v1...");
             boolean joined = plugin.getGameManager().joinGame(player, LabyGameMode.DUEL);
             if (joined) {
                 MessageUtil.send(player, "&aVous avez rejoint un Duel 1v1 !");
+                plugin.getPartyChannelListener().autoJoinPartyMembers(player.getUniqueId(), LabyGameMode.DUEL);
             }
         } else if (slot == 15) {
             // DUO
             hasChosen.add(player.getUniqueId());
             unfreezePlayer(player);
             player.closeInventory();
-            notifyPartyModeChosen(player, "DUO");
             MessageUtil.send(player, "&eRecherche d'une partie Duo...");
             boolean joined = plugin.getGameManager().joinGame(player, LabyGameMode.DUO);
             if (joined) {
                 MessageUtil.send(player, "&aVous avez rejoint une partie Duo !");
+                plugin.getPartyChannelListener().autoJoinPartyMembers(player.getUniqueId(), LabyGameMode.DUO);
             }
         } else if (slot == 22) {
             // RETOUR AU HUB
@@ -297,22 +294,6 @@ public class ModeSelectListener implements Listener {
         hasChosen.add(uuid);
     }
 
-    /**
-     * Notify BungeeCord PastequeParty plugin that a player (party leader)
-     * has chosen a game mode, so party members can be routed.
-     */
-    private void notifyPartyModeChosen(Player player, String modeName) {
-        try {
-            ByteArrayOutputStream b = new ByteArrayOutputStream();
-            DataOutputStream out = new DataOutputStream(b);
-            out.writeUTF("MODE_CHOSEN");
-            out.writeUTF(player.getUniqueId().toString());
-            out.writeUTF(modeName);
-            player.sendPluginMessage(plugin, "PastequeParty", b.toByteArray());
-        } catch (IOException e) {
-            plugin.getLogger().warning("Erreur envoi MODE_CHOSEN: " + e.getMessage());
-        }
-    }
 
     // ===== UTILS =====
 

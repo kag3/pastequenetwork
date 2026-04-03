@@ -8,6 +8,7 @@ import fr.pastequeworld.labyroyal.listener.ChatListener;
 import fr.pastequeworld.labyroyal.listener.CombatListener;
 import fr.pastequeworld.labyroyal.listener.GameListener;
 import fr.pastequeworld.labyroyal.listener.ModeSelectListener;
+import fr.pastequeworld.labyroyal.listener.PartyChannelListener;
 import fr.pastequeworld.labyroyal.util.MessageUtil;
 
 import org.bukkit.Bukkit;
@@ -24,6 +25,7 @@ public class LabyRoyalPlugin extends JavaPlugin {
     private AntiCheatListener antiCheatListener;
     private ModeSelectListener modeSelectListener;
     private CombatListener combatListener;
+    private PartyChannelListener partyChannelListener;
 
     @Override
     public void onEnable() {
@@ -39,8 +41,9 @@ public class LabyRoyalPlugin extends JavaPlugin {
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 
         // Register PastequeParty channel for party integration
+        partyChannelListener = new PartyChannelListener(this);
         getServer().getMessenger().registerOutgoingPluginChannel(this, "PastequeParty");
-        getServer().getMessenger().registerIncomingPluginChannel(this, "PastequeParty", new fr.pastequeworld.labyroyal.listener.PartyChannelListener(this));
+        getServer().getMessenger().registerIncomingPluginChannel(this, "PastequeParty", partyChannelListener);
 
         // Construire la cabane de selection dans le monde par defaut
         org.bukkit.World defaultWorld = Bukkit.getWorlds().get(0);
@@ -97,6 +100,10 @@ public class LabyRoyalPlugin extends JavaPlugin {
 
     public ModeSelectListener getModeSelectListener() {
         return modeSelectListener;
+    }
+
+    public PartyChannelListener getPartyChannelListener() {
+        return partyChannelListener;
     }
 
     /**
