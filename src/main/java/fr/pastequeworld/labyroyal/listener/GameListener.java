@@ -7,6 +7,7 @@ import fr.pastequeworld.labyroyal.game.LabyGameMode;
 import fr.pastequeworld.labyroyal.game.PlayerData;
 import fr.pastequeworld.labyroyal.util.MessageUtil;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -31,7 +32,7 @@ public class GameListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onPlayerDeath(PlayerDeathEvent event) {
-        Player player = event.getEntity();
+        final Player player = event.getEntity();
         Game game = plugin.getGameManager().getPlayerGame(player.getUniqueId());
         if (game == null) return;
 
@@ -41,6 +42,16 @@ public class GameListener implements Listener {
 
         Player killer = player.getKiller();
         game.eliminatePlayer(player, killer, false);
+
+        // Skip death screen - force respawn on next tick
+        Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+            @Override
+            public void run() {
+                if (player.isOnline() && player.isDead()) {
+                    player.spigot().respawn();
+                }
+            }
+        }, 1L);
     }
 
     @EventHandler
@@ -112,6 +123,30 @@ public class GameListener implements Listener {
         if (attackerData != null && !attackerData.isAlive()) {
             event.setCancelled(true);
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        event.setJoinMessage(null);
+        final Player player = event.getPlayer();
+
+        // Hide all in-game players from this new player (and vice versa)
+        Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+            @Override
+            public void run() {
+                if (!player.isOnline()) return;
+                // If this player is not in any game, hide all game players
+                if (plugin.getGameManager().getPlayerGame(player.getUniqueId()) != null) return;
+
+                for (Game game : plugin.getGameManager().getGames()) {
+                    for (Player gamePlayer : game.getOnlinePlayers()) {
+                        player.hidePlayer(gamePlayer);
+                        gamePlayer.hidePlayer(player);
+                    }
+                }
+            }
+        }, 2L);
     }
 
     @EventHandler

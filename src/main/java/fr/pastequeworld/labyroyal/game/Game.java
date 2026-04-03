@@ -4,6 +4,7 @@ import fr.pastequeworld.labyroyal.LabyRoyalPlugin;
 import fr.pastequeworld.labyroyal.arena.LobbyBuilder;
 import fr.pastequeworld.labyroyal.arena.MazeGenerator;
 import fr.pastequeworld.labyroyal.arena.VoidGenerator;
+import fr.pastequeworld.labyroyal.manager.BossBarManager;
 import fr.pastequeworld.labyroyal.manager.ScoreboardManager;
 import fr.pastequeworld.labyroyal.manager.StormManager;
 import fr.pastequeworld.labyroyal.util.MessageUtil;
@@ -34,6 +35,7 @@ public class Game {
     private LobbyBuilder lobbyBuilder;
     private StormManager stormManager;
     private ScoreboardManager scoreboardManager;
+    private BossBarManager bossBarManager;
 
     private final Map<UUID, PlayerData> players = new LinkedHashMap<UUID, PlayerData>();
     private final List<Team> teams = new ArrayList<Team>();
@@ -92,6 +94,7 @@ public class Game {
         this.lobbySize = plugin.getConfig().getInt("lobby.size");
 
         this.scoreboardManager = new ScoreboardManager(this);
+        this.bossBarManager = new BossBarManager(this);
     }
 
     // ==================== WORLD CREATION ====================
@@ -159,7 +162,11 @@ public class Game {
         }
 
         preparePlayer(player);
+        bossBarManager.addPlayer(player);
         player.teleport(lobbyBuilder.getSpawnLocation(world));
+
+        // Privatize tab list: hide players from other games, show only this game's players
+        updateTabListVisibility(player);
 
         String joinMsg = "&a+ &f" + player.getName() + " &7a rejoint la partie &8(&e"
                 + players.size() + "&7/&e" + maxPlayers + "&8)";
@@ -167,6 +174,7 @@ public class Game {
         SoundUtil.playAll(getOnlinePlayers(), Sound.BLOCK_NOTE_HARP, 1.0f, 1.5f);
 
         scoreboardManager.updateAll(getOnlinePlayers());
+        bossBarManager.update(0, 1);
         checkStartConditions();
 
         return true;
@@ -198,6 +206,7 @@ public class Game {
             resetPlayer(player);
             sendToHub(player);
             scoreboardManager.remove(player);
+            bossBarManager.removePlayer(player);
             scoreboardManager.updateAll(getOnlinePlayers());
 
             if (players.isEmpty()) {
@@ -296,6 +305,7 @@ public class Game {
                 }
 
                 scoreboardManager.updateAll(online);
+                bossBarManager.update(countdown, countdownTime);
             }
         }.runTaskTimer(plugin, 20L, 20L);
     }
@@ -415,6 +425,7 @@ public class Game {
                 }
 
                 scoreboardManager.updateAll(online);
+                bossBarManager.update(phaseTimer, preparationTime);
 
                 MessageUtil.broadcastActionBar(online,
                         "&6\u2694 Pr\u00e9paration &7- &e" + MessageUtil.formatTime(phaseTimer));
@@ -486,6 +497,7 @@ public class Game {
                 }
 
                 scoreboardManager.updateAll(online);
+                bossBarManager.update(phaseTimer, pvpTime);
 
                 MessageUtil.broadcastActionBar(online,
                         "&c\u2694 Combat &7- &e" + MessageUtil.formatTime(phaseTimer)
@@ -525,6 +537,10 @@ public class Game {
         }
 
         SoundUtil.playAll(getOnlinePlayers(), Sound.ENTITY_LIGHTNING_THUNDER, 0.5f, 0.8f);
+
+        // Show DÉFAITE title to eliminated player
+        MessageUtil.sendTitle(player, "&c&lD\u00c9FAITE", "&7Vous avez \u00e9t\u00e9 \u00e9limin\u00e9 !");
+        SoundUtil.play(player, Sound.ENTITY_WITHER_DEATH, 0.5f, 0.8f);
 
         player.setGameMode(GameMode.SPECTATOR);
 
@@ -569,6 +585,7 @@ public class Game {
         if (state == GameState.ENDING) return;
         state = GameState.ENDING;
         cancelAllTasks();
+        bossBarManager.update(0, 1);
 
         Collection<Player> online = getOnlinePlayers();
 
@@ -576,9 +593,20 @@ public class Game {
             Player winPlayer = Bukkit.getPlayer(winner.getUuid());
             String winName = winner.getName();
 
-            MessageUtil.broadcastTitle(online,
-                    "&6&l\u2726 VICTOIRE \u2726",
-                    "&e" + winName + " &7remporte le LabyRoyale !");
+            // Winner sees VICTOIRE, losers see DÉFAITE
+            for (Player p : online) {
+                if (p.getUniqueId().equals(winner.getUuid())) {
+                    MessageUtil.sendTitle(p,
+                            "&6&l\u2726 VICTOIRE \u2726",
+                            "&e" + winName + " &7remporte le LabyRoyale !");
+                    SoundUtil.victory(p);
+                } else {
+                    MessageUtil.sendTitle(p,
+                            "&c&lD\u00c9FAITE",
+                            "&e" + winName + " &7remporte le LabyRoyale !");
+                    SoundUtil.play(p, Sound.ENTITY_WITHER_DEATH, 0.5f, 0.8f);
+                }
+            }
 
             broadcast(MessageUtil.line());
             broadcast("&6&l       \u2726 LABYROYALE - VICTOIRE \u2726");
@@ -589,7 +617,6 @@ public class Game {
             broadcast(MessageUtil.line());
 
             if (winPlayer != null) {
-                SoundUtil.victory(winPlayer);
                 spawnFireworks(winPlayer.getLocation());
             }
         } else {
@@ -609,6 +636,7 @@ public class Game {
                         resetPlayer(p);
                         sendToHub(p);
                         scoreboardManager.remove(p);
+                        bossBarManager.removePlayer(p);
                     }
                 }
                 players.clear();
@@ -628,6 +656,7 @@ public class Game {
         if (state == GameState.ENDING) return;
         state = GameState.ENDING;
         cancelAllTasks();
+        bossBarManager.update(0, 1);
 
         Collection<Player> online = getOnlinePlayers();
 
@@ -640,9 +669,21 @@ public class Game {
             }
         }
 
-        MessageUtil.broadcastTitle(online,
-                "&6&l\u2726 VICTOIRE \u2726",
-                "&e\u00c9quipe " + winTeam.getId() + " &7remporte le LabyRoyale !");
+        // Winners see VICTOIRE, losers see DÉFAITE
+        for (Player p : online) {
+            if (winTeam.getMembers().contains(p.getUniqueId())) {
+                MessageUtil.sendTitle(p,
+                        "&6&l\u2726 VICTOIRE \u2726",
+                        "&e\u00c9quipe " + winTeam.getId() + " &7remporte le LabyRoyale !");
+                SoundUtil.victory(p);
+                spawnFireworks(p.getLocation());
+            } else {
+                MessageUtil.sendTitle(p,
+                        "&c&lD\u00c9FAITE",
+                        "&e\u00c9quipe " + winTeam.getId() + " &7remporte le LabyRoyale !");
+                SoundUtil.play(p, Sound.ENTITY_WITHER_DEATH, 0.5f, 0.8f);
+            }
+        }
 
         broadcast(MessageUtil.line());
         broadcast("&6&l       \u2726 LABYROYALE - VICTOIRE \u2726");
@@ -650,11 +691,6 @@ public class Game {
         broadcast("   &e\u2b50 Gagnants: &f&l" + memberNames);
         broadcast("");
         broadcast(MessageUtil.line());
-
-        for (Player p : winTeam.getOnlinePlayers()) {
-            SoundUtil.victory(p);
-            spawnFireworks(p.getLocation());
-        }
 
         SoundUtil.playAll(online, Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
 
@@ -667,6 +703,7 @@ public class Game {
                         resetPlayer(p);
                         sendToHub(p);
                         scoreboardManager.remove(p);
+                        bossBarManager.removePlayer(p);
                     }
                 }
                 players.clear();
@@ -706,6 +743,42 @@ public class Game {
                     fw.setFireworkMeta(meta);
                 }
             }.runTaskLater(plugin, i * 15L);
+        }
+    }
+
+    // ==================== TAB LIST ====================
+
+    /**
+     * Hide all non-game players from the new player, show all game players.
+     * Also show the new player to all game players, hide from non-game players.
+     */
+    @SuppressWarnings("deprecation")
+    private void updateTabListVisibility(Player newPlayer) {
+        // Hide ALL online server players from this player (non-game players)
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            if (online.equals(newPlayer)) continue;
+
+            if (players.containsKey(online.getUniqueId())) {
+                // Same game: show each other
+                newPlayer.showPlayer(online);
+                online.showPlayer(newPlayer);
+            } else {
+                // Different game or not in a game: hide each other
+                newPlayer.hidePlayer(online);
+                online.hidePlayer(newPlayer);
+            }
+        }
+    }
+
+    /**
+     * Restore full visibility when player leaves the game.
+     */
+    @SuppressWarnings("deprecation")
+    private void restoreTabListVisibility(Player player) {
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            if (online.equals(player)) continue;
+            player.showPlayer(online);
+            online.showPlayer(player);
         }
     }
 
@@ -784,6 +857,7 @@ public class Game {
             player.removePotionEffect(effect.getType());
         }
         player.setFireTicks(0);
+        restoreTabListVisibility(player);
     }
 
     private void sendToHub(Player player) {
@@ -798,6 +872,7 @@ public class Game {
 
     public void cleanup() {
         cancelAllTasks();
+        bossBarManager.cleanup();
         if (world != null) {
             String worldName = world.getName();
             for (Player p : world.getPlayers()) {
