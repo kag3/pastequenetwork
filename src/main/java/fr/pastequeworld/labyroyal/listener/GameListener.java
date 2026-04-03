@@ -224,7 +224,8 @@ public class GameListener implements Listener {
             Material type = event.getBlock().getType();
             if (type == Material.BEDROCK
                     || type == Material.OBSIDIAN
-                    || type == Material.BARRIER) {
+                    || type == Material.BARRIER
+                    || type == Material.SEA_LANTERN) {
                 event.setCancelled(true);
                 MessageUtil.sendActionBar(player, "&cCe bloc est indestructible !");
             }
