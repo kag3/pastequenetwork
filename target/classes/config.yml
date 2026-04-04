@@ -1,0 +1,99 @@
+prefix: "&2&lPasteque &a&lSkyblock &7» "
+spawn-world-name: world
+spawn-world-use-world-spawn: true
+spawn-world-fallback-y: 80
+island-world-name: pasteque_skyblock_islands
+island-world-environment: NORMAL
+island-world-y: 100
+external-arena-world-name: skyblockarena
+island:
+  size: 320
+  gap: 340
+  max-members: 6
+  default-public: false
+  protection-height-min: 0
+  protection-height-max: 255
+  void-y: 20
+  send-private-visitors-to-spawn: true
+  starter:
+    chest: true
+    water-bucket: true
+    lava-bucket: true
+    melon-slices: 4
+    ice: 1
+  starter-bank: 0
+embassy:
+  unlock-material: MELON_BLOCK
+economy:
+  starting-balance: 250.0
+  currency-name: Pasteque
+  daily-login-reward: 150.0
+shop:
+  sign-tag: "[PSHOP]"
+  right-click-buy: true
+  left-click-sell: true
+auction:
+  listing-fee: 25.0
+  max-active-listings-per-player: 10
+  expire-days: 7
+visual-border:
+  refresh-ticks: 20
+  show-distance: 14
+confirm:
+  expire-seconds: 20
+pvp:
+  enabled-by-default: false
+combat:
+  tag-seconds: 30
+  logout-loss: 500.0
+  pvp-steal-percent: 0.10
+  pvp-steal-cap: 250.0
+invasions:
+  interval-minutes: 20
+  mob-count: 8
+  kill-reward: 25.0
+challenges:
+  cobble_64:
+    name: "Mineur de pierre"
+    icon: COBBLESTONE
+    amount: 64
+    material: COBBLESTONE
+    reward: 150.0
+    description:
+      - "&7Apporte 64 cobblestones"
+      - "&7Récompense: &a150 Pasteque"
+  wheat_32:
+    name: "Fermier débutant"
+    icon: WHEAT
+    amount: 32
+    material: WHEAT
+    reward: 200.0
+    description:
+      - "&7Apporte 32 blés"
+      - "&7Récompense: &a200 Pasteque"
+block-values:
+  DIAMOND_BLOCK: 150
+  EMERALD_BLOCK: 175
+  GOLD_BLOCK: 70
+  IRON_BLOCK: 40
+  MOB_SPAWNER: 250
+  ENCHANTMENT_TABLE: 120
+  OBSIDIAN: 12
+  COBBLESTONE: 1
+
+coop-world-name: pasteque_skyblock_coop
+coop-world-y: 100
+coop:
+  gap: 520
+  base-size: 220
+  per-player-extra-size: 30
+island-expansions:
+  solo:
+    farming-price: 10000
+    mining-price: 10000
+  coop:
+    mining-price: 50000
+end-event:
+  world-name: world_the_end
+  duration-minutes: 30
+  dragon-health: 300.0
