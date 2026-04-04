@@ -492,6 +492,9 @@ public class MazeGenerator {
         List<Location> spawns = new ArrayList<Location>();
         int offset = getOffset();
 
+        // Minimum distance from map center (0,0) to avoid center arena
+        double minCenterDist = (centerRadius * CELL_BLOCK_SIZE) + CELL_BLOCK_SIZE * 3;
+
         int sectorsPerSide = (int) Math.ceil(Math.sqrt(count));
         int cellsPerSector = cells / sectorsPerSide;
 
@@ -510,26 +513,40 @@ public class MazeGenerator {
         for (int[] center : sectorCenters) {
             if (spawns.size() >= count) break;
 
-            int[] passageCell = findNearestPassageCell(center[0], center[1]);
+            int[] passageCell = findNearestPassageCellAwayFromCenter(center[0], center[1]);
             if (passageCell != null) {
                 int gx = 2 * passageCell[0] + 1;
                 int gz = 2 * passageCell[1] + 1;
                 int bx = gx * CELL_BLOCK_SIZE + offset + CELL_BLOCK_SIZE / 2;
                 int bz = gz * CELL_BLOCK_SIZE + offset + CELL_BLOCK_SIZE / 2;
                 Location loc = new Location(world, bx + 0.5, baseY + 1, bz + 0.5);
+
+                // Reject if too close to center
+                if (loc.distance(new Location(world, 0.5, baseY + 1, 0.5)) < minCenterDist) continue;
+
                 spawns.add(loc);
             }
         }
 
-        while (spawns.size() < count) {
+        // Fallback: random cells, always away from center
+        int attempts = 0;
+        while (spawns.size() < count && attempts < 5000) {
+            attempts++;
             int cx = random.nextInt(cells);
             int cz = random.nextInt(cells);
             int gx = 2 * cx + 1;
             int gz = 2 * cz + 1;
+
+            // Skip center area cells
+            if (isCenterArea(gx, gz)) continue;
+
             if (grid[gx][gz]) {
                 int bx = gx * CELL_BLOCK_SIZE + offset + CELL_BLOCK_SIZE / 2;
                 int bz = gz * CELL_BLOCK_SIZE + offset + CELL_BLOCK_SIZE / 2;
                 Location loc = new Location(world, bx + 0.5, baseY + 1, bz + 0.5);
+
+                // Reject if too close to center
+                if (loc.distance(new Location(world, 0.5, baseY + 1, 0.5)) < minCenterDist) continue;
 
                 boolean tooClose = false;
                 for (Location existing : spawns) {
@@ -547,11 +564,15 @@ public class MazeGenerator {
         return spawns;
     }
 
-    private int[] findNearestPassageCell(int cx, int cz) {
+    /**
+     * Find nearest passage cell that is NOT in the center area.
+     */
+    private int[] findNearestPassageCellAwayFromCenter(int cx, int cz) {
+        // Check the cell itself first
         if (cx >= 0 && cx < cells && cz >= 0 && cz < cells) {
             int gx = 2 * cx + 1;
             int gz = 2 * cz + 1;
-            if (grid[gx][gz]) return new int[]{cx, cz};
+            if (grid[gx][gz] && !isCenterArea(gx, gz)) return new int[]{cx, cz};
         }
 
         for (int radius = 1; radius < cells; radius++) {
@@ -563,7 +584,7 @@ public class MazeGenerator {
                     if (nx >= 0 && nx < cells && nz >= 0 && nz < cells) {
                         int gx = 2 * nx + 1;
                         int gz = 2 * nz + 1;
-                        if (grid[gx][gz]) return new int[]{nx, nz};
+                        if (grid[gx][gz] && !isCenterArea(gx, gz)) return new int[]{nx, nz};
                     }
                 }
             }
