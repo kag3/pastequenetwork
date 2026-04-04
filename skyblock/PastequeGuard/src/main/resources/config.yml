@@ -1,0 +1,44 @@
+prefix: "&2&lPasteque&b&lGuard &f» "
+messages:
+  no-permission: "&dVous n'avez pas la permission d'utiliser cette commande."
+  player-only: "&dCette commande est réservée aux joueurs."
+  player-not-found: "&dCe joueur est introuvable."
+  syntax: "&fSyntaxe : &d%syntax%"
+  report-received: "&fVotre signalement contre &d%target% &fa bien été envoyé."
+  report-notify: "&fNouveau signalement de &d%author% &fcontre &d%target% &fpour : &d%reason%"
+  panel-opened: "&fLe panel de signalements a été ouvert."
+  warn-sent: "&fAvertissement envoyé à &d%target%&f."
+  warn-received: "&fVous avez reçu un avertissement : &d%reason%"
+  kick-broadcast: "&d%target% &fa été écarté du serveur."
+  unban-success: "&d%target% &fn'est plus banni."
+  unmute-success: "&d%target% &fpeut de nouveau parler."
+  sanction-applied: "&fSanction appliquée à &d%target%&f."
+  history-header: "&fHistorique de &d%target%&f :"
+  no-history: "&fAucun historique pour &d%target%&f."
+  no-reports: "&fAucun signalement en attente."
+  anti-spam-warn: "&fMerci d'arrêter de spam/flood sous peine de sanction."
+  auto-muted: "&fVous avez été temporairement réduit au silence pour spam/flood répété."
+  purchase-nothing: ""
+ban-screen:
+  line1: "&dVous êtes banni de ce serveur."
+  line2: "&fRaison : &d%reason%"
+  line3: "&fStaff : &d%staff%"
+  line4: "&fFin : &d%expires%"
+mute-message: "&fVous ne pouvez pas parler actuellement. &fRaison : &d%reason% &f| Fin : &d%expires%"
+kick-screen:
+  line1: "&dVous avez été expulsé du serveur."
+  line2: "&fRaison : &d%reason%"
+  line3: "&fStaff : &d%staff%"
+auto-moderation:
+  min-delay-ms: 1200
+  repeat-threshold: 3
+  caps-threshold: 0.72
+  max-same-char-run: 12
+  violation-reset-seconds: 25
+  automute-duration: "10m"
+reports:
+  gui-title: "&dPastequeGuard &f• &dSignalements"
+  size: 54
+  item-material: BOOK_AND_QUILL
+  close-material: BARRIER
+  no-reports-material: STAINED_GLASS_PANE

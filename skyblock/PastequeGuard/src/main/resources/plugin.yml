@@ -1,0 +1,15 @@
+name: PastequeGuard
+main: fr.pasteque.guard.PastequeGuardPlugin
+version: 1.0.0
+author: OpenAI
+commands:
+  pg:
+    description: Commande principale de PastequeGuard
+    usage: /pg
+permissions:
+  pastequeguard.staff:
+    description: Accès aux commandes de modération et au panel
+    default: op
+  pastequeguard.bypass.chatfilter:
+    description: Ignore le filtre anti spam/flood
+    default: op

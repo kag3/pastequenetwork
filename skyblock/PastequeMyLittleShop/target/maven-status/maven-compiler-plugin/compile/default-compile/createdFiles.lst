@@ -1,0 +1,12 @@
+fr\pasteque\mylittleshop\model\PendingShopCreation.class
+fr\pasteque\mylittleshop\util\SignPlacementUtil.class
+fr\pasteque\mylittleshop\listener\ShopListener.class
+fr\pasteque\mylittleshop\util\SignPlacement.class
+fr\pasteque\mylittleshop\service\SkyblockIslandBridge.class
+fr\pasteque\mylittleshop\PastequeMyLittleShopPlugin.class
+fr\pasteque\mylittleshop\model\IslandArea.class
+fr\pasteque\mylittleshop\service\ShopManager.class
+fr\pasteque\mylittleshop\economy\PastequeEconomyBridge.class
+fr\pasteque\mylittleshop\model\Shop.class
+fr\pasteque\mylittleshop\command\MyShopCommand.class
+fr\pasteque\mylittleshop\command\MyShopAdminCommand.class

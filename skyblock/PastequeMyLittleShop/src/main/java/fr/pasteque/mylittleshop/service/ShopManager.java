@@ -1,0 +1,440 @@
+package fr.pasteque.mylittleshop.service;
+
+import fr.pasteque.mylittleshop.PastequeMyLittleShopPlugin;
+import fr.pasteque.mylittleshop.economy.PastequeEconomyBridge;
+import fr.pasteque.mylittleshop.model.PendingShopCreation;
+import fr.pasteque.mylittleshop.model.Shop;
+import fr.pasteque.mylittleshop.util.SignPlacement;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.Sign;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.MaterialData;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+
+public class ShopManager {
+
+    public static final String CREATE_GUI_TITLE = "§dCréer un shop";
+    public static final String VIEW_GUI_TITLE = "§dVoir le shop";
+    public static final String OWNER_GUI_TITLE = "§dGérer le shop";
+
+    private final PastequeMyLittleShopPlugin plugin;
+    private final PastequeEconomyBridge economyBridge;
+    private final SkyblockIslandBridge islandBridge;
+    private final Map<UUID, PendingShopCreation> pendingCreations = new HashMap<UUID, PendingShopCreation>();
+    private final Map<String, Shop> shopsByLocation = new HashMap<String, Shop>();
+    private final Map<UUID, Map<String, Shop>> shopsByOwner = new HashMap<UUID, Map<String, Shop>>();
+    private final File shopsFile;
+    private final YamlConfiguration shopsConfig;
+    private final Map<UUID, Shop> ownerViewSessions = new HashMap<UUID, Shop>();
+
+    public ShopManager(PastequeMyLittleShopPlugin plugin, PastequeEconomyBridge economyBridge, SkyblockIslandBridge islandBridge) {
+        this.plugin = plugin;
+        this.economyBridge = economyBridge;
+        this.islandBridge = islandBridge;
+        this.shopsFile = new File(plugin.getDataFolder(), "shops.yml");
+        this.shopsConfig = YamlConfiguration.loadConfiguration(shopsFile);
+    }
+
+    public void load() {
+        shopsByLocation.clear();
+        shopsByOwner.clear();
+        ConfigurationSection section = shopsConfig.getConfigurationSection("shops");
+        if (section == null) return;
+        for (String ownerKey : section.getKeys(false)) {
+            UUID owner;
+            try { owner = UUID.fromString(ownerKey); } catch (IllegalArgumentException ignored) { continue; }
+            ConfigurationSection ownerSection = section.getConfigurationSection(ownerKey);
+            if (ownerSection == null) continue;
+            for (String shopKey : ownerSection.getKeys(false)) {
+                ConfigurationSection shopSection = ownerSection.getConfigurationSection(shopKey);
+                if (shopSection == null) continue;
+                String world = shopSection.getString("world");
+                if (world == null) continue;
+                Location location = new Location(Bukkit.getWorld(world), shopSection.getInt("x"), shopSection.getInt("y"), shopSection.getInt("z"));
+                ItemStack item = shopSection.getItemStack("item");
+                if (item == null) continue;
+                Shop shop = new Shop(owner, shopSection.getString("name", shopKey), location, item, shopSection.getDouble("price"), shopSection.getInt("stock"));
+                registerShop(shop);
+            }
+        }
+    }
+
+    public void save() {
+        shopsConfig.set("shops", null);
+        for (Map.Entry<UUID, Map<String, Shop>> entry : shopsByOwner.entrySet()) {
+            for (Shop shop : entry.getValue().values()) {
+                String base = "shops." + entry.getKey().toString() + "." + normalize(shop.getName());
+                shopsConfig.set(base + ".name", shop.getName());
+                shopsConfig.set(base + ".world", shop.getSignLocation().getWorld().getName());
+                shopsConfig.set(base + ".x", shop.getSignLocation().getBlockX());
+                shopsConfig.set(base + ".y", shop.getSignLocation().getBlockY());
+                shopsConfig.set(base + ".z", shop.getSignLocation().getBlockZ());
+                shopsConfig.set(base + ".price", shop.getPrice());
+                shopsConfig.set(base + ".stock", shop.getStock());
+                shopsConfig.set(base + ".item", shop.getTemplate());
+            }
+        }
+        try {
+            shopsConfig.save(shopsFile);
+        } catch (IOException e) {
+            plugin.getLogger().warning("Impossible d'enregistrer shops.yml : " + e.getMessage());
+        }
+    }
+
+    public PendingShopCreation getPending(UUID player) { return pendingCreations.get(player); }
+    public void removePending(UUID player) { pendingCreations.remove(player); }
+
+    public PendingShopCreation openCreation(Player player, String shopName, SignPlacement placement) {
+        Inventory inventory = Bukkit.createInventory(player, 54, CREATE_GUI_TITLE + " §7- §f" + trim(shopName));
+        ItemStack validate = new ItemStack(Material.EMERALD_BLOCK);
+        org.bukkit.inventory.meta.ItemMeta meta = validate.getItemMeta();
+        meta.setDisplayName(plugin.color("&dValider le dépôt des stocks"));
+        validate.setItemMeta(meta);
+        inventory.setItem(49, validate);
+        PendingShopCreation pending = new PendingShopCreation(shopName, inventory, placement.getLocation(), placement.getMaterial(), placement.getWallFacing());
+        pendingCreations.put(player.getUniqueId(), pending);
+        player.openInventory(inventory);
+        return pending;
+    }
+
+    public boolean canCreate(Player player) {
+        return islandBridge.isOnOwnedSoloIsland(player.getUniqueId(), player.getLocation());
+    }
+
+    public boolean ownerHasShopName(UUID owner, String shopName) {
+        Map<String, Shop> byName = shopsByOwner.get(owner);
+        return byName != null && byName.containsKey(normalize(shopName));
+    }
+
+    public boolean validatePendingDeposit(Player player) {
+        PendingShopCreation pending = pendingCreations.get(player.getUniqueId());
+        if (pending == null) return false;
+        Inventory inventory = pending.getInventory();
+        ItemStack template = null;
+        int stock = 0;
+        for (int slot = 0; slot < 45; slot++) {
+            ItemStack item = inventory.getItem(slot);
+            if (item == null || item.getType() == Material.AIR) continue;
+            if (template == null) {
+                template = item.clone();
+                template.setAmount(1);
+            } else if (!template.isSimilar(one(item))) {
+                return false;
+            }
+            stock += item.getAmount();
+        }
+        if (template == null || stock <= 0) return false;
+        pending.setTemplate(template);
+        pending.setStock(stock);
+        pending.setWaitingPrice(true);
+        return true;
+    }
+
+    public void cancelPending(Player player, boolean returnItems) {
+        PendingShopCreation pending = pendingCreations.remove(player.getUniqueId());
+        if (pending == null) return;
+        if (returnItems) {
+            Inventory inventory = pending.getInventory();
+            for (int slot = 0; slot < 45; slot++) {
+                ItemStack item = inventory.getItem(slot);
+                if (item != null && item.getType() != Material.AIR) {
+                    HashMap<Integer, ItemStack> overflow = player.getInventory().addItem(item);
+                    for (ItemStack overflowItem : overflow.values()) {
+                        player.getWorld().dropItemNaturally(player.getLocation(), overflowItem);
+                    }
+                }
+            }
+        }
+    }
+
+    public Shop finalizePending(Player player, double price) {
+        PendingShopCreation pending = pendingCreations.remove(player.getUniqueId());
+        if (pending == null || !pending.isWaitingPrice() || pending.getTemplate() == null || pending.getStock() <= 0) {
+            return null;
+        }
+        placeSign(pending, price);
+        Shop shop = new Shop(player.getUniqueId(), pending.getShopName(), pending.getSignLocation(), pending.getTemplate(), price, pending.getStock());
+        registerShop(shop);
+        save();
+        return shop;
+    }
+
+    private void placeSign(PendingShopCreation pending, double price) {
+        Block block = pending.getSignLocation().getBlock();
+        block.setType(pending.getSignMaterial());
+        MaterialData data = block.getState().getData();
+        if (data instanceof org.bukkit.material.Sign && pending.getSignMaterial() == Material.WALL_SIGN) {
+            org.bukkit.material.Sign wall = (org.bukkit.material.Sign) data;
+            wall.setFacingDirection(pending.getWallFacing());
+            block.getState().setData(wall);
+            block.getState().update(true, false);
+        }
+        Sign sign = (Sign) block.getState();
+        sign.setLine(0, plugin.color(plugin.getConfig().getString("shops.sign-title-color", "&d") + "[MyShop]"));
+        sign.setLine(1, trim(pending.getShopName()));
+        sign.setLine(2, plugin.color("&fStock: &d" + pending.getStock()));
+        sign.setLine(3, plugin.color("&5" + economyBridge.format(price) + " Pasteque"));
+        sign.update(true);
+    }
+
+    public Shop getShopByLocation(Location location) {
+        return location == null ? null : shopsByLocation.get(key(location));
+    }
+
+    public Shop getShopByName(UUID owner, String shopName) {
+        Map<String, Shop> map = shopsByOwner.get(owner);
+        return map == null ? null : map.get(normalize(shopName));
+    }
+
+    public Shop getShopByName(String ownerName, String shopName) {
+        for (UUID owner : shopsByOwner.keySet()) {
+            String candidate = Bukkit.getOfflinePlayer(owner).getName();
+            if (candidate != null && candidate.equalsIgnoreCase(ownerName)) {
+                return getShopByName(owner, shopName);
+            }
+        }
+        return null;
+    }
+
+    public void openView(Player player, Shop shop) {
+        ownerViewSessions.remove(player.getUniqueId());
+        Inventory inventory = Bukkit.createInventory(player, 27, VIEW_GUI_TITLE + " §7- §f" + trim(shop.getName()));
+        inventory.setItem(13, withName(shop.getTemplate(), "&d" + shop.getName(), Arrays.asList(
+                plugin.color("&fObjet : &d" + readable(shop.getTemplate())),
+                plugin.color("&fStock : &5" + shop.getStock()),
+                plugin.color("&fPrix : &5" + economyBridge.format(shop.getPrice()) + " Pasteque"),
+                plugin.color(plugin.getConfig().getString("messages.buy-right-click"))
+        )));
+        player.openInventory(inventory);
+    }
+
+    public void openOwnerManage(Player player, Shop shop) {
+        ownerViewSessions.put(player.getUniqueId(), shop);
+        Inventory inventory = Bukkit.createInventory(player, 54, OWNER_GUI_TITLE + " §7- §f" + trim(shop.getName()));
+        inventory.setItem(13, withName(shop.getTemplate(), "&d" + shop.getName(), Arrays.asList(
+                plugin.color("&fObjet : &d" + readable(shop.getTemplate())),
+                plugin.color("&fStock actuel : &5" + shop.getStock()),
+                plugin.color("&fPrix : &5" + economyBridge.format(shop.getPrice()) + " Pasteque"),
+                plugin.color(plugin.getConfig().getString("messages.owner-manage"))
+        )));
+        inventory.setItem(49, button(Material.EMERALD_BLOCK, "&dValider l'ajout de stock"));
+        inventory.setItem(50, button(Material.CHEST, "&dRetirer 1 stack"));
+        inventory.setItem(51, button(Material.HOPPER, "&dRetirer tout le stock"));
+        player.openInventory(inventory);
+    }
+
+    public boolean handleOwnerInventory(Player player, Inventory inventory, Shop shop, int rawSlot) {
+        if (rawSlot == 49) {
+            ItemStack template = shop.getTemplate();
+            int added = 0;
+            for (int slot = 27; slot <= 44; slot++) {
+                ItemStack item = inventory.getItem(slot);
+                if (item == null || item.getType() == Material.AIR) continue;
+                if (!one(item).isSimilar(template)) {
+                    player.sendMessage(plugin.message("messages.invalid-mixed-stock"));
+                    return true;
+                }
+                added += item.getAmount();
+                inventory.setItem(slot, null);
+            }
+            if (added > 0) {
+                shop.addStock(added);
+                updateSign(shop);
+                save();
+                player.sendMessage(plugin.message("messages.stock-added"));
+            }
+            return true;
+        }
+        if (rawSlot == 50) {
+            withdraw(player, shop, Math.min(64, shop.getStock()));
+            return true;
+        }
+        if (rawSlot == 51) {
+            withdraw(player, shop, shop.getStock());
+            return true;
+        }
+        return false;
+    }
+
+    private void withdraw(Player player, Shop shop, int amount) {
+        if (amount <= 0) {
+            player.sendMessage(plugin.message("messages.stock-empty-return"));
+            return;
+        }
+        ItemStack item = shop.getTemplate();
+        int left = amount;
+        while (left > 0) {
+            int batch = Math.min(item.getMaxStackSize(), left);
+            ItemStack stack = item.clone();
+            stack.setAmount(batch);
+            HashMap<Integer, ItemStack> overflow = player.getInventory().addItem(stack);
+            if (!overflow.isEmpty()) {
+                for (ItemStack overflowItem : overflow.values()) {
+                    player.getWorld().dropItemNaturally(player.getLocation(), overflowItem);
+                }
+            }
+            left -= batch;
+        }
+        shop.takeStock(amount);
+        updateSign(shop);
+        save();
+        player.sendMessage(plugin.message("messages.stock-withdrawn"));
+    }
+
+
+    public Shop getOpenOwnerSession(UUID uuid) {
+        return ownerViewSessions.get(uuid);
+    }
+
+    public void clearOpenOwnerSession(UUID uuid, Inventory inventory) {
+        Shop shop = ownerViewSessions.remove(uuid);
+        if (shop == null || inventory == null) return;
+        for (int slot = 27; slot <= 44; slot++) {
+            ItemStack item = inventory.getItem(slot);
+            if (item != null && item.getType() != Material.AIR) {
+                HashMap<Integer, ItemStack> overflow = Bukkit.getPlayer(uuid) != null ? Bukkit.getPlayer(uuid).getInventory().addItem(item) : new HashMap<Integer, ItemStack>();
+                if (Bukkit.getPlayer(uuid) != null) {
+                    for (ItemStack overflowItem : overflow.values()) {
+                        Bukkit.getPlayer(uuid).getWorld().dropItemNaturally(Bukkit.getPlayer(uuid).getLocation(), overflowItem);
+                    }
+                }
+            }
+        }
+    }
+
+    public boolean buyOne(Player buyer, Shop shop) {
+        int buyAmount = Math.max(1, plugin.getConfig().getInt("shops.buy-amount", 1));
+        if (shop.getStock() < buyAmount) {
+            buyer.sendMessage(plugin.message("messages.no-stock"));
+            return false;
+        }
+        if (!economyBridge.take(buyer.getUniqueId(), shop.getPrice())) {
+            buyer.sendMessage(plugin.message("messages.not-enough-pasteque"));
+            return false;
+        }
+        economyBridge.add(shop.getOwner(), shop.getPrice());
+        ItemStack item = shop.getTemplate();
+        int amountLeft = buyAmount;
+        while (amountLeft > 0) {
+            int batch = Math.min(item.getMaxStackSize(), amountLeft);
+            ItemStack stack = item.clone();
+            stack.setAmount(batch);
+            HashMap<Integer, ItemStack> overflow = buyer.getInventory().addItem(stack);
+            for (ItemStack overflowItem : overflow.values()) {
+                buyer.getWorld().dropItemNaturally(buyer.getLocation(), overflowItem);
+            }
+            amountLeft -= batch;
+        }
+        shop.takeStock(buyAmount);
+        updateSign(shop);
+        save();
+        buyer.sendMessage(plugin.prefix() + plugin.color(plugin.getConfig().getString("messages.bought").replace("%item%", readable(shop.getTemplate())).replace("%price%", economyBridge.format(shop.getPrice()))));
+        Player owner = Bukkit.getPlayer(shop.getOwner());
+        if (owner != null) {
+            owner.sendMessage(plugin.prefix() + plugin.color(plugin.getConfig().getString("messages.sold-owner").replace("%buyer%", buyer.getName()).replace("%item%", readable(shop.getTemplate())).replace("%price%", economyBridge.format(shop.getPrice()))));
+        }
+        return true;
+    }
+
+    public boolean deleteShop(Player player, String shopName) {
+        Shop shop = getShopByName(player.getUniqueId(), shopName);
+        if (shop == null) return false;
+        withdraw(player, shop, shop.getStock());
+        removeShop(shop, true);
+        player.sendMessage(plugin.prefix() + plugin.color(plugin.getConfig().getString("messages.shop-deleted").replace("%shop%", shop.getName())));
+        return true;
+    }
+
+    public boolean adminDelete(String ownerName, String shopName) {
+        Shop shop = getShopByName(ownerName, shopName);
+        if (shop == null) return false;
+        removeShop(shop, true);
+        return true;
+    }
+
+    public void removeShop(Shop shop, boolean saveNow) {
+        shopsByLocation.remove(shop.locationKey());
+        Map<String, Shop> byName = shopsByOwner.get(shop.getOwner());
+        if (byName != null) {
+            byName.remove(normalize(shop.getName()));
+            if (byName.isEmpty()) shopsByOwner.remove(shop.getOwner());
+        }
+        Block block = shop.getSignLocation().getBlock();
+        if (block.getType() == Material.SIGN_POST || block.getType() == Material.WALL_SIGN) {
+            block.setType(Material.AIR);
+        }
+        if (saveNow) save();
+    }
+
+    public void updateSign(Shop shop) {
+        Block block = shop.getSignLocation().getBlock();
+        if (block.getState() instanceof Sign) {
+            Sign sign = (Sign) block.getState();
+            sign.setLine(0, plugin.color(plugin.getConfig().getString("shops.sign-title-color", "&d") + "[MyShop]"));
+            sign.setLine(1, trim(shop.getName()));
+            sign.setLine(2, plugin.color("&fStock: &d" + shop.getStock()));
+            sign.setLine(3, plugin.color("&5" + economyBridge.format(shop.getPrice()) + " Pasteque"));
+            sign.update(true);
+        }
+    }
+
+    private void registerShop(Shop shop) {
+        shopsByLocation.put(shop.locationKey(), shop);
+        Map<String, Shop> byName = shopsByOwner.get(shop.getOwner());
+        if (byName == null) {
+            byName = new HashMap<String, Shop>();
+            shopsByOwner.put(shop.getOwner(), byName);
+        }
+        byName.put(normalize(shop.getName()), shop);
+    }
+
+    private String key(Location location) {
+        return location.getWorld().getName() + ";" + location.getBlockX() + ";" + location.getBlockY() + ";" + location.getBlockZ();
+    }
+
+    private ItemStack one(ItemStack stack) {
+        ItemStack clone = stack.clone();
+        clone.setAmount(1);
+        return clone;
+    }
+
+    private String trim(String value) {
+        return value.length() > 15 ? value.substring(0, 15) : value;
+    }
+
+    private String normalize(String value) {
+        return value.toLowerCase(Locale.ENGLISH).replace(' ', '_');
+    }
+
+    private String readable(ItemStack item) {
+        return item.hasItemMeta() && item.getItemMeta().hasDisplayName() ? ChatColor.stripColor(item.getItemMeta().getDisplayName()) : item.getType().name();
+    }
+
+    private ItemStack button(Material material, String name) {
+        ItemStack item = new ItemStack(material, 1);
+        org.bukkit.inventory.meta.ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(plugin.color(name));
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private ItemStack withName(ItemStack base, String name, List<String> lore) {
+        ItemStack item = base.clone();
+        org.bukkit.inventory.meta.ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(plugin.color(name));
+        meta.setLore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+}

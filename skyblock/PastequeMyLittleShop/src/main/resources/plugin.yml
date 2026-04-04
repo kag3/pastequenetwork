@@ -1,0 +1,15 @@
+name: PastequeMyLittleShop
+main: fr.pasteque.mylittleshop.PastequeMyLittleShopPlugin
+version: 1.0.0
+author: OpenAI
+softdepend: [PastequeSkyblock]
+commands:
+  myshop:
+    description: Gérer votre shop personnel.
+    usage: /myshop <create|price|delete>
+  myshopadmin:
+    description: Administration des shops.
+    usage: /myshopadmin delete <joueur> <nom>
+permissions:
+  pastequemylittleshop.admin:
+    default: op

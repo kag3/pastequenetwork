@@ -1,0 +1,46 @@
+messages:
+  prefix: '&2Pasteque &dMyLittleShop &7» '
+  must-look-block: '&fRegarde un sol ou un mur proche pour placer ton panneau.'
+  only-owner-island: '&fTu dois être sur ta propre île solo pour créer un shop.'
+  pending-created: '&fDépose uniquement le ou les items à vendre, puis clique sur &dValider le dépôt des stocks&f.'
+  invalid-mixed-stock: '&fTu ne peux pas mélanger plusieurs objets différents ou des variantes enchantées différentes.'
+  pending-price: '&fDépôt validé. Choisis maintenant un prix avec &d/myshop price <prix>&f.'
+  shop-created: '&fTon shop &d%shop% &fest prêt au prix de &5%price% Pasteque&f.'
+  shop-deleted: '&fLe shop &d%shop% &fa été supprimé et ton stock t\'a été rendu.'
+  admin-shop-deleted: '&fLe shop &d%shop% &fde &5%owner% &fa été supprimé sans restitution.'
+  no-pending-shop: '&fTu n\'as aucun shop en attente de prix.'
+  invalid-price: '&fEntre un prix valide supérieur à 0.'
+  not-enough-pasteque: '&fTu n\'as pas assez de Pasteque pour acheter cet objet.'
+  no-stock: '&fCe shop n\'a plus de stock.'
+  bought: '&fTu as acheté &d%item% &fpour &5%price% Pasteque&f.'
+  sold-owner: '&f%buyer% a acheté &d%item% &fpour &5%price% Pasteque&f.'
+  stock-added: '&fStock ajouté avec succès.'
+  stock-empty-return: '&fAucun stock à retirer.'
+  stock-withdrawn: '&fStock retiré dans ton inventaire.'
+  unknown-shop: '&fShop introuvable.'
+  existing-name: '&fTu as déjà un shop portant ce nom.'
+  creation-cancelled: '&fCréation du shop annulée, les objets ont été rendus.'
+  buy-right-click: '&fClic droit sur le panneau pour acheter. Clic gauche pour voir le stock.'
+  owner-manage: '&fEn tant que propriétaire, tu peux gérer le stock ici.'
+  help-header: '&8&m---------------- &dMyLittleShop &8&m----------------'
+  help-create: '&f/myshop create <nom> &7- Prépare un nouveau shop.'
+  help-price: '&f/myshop price <prix> &7- Finalise le prix du shop en attente.'
+  help-delete: '&f/myshop delete <nom> &7- Supprime ton shop et récupère le stock.'
+  help-admin-delete: '&f/myshopadmin delete <joueur> <nom> &7- Supprime un shop sans restitution.'
+
+economy:
+  file: 'PastequeSkyblock/economy.yml'
+  balance-paths:
+    - 'players.%uuid%'
+    - 'balances.%uuid%'
+    - 'players.%uuid%.balance'
+
+skyblock:
+  islands-file: 'PastequeSkyblock/islands.yml'
+  island-world-name: 'pasteque_skyblock_islands'
+  island-size: 320
+
+shops:
+  look-distance: 6
+  buy-amount: 1
+  sign-title-color: '&d'
