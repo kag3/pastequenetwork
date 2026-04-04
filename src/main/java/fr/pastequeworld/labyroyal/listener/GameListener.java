@@ -214,21 +214,55 @@ public class GameListener implements Listener {
             return;
         }
 
+        org.bukkit.block.Block block = event.getBlock();
+        int bx = block.getX(), by = block.getY(), bz = block.getZ();
+
         if (game.getState() == GameState.PVP) {
-            event.setCancelled(true);
-            MessageUtil.sendActionBar(player, "&cLes minerais ne sont plus exploitables !");
+            // Only player-placed blocks can be broken during PVP
+            if (game.isPlayerPlaced(bx, by, bz)) {
+                game.unmarkPlayerPlaced(bx, by, bz);
+                // Allow break
+            } else {
+                event.setCancelled(true);
+                MessageUtil.sendActionBar(player, "&cVous ne pouvez casser que les blocs pos\u00e9s par des joueurs !");
+            }
             return;
         }
 
         if (game.getState() == GameState.PREPARATION) {
-            Material type = event.getBlock().getType();
+            Material type = block.getType();
             if (type == Material.BEDROCK
                     || type == Material.OBSIDIAN
                     || type == Material.BARRIER
                     || type == Material.SEA_LANTERN) {
                 event.setCancelled(true);
                 MessageUtil.sendActionBar(player, "&cCe bloc est indestructible !");
+                return;
             }
+
+            // Duel mode: auto-smelt ores (UHC Fast)
+            if (game.getGameMode() == LabyGameMode.DUEL) {
+                Material smelted = getSmeltedDrop(type);
+                if (smelted != null) {
+                    event.setCancelled(true);
+                    block.setType(Material.AIR);
+                    block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5),
+                            new org.bukkit.inventory.ItemStack(smelted));
+                    // Give XP like normal mining
+                    player.giveExp(1);
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns the smelted version of an ore, or null if not an ore.
+     */
+    private Material getSmeltedDrop(Material type) {
+        switch (type) {
+            case IRON_ORE: return Material.IRON_INGOT;
+            case GOLD_ORE: return Material.GOLD_INGOT;
+            default: return null;
         }
     }
 
@@ -250,7 +284,12 @@ public class GameListener implements Listener {
         if (event.getBlock().getY() >= maxBuildY) {
             event.setCancelled(true);
             MessageUtil.sendActionBar(player, "&cVous ne pouvez pas placer de blocs ici !");
+            return;
         }
+
+        // Track player-placed blocks so they can be broken during PVP
+        org.bukkit.block.Block block = event.getBlock();
+        game.markPlayerPlaced(block.getX(), block.getY(), block.getZ());
     }
 
     @EventHandler

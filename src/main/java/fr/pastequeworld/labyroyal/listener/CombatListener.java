@@ -203,24 +203,18 @@ public class CombatListener implements Listener {
                     dx /= dist;
                     dz /= dist;
 
-                    // 1.8 base knockback values
-                    double horizontalKB = 0.4;
-                    double verticalKB = 0.36;
+                    // 1.8 base knockback values (tuned for authentic feel)
+                    double horizontalKB = 0.35;
+                    double verticalKB = 0.3;
 
-                    // Each KB level adds 0.45 horizontal and a bit of vertical
-                    horizontalKB += finalKbLevel * 0.45;
-                    verticalKB += finalKbLevel * 0.08;
+                    // Each KB level adds horizontal and a bit of vertical
+                    horizontalKB += finalKbLevel * 0.38;
+                    verticalKB += finalKbLevel * 0.06;
 
                     // Cap vertical KB
-                    if (verticalKB > 0.5) verticalKB = 0.5;
+                    if (verticalKB > 0.42) verticalKB = 0.42;
 
                     Vector kb = new Vector(dx * horizontalKB, verticalKB, dz * horizontalKB);
-
-                    // Combine with victim's current velocity slightly (1.8 feel)
-                    Vector current = victim.getVelocity();
-                    kb.setX(kb.getX() + current.getX() * 0.15);
-                    kb.setZ(kb.getZ() + current.getZ() * 0.15);
-
                     victim.setVelocity(kb);
                 }
             }.runTaskLater(plugin, 1L);

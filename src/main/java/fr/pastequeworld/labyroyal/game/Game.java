@@ -39,6 +39,7 @@ public class Game {
 
     private final Map<UUID, PlayerData> players = new LinkedHashMap<UUID, PlayerData>();
     private final List<Team> teams = new ArrayList<Team>();
+    private final Set<Long> playerPlacedBlocks = new HashSet<Long>();
     private int nextTeamId = 1;
 
     private BukkitTask countdownTask;
@@ -755,6 +756,24 @@ public class Game {
         }
     }
 
+    // ==================== PLAYER-PLACED BLOCKS ====================
+
+    private static long blockKey(int x, int y, int z) {
+        return ((long) x & 0x3FFFFFFL) << 38 | ((long) y & 0xFFFL) << 26 | ((long) z & 0x3FFFFFFL);
+    }
+
+    public void markPlayerPlaced(int x, int y, int z) {
+        playerPlacedBlocks.add(blockKey(x, y, z));
+    }
+
+    public void unmarkPlayerPlaced(int x, int y, int z) {
+        playerPlacedBlocks.remove(blockKey(x, y, z));
+    }
+
+    public boolean isPlayerPlaced(int x, int y, int z) {
+        return playerPlacedBlocks.contains(blockKey(x, y, z));
+    }
+
     // ==================== TAB LIST ====================
 
     /**
@@ -854,12 +873,15 @@ public class Game {
 
     private void resetPlayer(Player player) {
         player.setGameMode(GameMode.ADVENTURE);
+        player.setFlying(false);
+        player.setAllowFlight(false);
         player.setMaxHealth(20);
         player.setHealth(20);
         player.setFoodLevel(20);
         player.setSaturation(20);
         player.getInventory().clear();
         player.setWalkSpeed(0.2f);
+        player.setFlySpeed(0.1f);
         player.setLevel(0);
         player.setExp(0);
         for (PotionEffect effect : player.getActivePotionEffects()) {

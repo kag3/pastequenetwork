@@ -137,6 +137,12 @@ public class ModeSelectListener implements Listener {
                 if (!player.isOnline()) return;
                 if (hasChosen.contains(player.getUniqueId())) return;
 
+                // Reset flight state from previous spectator mode
+                player.setGameMode(org.bukkit.GameMode.ADVENTURE);
+                player.setFlying(false);
+                player.setAllowFlight(false);
+                player.setFlySpeed(0.1f);
+
                 // Normal flow: cabin + GUI
                 teleportToCabin(player);
                 freezePlayer(player);
@@ -156,7 +162,7 @@ public class ModeSelectListener implements Listener {
 
     private void freezePlayer(Player player) {
         player.setWalkSpeed(0f);
-        player.setFlySpeed(0f);
+        // Don't set flySpeed to 0 - it locks the camera/cursor
     }
 
     private void unfreezePlayer(Player player) {
