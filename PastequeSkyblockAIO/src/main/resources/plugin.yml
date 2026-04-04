@@ -1,0 +1,68 @@
+name: PastequeSkyblockAIO
+version: 1.0.0
+main: fr.pasteque.skyblock.PastequeSkyblockPlugin
+author: PastequeNetwork
+description: All-In-One Skyblock - Islands, Economy, Arena, Moderation, Shops
+load: POSTWORLD
+
+commands:
+  is:
+    description: Commandes d'ile skyblock
+    aliases: [island]
+  iscoop:
+    description: Commandes d'ile cooperative
+  money:
+    description: Voir votre solde
+    aliases: [balance, bal]
+  pay:
+    description: Envoyer de l'argent
+  hdv:
+    description: Hotel des ventes
+  friends:
+    description: Gestion des amis
+  enemy:
+    description: Gestion des ennemis
+  alliance:
+    description: Gestion des alliances
+  pvpwarp:
+    description: Teleportation zone PvP
+  endevent:
+    description: Evenement End Dragon
+  aend:
+    description: Admin End Event
+  psky:
+    description: Admin skyblock
+  pg:
+    description: Commandes de moderation PastequeGuard
+  myshop:
+    description: Gestion des boutiques personnelles
+  myshopadmin:
+    description: Administration des boutiques
+  arena:
+    description: Teleportation arene PvP
+  arenakit:
+    description: Boutique de kits arene
+  arenalevel:
+    description: Voir votre niveau d'arene
+  arenaadmin:
+    description: Administration de l'arene
+
+permissions:
+  pastequeskyblock.admin:
+    description: Acces aux commandes admin skyblock
+    default: op
+  pastequeguard.staff:
+    description: Acces aux commandes de moderation
+    default: op
+  pastequeguard.bypass.chatfilter:
+    description: Bypass le filtre anti-spam
+    default: op
+  pastequemylittleshop.admin:
+    description: Administration des boutiques joueurs
+    default: op
+  pastequearena.admin:
+    description: Administration de l'arene
+    default: op
+  pastequearena.bypass:
+    description: Bypass les protections arene
+    default: op

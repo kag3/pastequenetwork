@@ -1,0 +1,179 @@
+# ============================================
+# PastequeSkyblock All-In-One Configuration
+# ============================================
+
+prefix: "&6&lPasteque&b&lSkyblock &f>> "
+
+# --- Worlds ---
+worlds:
+  island-world: "pasteque_skyblock_islands"
+  coop-world: "pasteque_skyblock_coop"
+  end-world: "pasteque_skyblock_end"
+  arena-world: "skyblockarena"
+  island-y: 100
+  coop-y: 100
+
+# --- Islands ---
+islands:
+  size: 320
+  gap: 340
+  coop-base-size: 220
+  coop-size-per-player: 30
+  coop-gap: 520
+  max-members: 10
+  invite-timeout: 120
+
+# --- Economy ---
+economy:
+  currency-name: "Pasteque"
+  starting-balance: 250.0
+  daily-reward: 150.0
+
+# --- Auction House ---
+auction:
+  listing-fee: 25.0
+  max-listings: 10
+  expiration-days: 7
+  page-size: 45
+
+# --- Combat ---
+combat:
+  tag-seconds: 30
+  logout-penalty: 500.0
+  pvp-steal-percent: 0.10
+  pvp-steal-cap: 250.0
+
+# --- Invasions ---
+invasions:
+  interval-minutes: 20
+  mob-count: 8
+  kill-reward: 25.0
+  chance: 0.5
+
+# --- End Event ---
+end-event:
+  duration-minutes: 30
+  dragon-health: 300
+  hour: 20
+  rewards:
+    first: 100000.0
+    second: 50000.0
+    third: 25000.0
+    fourth: 25000.0
+    last-hit: 15000.0
+
+# --- Challenges ---
+challenges:
+  list:
+    woodcutter:
+      display: "&eBucheron"
+      material: LOG
+      amount: 64
+      reward: 500.0
+    miner:
+      display: "&7Mineur"
+      material: COBBLESTONE
+      amount: 128
+      reward: 750.0
+
+# --- Block Values (Island Level) ---
+block-values:
+  DIAMOND_BLOCK: 50
+  EMERALD_BLOCK: 40
+  GOLD_BLOCK: 30
+  IRON_BLOCK: 20
+  LAPIS_BLOCK: 15
+  REDSTONE_BLOCK: 10
+  COAL_BLOCK: 5
+  OBSIDIAN: 5
+  DIAMOND_ORE: 10
+  EMERALD_ORE: 8
+  GOLD_ORE: 6
+  IRON_ORE: 4
+  COAL_ORE: 2
+  LOG: 1
+  LOG_2: 1
+  MELON_BLOCK: 1
+  PUMPKIN: 1
+
+# --- Border ---
+border:
+  particle-distance: 14
+  refresh-ticks: 20
+  cooldown-ms: 700
+
+# --- Guard (Moderation) ---
+guard:
+  prefix: "&2&lPasteque&b&lGuard &f>> "
+  filter:
+    min-delay-ms: 1200
+    repeat-threshold: 3
+    caps-threshold: 0.72
+    max-same-char-run: 12
+    violation-reset-seconds: 25
+    automute-duration: "10m"
+    automute-violation-count: 4
+  reports:
+    gui-title: "&dPastequeGuard &f- &dSignalements"
+    gui-size: 54
+    item-material: BOOK_AND_QUILL
+    close-material: BARRIER
+
+# --- Player Shops ---
+playershop:
+  look-distance: 6
+  buy-amount: 1
+  sign-title-color: "&d"
+
+# --- Arena ---
+arena:
+  kit:
+    price: 250.0
+    description: "&7Kit de combat complet"
+  level-formula:
+    base: 75
+    linear: 25
+    quadratic: 5
+  max-level: 101
+  kill-xp: 35
+  activity-xp-per-minute: 4
+  combat-tag-seconds: 30
+  combat-logout-penalty: 500.0
+  pvp-pasteque-steal-percent: 0.10
+  chat-format: "&8[&dNiv.%level%&8] &f%player% &8>> &f%message%"
+
+# --- Messages ---
+messages:
+  no-permission: "&cVous n'avez pas la permission."
+  player-only: "&cCommande reservee aux joueurs."
+  player-not-found: "&cJoueur introuvable."
+  island-created: "&aVotre ile a ete creee avec succes !"
+  island-already-exists: "&cVous avez deja une ile."
+  no-island: "&cVous n'avez pas d'ile."
+  teleported-home: "&aTeleportation a votre ile..."
+  invite-sent: "&aInvitation envoyee a &e%player%&a."
+  invite-received: "&e%player% &avous invite sur son ile ! &e/is accept &apour accepter."
+  member-added: "&e%player% &aa rejoint votre ile !"
+  member-kicked: "&e%player% &ca ete expulse de l'ile."
+  island-deleted: "&cVotre ile a ete supprimee."
+  island-reset: "&aVotre ile a ete reintialisee."
+  not-enough-money: "&cVous n'avez pas assez de %currency%."
+  money-sent: "&aVous avez envoye &e%amount% %currency% &aa &e%player%&a."
+  money-received: "&aVous avez recu &e%amount% %currency% &ade &e%player%&a."
+  daily-reward: "&aRecompense journaliere : &e+%amount% %currency% &a!"
+  combat-tagged: "&cVous etes en combat ! Ne deconnectez pas !"
+  combat-ended: "&aVous n'etes plus en combat."
+  combat-logout: "&c%player% s'est deconnecte en combat !"
+  arena-welcome: "&aBienvenue dans l'arene PvP !"
+  arena-kill: "&c%killer% &fa tue &c%victim%"
+  arena-levelup: "&6&lNIVEAU SUPERIEUR ! &eVous etes maintenant niveau &6%level%&e !"
+  guard-muted: "&cVous etes mute. Expiration: %time%"
+  guard-banned: "&cVous etes banni. Expiration: %time%"
+  guard-kicked: "&cVous avez ete kick: %reason%"
+  guard-warned: "&eVous avez recu un avertissement: %reason%"
+  guard-spam-warning: "&cEvitez le spam !"
+  guard-auto-muted: "&cVous avez ete mute automatiquement pour spam (10 minutes)."
+  shop-created: "&aBoutique &e%name% &acreee avec succes !"
+  shop-deleted: "&cBoutique &e%name% &csupprimee."
+  shop-bought: "&aVous avez achete &e%item% &apour &e%price% %currency%&a."
+  shop-not-enough-stock: "&cStock insuffisant."
