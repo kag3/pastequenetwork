@@ -20,6 +20,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
 
 public class GameListener implements Listener {
@@ -298,6 +299,20 @@ public class GameListener implements Listener {
         Game game = plugin.getGameManager().getPlayerGame(player.getUniqueId());
         if (game == null) return;
 
+        // Bed item: right-click to return to hub (only in queue)
+        if (event.getAction() == org.bukkit.event.block.Action.RIGHT_CLICK_AIR
+                || event.getAction() == org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) {
+            if (player.getInventory().getItemInMainHand() != null
+                    && player.getInventory().getItemInMainHand().getType() == Material.BED) {
+                event.setCancelled(true);
+                if (game.getState() == GameState.WAITING || game.getState() == GameState.STARTING) {
+                    game.removePlayer(player);
+                    plugin.getGameManager().removePlayerMapping(player.getUniqueId());
+                }
+                return;
+            }
+        }
+
         // Block chest/container opening during countdown freeze
         if (game.isCountdownFrozen()) {
             if (event.getAction() == org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK
@@ -312,6 +327,20 @@ public class GameListener implements Listener {
                     MessageUtil.sendActionBar(player, "&cAttendez le signal de d\u00e9part !");
                 }
             }
+        }
+    }
+
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player)) return;
+        Player player = (Player) event.getWhoClicked();
+
+        Game game = plugin.getGameManager().getPlayerGame(player.getUniqueId());
+        if (game == null) return;
+
+        // Block moving the bed item in WAITING/STARTING
+        if (game.getState() == GameState.WAITING || game.getState() == GameState.STARTING) {
+            event.setCancelled(true);
         }
     }
 

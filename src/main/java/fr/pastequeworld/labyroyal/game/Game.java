@@ -868,6 +868,17 @@ public class Game {
         for (PotionEffect effect : player.getActivePotionEffects()) {
             player.removePotionEffect(effect.getType());
         }
+
+        // Bed item in last hotbar slot to return to hub
+        org.bukkit.inventory.ItemStack bed = new org.bukkit.inventory.ItemStack(Material.BED);
+        org.bukkit.inventory.meta.ItemMeta bedMeta = bed.getItemMeta();
+        bedMeta.setDisplayName(MessageUtil.color("&c&lRetour au Hub"));
+        java.util.List<String> lore = new java.util.ArrayList<String>();
+        lore.add(MessageUtil.color("&7Clic droit pour retourner au hub"));
+        bedMeta.setLore(lore);
+        bed.setItemMeta(bedMeta);
+        player.getInventory().setItem(8, bed);
+
         scoreboardManager.setup(player);
     }
 
