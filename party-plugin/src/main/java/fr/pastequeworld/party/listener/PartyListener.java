@@ -87,10 +87,12 @@ public class PartyListener implements Listener {
             toSend.add(memberUuid);
         }
 
-        // Send members one by one, 5 seconds apart (BungeeCord connection_throttle = 4000ms)
+        // Send members one by one, 500ms apart
+        // IMPORTANT: connection_throttle must be -1 in BungeeCord config.yml
+        // AND connection-throttle must be -1 in Spigot spigot.yml
         for (int i = 0; i < toSend.size(); i++) {
             final UUID uuid = toSend.get(i);
-            long delay = i * 5;
+            long delay = 500 + (i * 500);
             plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
                 @Override
                 public void run() {
@@ -100,7 +102,7 @@ public class PartyListener implements Listener {
                         member.connect(server);
                     }
                 }
-            }, delay, TimeUnit.SECONDS);
+            }, delay, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -133,11 +135,11 @@ public class PartyListener implements Listener {
             pendingLabyMembers.put(uuid, leader.getName());
         }
 
-        // Send members one by one, 5 seconds apart, starting after 3 seconds
+        // Send members one by one, 500ms apart, starting after 2 seconds
         for (int i = 0; i < memberUuids.size(); i++) {
             final UUID uuid = memberUuids.get(i);
             final String leaderName = leader.getName();
-            long delay = 3 + (i * 5);
+            long delay = 2000 + (i * 500);
 
             plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
                 @Override
@@ -156,7 +158,7 @@ public class PartyListener implements Listener {
                     Msg.send(member, "&d\u25B6 &7T\u00e9l\u00e9portation vers &dLabyRoyale&7...");
                     member.connect(server);
                 }
-            }, delay, TimeUnit.SECONDS);
+            }, delay, TimeUnit.MILLISECONDS);
         }
 
         // Cleanup pending after 60 seconds
