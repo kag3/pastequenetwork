@@ -1,0 +1,40 @@
+name: PastequeSkyblock
+main: fr.pasteque.skyblock.PastequeSkyblockPlugin
+version: 0.6.1
+author: OpenAI
+load: POSTWORLD
+commands:
+  is:
+    description: Commande principale du skyblock
+    aliases: [island]
+  hdv:
+    description: Hôtel des ventes
+  money:
+    description: Affiche votre solde
+    aliases: [balance, bal]
+  pay:
+    description: Envoie des Pasteque
+  psky:
+    description: Administration PastequeSkyblock
+  friends:
+    description: Gestion des amis
+  enemy:
+    description: Gestion des ennemis
+  alliance:
+    description: Gestion des alliances
+    aliases: [ally, faction]
+  pvpwarp:
+    description: Téléportation vers le warp PvP hardcore
+  iscoop:
+    description: Gestion des îles coop
+  endevent:
+    description: Téléportation vers l'event End
+  aend:
+    description: Administration de l'event End
+permissions:
+  pastequeskyblock.admin:
+    default: op
+  pastequeskyblock.bypass:
+    default: op
+
+softdepend: [PastequeGuard, PastequeSkyBlockArena]
