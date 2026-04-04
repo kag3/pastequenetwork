@@ -183,8 +183,9 @@ public class ModeSelectListener implements Listener {
         Location to = event.getTo();
         if (to == null) return;
 
-        if (from.getX() != to.getX() || from.getY() != to.getY() || from.getZ() != to.getZ()) {
-            event.setTo(new Location(from.getWorld(), from.getX(), from.getY(), from.getZ(),
+        // Only block horizontal movement (X/Z), allow vertical (gravity/falling)
+        if (from.getX() != to.getX() || from.getZ() != to.getZ()) {
+            event.setTo(new Location(from.getWorld(), from.getX(), to.getY(), from.getZ(),
                     to.getYaw(), to.getPitch()));
         }
     }
