@@ -319,11 +319,11 @@ public class PlayerShopManager {
             buyer.sendMessage(message("messages.no-stock"));
             return false;
         }
-        if (!economy.withdraw(buyer.getUniqueId(), shop.getPrice())) {
+        if (!economy.take(buyer.getUniqueId(), shop.getPrice())) {
             buyer.sendMessage(message("messages.not-enough-pasteque"));
             return false;
         }
-        economy.deposit(shop.getOwner(), shop.getPrice());
+        economy.add(shop.getOwner(), shop.getPrice());
         ItemStack item = shop.getTemplate();
         int amountLeft = buyAmount;
         while (amountLeft > 0) {
