@@ -17,38 +17,47 @@ public final class GuiHelper {
     }
 
     /**
-     * Fill all empty (null) slots with black stained glass panes (data 15).
+     * Pro layout: leave empty slots genuinely empty (no black-glass wall) —
+     * only fills the LEFT and RIGHT frame columns to keep visual symmetry.
+     * This is what Hypixel/top-tier servers do.
      */
     public static void fillEmpty(Inventory inv) {
-        ItemStack filler = glassPane(15, " ");
-        for (int i = 0; i < inv.getSize(); i++) {
-            if (inv.getItem(i) == null) {
-                inv.setItem(i, filler.clone());
-            }
+        ItemStack frame = glassPane(13, " "); // dark green (Pasteque)
+        int rows = inv.getSize() / 9;
+        for (int r = 1; r < rows - 1; r++) {
+            int left = r * 9;
+            int right = r * 9 + 8;
+            if (inv.getItem(left) == null) inv.setItem(left, frame.clone());
+            if (inv.getItem(right) == null) inv.setItem(right, frame.clone());
         }
     }
 
     /**
-     * Create the decorative top row border with alternating dark green (13) and purple (10) glass.
-     * Assumes the inventory has at least 9 slots.
+     * Top border: Pasteque-themed pattern with lime + magenta accents at
+     * positions 0,4,8 and dark-green fill elsewhere. Symmetric, distinctive.
      */
     public static void addTopBorder(Inventory inv) {
-        for (int i = 0; i < 9; i++) {
-            short color = (i % 2 == 0) ? (short) 13 : (short) 10;
-            inv.setItem(i, glassPane(color, " "));
-        }
+        ItemStack base = glassPane(13, " ");     // dark green
+        ItemStack accent1 = glassPane(5, " ");   // lime
+        ItemStack accent2 = glassPane(2, " ");   // magenta
+        for (int i = 0; i < 9; i++) inv.setItem(i, base.clone());
+        inv.setItem(0, accent2.clone());
+        inv.setItem(4, accent1.clone());
+        inv.setItem(8, accent2.clone());
     }
 
     /**
-     * Create the decorative bottom row border with alternating dark green (13) and purple (10) glass.
-     * Works for any inventory size.
+     * Bottom border: mirrors top pattern for perfect symmetry.
      */
     public static void addBottomBorder(Inventory inv) {
         int start = inv.getSize() - 9;
-        for (int i = 0; i < 9; i++) {
-            short color = (i % 2 == 0) ? (short) 13 : (short) 10;
-            inv.setItem(start + i, glassPane(color, " "));
-        }
+        ItemStack base = glassPane(13, " ");
+        ItemStack accent1 = glassPane(5, " ");
+        ItemStack accent2 = glassPane(2, " ");
+        for (int i = 0; i < 9; i++) inv.setItem(start + i, base.clone());
+        inv.setItem(start, accent2.clone());
+        inv.setItem(start + 4, accent1.clone());
+        inv.setItem(start + 8, accent2.clone());
     }
 
     /**
