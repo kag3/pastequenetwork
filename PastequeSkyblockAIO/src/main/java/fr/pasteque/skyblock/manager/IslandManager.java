@@ -168,6 +168,46 @@ public class IslandManager {
         clearColumnAbove(world, x, topY + 1, topY + 8, z);
     }
 
+    /**
+     * Build a naturally tapered underside under a surface column so the island
+     * does not look like a flat slab floating in the void. The underside
+     * narrows with depth following an organic curve and merges smoothly into
+     * the surface stratum above.
+     *
+     * @param world    the target world
+     * @param x        column X
+     * @param baseY    Y of the bottom of the 4-block surface stratum (i.e. topY - 4)
+     * @param z        column Z
+     * @param edge     normalized distance to the island border (0 = border, 1 = center)
+     * @param depth    maximum root depth at the center (in blocks)
+     * @param noise    local noise value in [-1,1] for irregularity
+     * @param stone    material used for the bulk of the root
+     * @param accent   material used for occasional veins (nullable)
+     */
+    private void terrainUnderside(World world, int x, int baseY, int z,
+                                  double edge, int depth, double noise,
+                                  Material stone, Material accent) {
+        if (edge <= 0.0D) return;
+        // Smooth root profile: deepest at the center, tapering to 0 at the border.
+        // Uses a curve (edge^0.65) so the underside is round/organic, not conical.
+        double shape = Math.pow(Math.max(0.0D, edge), 0.65D);
+        int rootDepth = (int) Math.round(shape * depth + noise * 1.2D);
+        if (rootDepth < 1) return;
+        if (rootDepth > depth) rootDepth = depth;
+        int startY = baseY - 1; // first block below the surface stratum
+        for (int i = 0; i < rootDepth; i++) {
+            int yy = startY - i;
+            if (yy <= 1) break;
+            Material use = stone;
+            if (accent != null) {
+                // Deterministic accent veins based on world coords, ~8% of blocks
+                int h = (int) (((long) x * 73856093L) ^ ((long) z * 19349663L) ^ ((long) yy * 83492791L));
+                if ((h & 0x7FFFFFFF) % 13 == 0) use = accent;
+            }
+            world.getBlockAt(x, yy, z).setType(use);
+        }
+    }
+
     private void setFlower(World world, int x, int y, int z, Material flower) {
         if (world.getBlockAt(x, y, z).getType() == Material.AIR && world.getBlockAt(x, y - 1, z).getType() == Material.GRASS)
             world.getBlockAt(x, y, z).setType(flower);
@@ -190,21 +230,35 @@ public class IslandManager {
     }
 
     private void sculptFloatingIsland(World world, int cx, int baseY, int cz, int radiusX, int radiusZ, int maxHeight, Material top, Material fill, long seed) {
-        for (int x = cx - radiusX - 2; x <= cx + radiusX + 2; x++) {
-            for (int z = cz - radiusZ - 2; z <= cz + radiusZ + 2; z++) {
+        // Matching underside: depth scales with island size so larger islands
+        // get proportionally deeper roots (never a flat slab). Minimum 6 so
+        // even small islands have a visible taper beneath.
+        int rootDepth = Math.max(6, Math.min(radiusX, radiusZ) - 2);
+        double noiseAmpEdge = 0.18D; // how much noise warps the border (non-circular feel)
+        for (int x = cx - radiusX - 4; x <= cx + radiusX + 4; x++) {
+            for (int z = cz - radiusZ - 4; z <= cz + radiusZ + 4; z++) {
                 double nx = (x - cx) / (double) radiusX;
                 double nz = (z - cz) / (double) radiusZ;
                 double dist = (nx * nx) + (nz * nz);
-                if (dist > 1.0D) continue;
-                double edge = Math.max(0.0D, 1.0D - dist);
                 double noise = terrainNoise(x, z, seed);
+                // Warp the border with noise so the shoreline is organic, not a clean ellipse
+                double warpedDist = dist - noise * noiseAmpEdge;
+                if (warpedDist > 1.0D) continue;
+                double edge = Math.max(0.0D, 1.0D - warpedDist);
                 int height = 0;
-                if (edge > 0.10D) height = 1;
-                if (edge > 0.42D && noise > -0.05D) height = 2;
-                if (maxHeight >= 3 && edge > 0.70D && noise > 0.35D) height = 3;
-                if (maxHeight >= 4 && edge > 0.82D && noise > 0.55D) height = 4;
+                if (edge > 0.05D) height = 1;
+                if (edge > 0.35D && noise > -0.15D) height = 2;
+                if (maxHeight >= 3 && edge > 0.60D && noise > 0.20D) height = 3;
+                if (maxHeight >= 4 && edge > 0.78D && noise > 0.45D) height = 4;
                 if (height > maxHeight) height = maxHeight;
                 terrainColumn(world, x, baseY, z, Math.max(0, height), top, fill);
+                // Root underside: blends the bottom of the surface stratum into
+                // a tapered shape that narrows with depth. baseY - 4 is the last
+                // block of the 4-block surface stratum placed by terrainColumn.
+                Material accent = null;
+                if (fill == Material.DIRT || fill == Material.SANDSTONE) accent = Material.STONE;
+                else if (fill == Material.NETHERRACK) accent = Material.GLOWSTONE;
+                terrainUnderside(world, x, baseY - 4, z, edge, rootDepth, noise, fill, accent);
             }
         }
     }

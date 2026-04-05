@@ -41,8 +41,9 @@ public final class MinionShopGui {
                 "&e\u25B6 Cliquez sur un minion pour l'acheter");
         inv.setItem(4, info);
 
-        // Slots for minions: centered aesthetically
-        int[] slots = { 19, 20, 21, 22, 23, 24, 25, 28 };
+        // Slots for minions: 2 aerated symmetric rows (4 per row)
+        // Row 2: 10 12 14 16  -  Row 3: 28 30 32 34
+        int[] slots = { 10, 12, 14, 16, 28, 30, 32, 34 };
         MinionType[] types = MinionType.values();
         int i = 0;
         for (MinionType t : types) {
