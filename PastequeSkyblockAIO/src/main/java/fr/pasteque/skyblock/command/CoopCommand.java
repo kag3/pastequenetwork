@@ -184,9 +184,6 @@ public class CoopCommand implements CommandExecutor {
     private void openMenu(Player player) {
         Inventory inv = Bukkit.createInventory(null, 54, MENU_TITLE);
 
-        GuiHelper.addTopBorder(inv);
-        GuiHelper.addBottomBorder(inv);
-
         Collection<CoopIsland> myIslands = plugin.getCoopManager().getPlayerIslands(player.getUniqueId());
         CoopIsland first = plugin.getCoopManager().getFirstIsland(player.getUniqueId());
         int pending = plugin.getCoopManager().getRemainingApprovals(player.getUniqueId());
@@ -251,9 +248,8 @@ public class CoopCommand implements CommandExecutor {
                 "&a\u25B6 Clic pour se teleporter"));
 
         inv.setItem(49, GuiHelper.closeButton());
-
-        GuiHelper.fillEmpty(inv);
-
+        GuiHelper.decorate(inv, GuiHelper.Theme.SOCIAL);
         player.openInventory(inv);
+        GuiHelper.playOpen(player);
     }
 }

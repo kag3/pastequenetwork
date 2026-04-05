@@ -21,7 +21,7 @@ public class MainMenuGui {
         // Row 3 (27-35) : 28, 30, 32, 34
         // Row 4 (36-44) : 39, 41 (symetriques autour de 40)
         // Close button  : 49 (row 5 center)
-        GuiHelper.addTopBorder(inv);
+        // Theme PASTEQUE (vert/lime/magenta) applique en fin de methode via decorate().
 
         // ── Row 1 : Ile / Arene / HDV / Boutique ────────────────────────
         inv.setItem(10, GuiHelper.createItem(Material.GRASS,
@@ -123,11 +123,17 @@ public class MainMenuGui {
                 "&e\u25B6 Clic pour ouvrir!"));
 
         // ── Row 5 : bottom border + close ───────────────────────────────
-        GuiHelper.addBottomBorder(inv);
         inv.setItem(49, GuiHelper.closeButton());
-
-        GuiHelper.fillEmpty(inv);
+        GuiHelper.decorate(inv, GuiHelper.Theme.PASTEQUE);
 
         return inv;
+    }
+
+    /**
+     * Ouvre le menu principal et joue le son de signature.
+     */
+    public static void open(Player player) {
+        player.openInventory(create(player));
+        GuiHelper.playOpen(player);
     }
 }

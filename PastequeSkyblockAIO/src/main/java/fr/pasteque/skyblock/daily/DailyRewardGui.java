@@ -19,8 +19,6 @@ public final class DailyRewardGui {
 
     public static void open(Player player, DailyRewardManager manager) {
         Inventory inv = Bukkit.createInventory(null, 45, TITLE);
-        GuiHelper.addTopBorder(inv);
-        GuiHelper.addBottomBorder(inv);
 
         int streak = manager.getStreak(player.getUniqueId());
         boolean canClaim = manager.canClaim(player.getUniqueId());
@@ -86,7 +84,8 @@ public final class DailyRewardGui {
                 "&7votre streak jusqu'au jackpot du jour 7 !"));
 
         inv.setItem(40, GuiHelper.closeButton());
-        GuiHelper.fillEmpty(inv);
+        GuiHelper.decorate(inv, GuiHelper.Theme.EVENT);
         player.openInventory(inv);
+        GuiHelper.playOpen(player);
     }
 }

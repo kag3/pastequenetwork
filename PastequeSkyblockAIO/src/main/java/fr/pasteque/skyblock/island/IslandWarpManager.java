@@ -216,9 +216,6 @@ public class IslandWarpManager {
         Inventory gui = Bukkit.createInventory(null, 36, WARP_GUI_TITLE);
         List<IslandWarp> ownerWarps = getWarps(islandOwner);
 
-        // Row 0: decorative border
-        GuiHelper.addTopBorder(gui);
-
         // Row 1: warp items
         int slot = 10;
         for (IslandWarp warp : ownerWarps) {
@@ -251,19 +248,15 @@ public class IslandWarpManager {
         gui.setItem(27, GuiHelper.backButton());
 
         // Fill remaining with black glass
-        GuiHelper.fillEmpty(gui);
+        GuiHelper.decorate(gui, GuiHelper.Theme.ISLAND);
 
         player.openInventory(gui);
+        GuiHelper.playOpen(player);
     }
 
     public void openPublicWarpsGui(Player player, int page) {
         Inventory gui = Bukkit.createInventory(null, 54, PUBLIC_WARP_GUI_TITLE);
 
-        // Row 0: decorative border
-        GuiHelper.addTopBorder(gui);
-
-        // Row 5: decorative border
-        GuiHelper.addBottomBorder(gui);
 
         List<Map.Entry<UUID, IslandWarp>> publicWarps = getPublicWarps();
         int itemsPerPage = 28; // slots 10-16, 19-25, 28-34, 37-43
@@ -312,9 +305,10 @@ public class IslandWarpManager {
         gui.setItem(49, GuiHelper.closeButton());
 
         // Fill remaining with black glass
-        GuiHelper.fillEmpty(gui);
+        GuiHelper.decorate(gui, GuiHelper.Theme.ISLAND);
 
         player.openInventory(gui);
+        GuiHelper.playOpen(player);
     }
 
     public void openPublicWarpsGui(Player player) {

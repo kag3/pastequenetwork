@@ -156,9 +156,7 @@ public class PSkyAdminCommand implements CommandExecutor {
         Inventory inv = Bukkit.createInventory(null, 54,
                 PastequeSkyblockPlugin.color("&2&lPasteque &5&lAdmin"));
 
-        // Borders
-        GuiHelper.addTopBorder(inv);
-        GuiHelper.addBottomBorder(inv);
+        // Theme ADMIN applique en fin de methode
 
         // Layout symetrique aere: 3+3+1 items
         // Row 2 : 20, 22, 24 (iles / hdv / pvp)
@@ -194,10 +192,8 @@ public class PSkyAdminCommand implements CommandExecutor {
 
         // Close button - bottom center
         inv.setItem(49, GuiHelper.closeButton());
-
-        // Fill remaining empty slots with black glass
-        GuiHelper.fillEmpty(inv);
-
+        GuiHelper.decorate(inv, GuiHelper.Theme.ADMIN);
         player.openInventory(inv);
+        GuiHelper.playOpen(player);
     }
 }

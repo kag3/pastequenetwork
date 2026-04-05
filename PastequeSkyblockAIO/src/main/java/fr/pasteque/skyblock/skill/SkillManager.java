@@ -1,5 +1,7 @@
 package fr.pasteque.skyblock.skill;
 
+import fr.pasteque.skyblock.gui.GuiHelper;
+
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
 import fr.pasteque.skyblock.skill.model.PlayerSkills;
 import fr.pasteque.skyblock.skill.model.SkillType;
@@ -126,7 +128,9 @@ public class SkillManager {
     public void openSkillGui(Player player) {
         PlayerSkills skills = getSkills(player.getUniqueId());
         Inventory inv = SkillGui.create(plugin, skills);
+        GuiHelper.decorate(inv, GuiHelper.Theme.SKILL);
         player.openInventory(inv);
+        GuiHelper.playOpen(player);
     }
 
     // ── Getter ───────────────────────────────────────────────────────────

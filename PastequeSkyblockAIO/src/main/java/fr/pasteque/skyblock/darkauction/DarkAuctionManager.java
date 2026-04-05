@@ -183,10 +183,8 @@ public class DarkAuctionManager {
         Inventory inv = Bukkit.createInventory(null, 27, GUI_TITLE);
 
         // Row 0: decorative border
-        GuiHelper.addTopBorder(inv);
 
         // Row 2: decorative border
-        GuiHelper.addBottomBorder(inv);
 
         if (currentItem != null) {
             // Center slot (13): auction item with enchant glow
@@ -264,9 +262,10 @@ public class DarkAuctionManager {
         inv.setItem(26, GuiHelper.closeButton());
 
         // Fill remaining with black glass
-        GuiHelper.fillEmpty(inv);
+        GuiHelper.decorate(inv, GuiHelper.Theme.EVENT);
 
         player.openInventory(inv);
+        GuiHelper.playOpen(player);
     }
 
     // ------------------------------------------------------------------

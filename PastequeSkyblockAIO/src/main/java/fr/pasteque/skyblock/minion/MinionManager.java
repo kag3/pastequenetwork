@@ -272,10 +272,8 @@ public class MinionManager {
         Inventory inv = Bukkit.createInventory(null, 27, title);
 
         // Row 0: decorative border
-        GuiHelper.addTopBorder(inv);
 
         // Row 2: decorative border
-        GuiHelper.addBottomBorder(inv);
 
         // Center (slot 13): minion info item
         Material iconMat = Material.matchMaterial(minion.getType().getIconMaterial());
@@ -350,9 +348,10 @@ public class MinionManager {
         inv.setItem(26, GuiHelper.closeButton());
 
         // Fill remaining with black glass
-        GuiHelper.fillEmpty(inv);
+        GuiHelper.decorate(inv, GuiHelper.Theme.ECO);
 
         player.openInventory(inv);
+        GuiHelper.playOpen(player);
     }
 
     // -- Utilities ------------------------------------------------------------

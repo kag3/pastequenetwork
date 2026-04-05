@@ -35,6 +35,18 @@ public class GuiListener implements Listener {
         String title = event.getInventory().getTitle();
         String plainTitle = title == null ? "" : ChatColor.stripColor(title);
 
+        // Signature sonore universelle: tout clic sur un GUI du plugin joue
+        // un bruitage discret. On ignore les clics sur les vitres decoratives
+        // (sert uniquement de filler visuel) et sur les slots vides.
+        Material clickedMat = event.getCurrentItem().getType();
+        if (clickedMat != Material.AIR && clickedMat != Material.STAINED_GLASS_PANE && isPluginGui(plainTitle)) {
+            if (clickedMat == Material.REDSTONE_BLOCK) {
+                fr.pasteque.skyblock.gui.GuiHelper.playClose(player);
+            } else {
+                fr.pasteque.skyblock.gui.GuiHelper.playClick(player);
+            }
+        }
+
         // Universal close button handler for all Pasteque GUIs
         if (plainTitle.startsWith("Pasteque")) {
             Material clickedType = event.getCurrentItem().getType();
@@ -210,5 +222,40 @@ public class GuiListener implements Listener {
                 return;
             }
         }
+    }
+
+    /**
+     * Heuristique pour detecter si un inventaire ouvert est un GUI du plugin
+     * (afin de jouer les sons uniquement dans nos menus). On s'appuie sur les
+     * prefixes et mots-cles utilises par les titres de GUIs declares dans le
+     * codebase — evite les faux-positifs dans les coffres vanilla.
+     */
+    private boolean isPluginGui(String plainTitle) {
+        if (plainTitle == null || plainTitle.length() == 0) return false;
+        if (plainTitle.startsWith("Pasteque")) return true;
+        // Autres titres GUI du plugin (non prefixes Pasteque)
+        return plainTitle.contains("Boutique")
+                || plainTitle.contains("Classements")
+                || plainTitle.contains("Recompense")
+                || plainTitle.contains("Top")
+                || plainTitle.contains("Admin")
+                || plainTitle.contains("HDV")
+                || plainTitle.contains("Minion")
+                || plainTitle.contains("Pet")
+                || plainTitle.contains("Skill")
+                || plainTitle.contains("Slayer")
+                || plainTitle.contains("Collection")
+                || plainTitle.contains("Arene")
+                || plainTitle.contains("Kit")
+                || plainTitle.contains("Coop")
+                || plainTitle.contains("Ile")
+                || plainTitle.contains("Pass")
+                || plainTitle.contains("Warp")
+                || plainTitle.contains("Upgrade")
+                || plainTitle.contains("Amelior")
+                || plainTitle.contains("Enchere")
+                || plainTitle.contains("Sombre")
+                || plainTitle.contains("Signal")
+                || plainTitle.contains("Shop");
     }
 }

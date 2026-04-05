@@ -28,8 +28,6 @@ public final class MinionShopGui {
 
     public static void open(Player player) {
         Inventory inv = Bukkit.createInventory(null, 54, TITLE);
-        GuiHelper.addTopBorder(inv);
-        GuiHelper.addBottomBorder(inv);
 
         // Info center-top
         ItemStack info = GuiHelper.createItem(Material.EMERALD,
@@ -83,8 +81,9 @@ public final class MinionShopGui {
                 "&8\u25B8 &e" + ((long) balance) + " Pasteque"));
 
         inv.setItem(49, GuiHelper.closeButton());
-        GuiHelper.fillEmpty(inv);
+        GuiHelper.decorate(inv, GuiHelper.Theme.ECO);
         player.openInventory(inv);
+        GuiHelper.playOpen(player);
     }
 
     public static double getPrice(MinionType type) {

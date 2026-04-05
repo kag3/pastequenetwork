@@ -1,5 +1,7 @@
 package fr.pasteque.skyblock.command;
 
+import fr.pasteque.skyblock.gui.GuiHelper;
+
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
 import fr.pasteque.skyblock.guard.FilterService;
 import fr.pasteque.skyblock.guard.GuardPanelGui;
@@ -63,6 +65,7 @@ public class GuardCommand implements CommandExecutor, TabCompleter {
             }
             Player player = (Player) sender;
             player.openInventory(GuardPanelGui.create(plugin, reportService));
+            GuiHelper.playOpen(player);
             player.sendMessage(plugin.getGuardPrefix() + plugin.color(plugin.getConfig().getString("messages.panel-opened")));
             return true;
         }

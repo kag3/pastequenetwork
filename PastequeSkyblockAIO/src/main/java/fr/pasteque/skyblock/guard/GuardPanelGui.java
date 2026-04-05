@@ -20,9 +20,6 @@ public class GuardPanelGui {
     public static Inventory create(PastequeSkyblockPlugin plugin, ReportService reportService) {
         Inventory inventory = Bukkit.createInventory(null, 54, GUI_TITLE);
 
-        GuiHelper.addTopBorder(inventory);
-        GuiHelper.addBottomBorder(inventory);
-
         List<ReportEntry> reports = reportService.getPendingReports();
         if (reports.isEmpty()) {
             inventory.setItem(22, GuiHelper.createItem(Material.STAINED_GLASS_PANE, 5,
@@ -60,7 +57,7 @@ public class GuardPanelGui {
 
         inventory.setItem(49, GuiHelper.closeButton());
 
-        GuiHelper.fillEmpty(inventory);
+        GuiHelper.decorate(inventory, GuiHelper.Theme.GUARD);
 
         return inventory;
     }

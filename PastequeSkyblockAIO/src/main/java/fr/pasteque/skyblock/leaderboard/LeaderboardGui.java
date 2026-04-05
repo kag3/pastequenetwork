@@ -19,8 +19,6 @@ public final class LeaderboardGui {
 
     public static void open(Player player, LeaderboardManager manager) {
         Inventory inv = Bukkit.createInventory(null, 54, TITLE);
-        GuiHelper.addTopBorder(inv);
-        GuiHelper.addBottomBorder(inv);
 
         // Header
         inv.setItem(4, GuiHelper.createItem(Material.BEACON,
@@ -34,8 +32,9 @@ public final class LeaderboardGui {
         renderColumn(inv, 25, Material.GRASS, "&a&l\u2766 TOP ILE", manager.getTopIslands(5), " niv");
 
         inv.setItem(49, GuiHelper.closeButton());
-        GuiHelper.fillEmpty(inv);
+        GuiHelper.decorate(inv, GuiHelper.Theme.ECO);
         player.openInventory(inv);
+        GuiHelper.playOpen(player);
     }
 
     private static void renderColumn(Inventory inv, int headSlot, Material mat, String title, List<LeaderboardManager.Entry> entries, String unit) {

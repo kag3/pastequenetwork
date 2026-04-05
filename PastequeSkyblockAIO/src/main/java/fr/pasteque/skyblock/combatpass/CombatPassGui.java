@@ -42,7 +42,6 @@ public final class CombatPassGui {
         int startTier = page * TIERS_PER_PAGE + 1;
 
         // ── Row 0: decorative border with center NETHER_STAR ─────────────
-        GuiHelper.addTopBorder(inv);
         inv.setItem(4, GuiHelper.createItem(Material.NETHER_STAR,
                 "&d&lSaison 1",
                 "&7Passe de Combat",
@@ -200,7 +199,6 @@ public final class CombatPassGui {
         }
 
         // ── Row 5: Navigation ────────────────────────────────────────────
-        GuiHelper.addBottomBorder(inv);
 
         // Slot 45: previous page
         if (page > 0) {
@@ -254,9 +252,10 @@ public final class CombatPassGui {
         }
 
         // Fill remaining empty slots with black glass
-        GuiHelper.fillEmpty(inv);
+        GuiHelper.decorate(inv, GuiHelper.Theme.PVP);
 
         player.openInventory(inv);
+        GuiHelper.playOpen(player);
     }
 
     // =========================================================================

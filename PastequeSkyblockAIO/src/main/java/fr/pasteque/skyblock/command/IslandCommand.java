@@ -544,8 +544,7 @@ public class IslandCommand implements CommandExecutor {
         String pvpState = island != null && island.isPvpEnabled() ? "&aActif" : "&cInactif";
         String bank = island == null ? "0" : String.valueOf((int) island.getBankBalance());
 
-        GuiHelper.addTopBorder(inventory);
-        GuiHelper.addBottomBorder(inventory);
+        // Theme ISLAND applique en fin de methode
 
         // Layout parfaitement symetrique aere — 15 items repartis en 4+4+4+3
         // Row 1 (9-17)  : 10, 12, 14, 16  — actions principales
@@ -594,18 +593,15 @@ public class IslandCommand implements CommandExecutor {
 
         // Close button at bottom center
         inventory.setItem(49, GuiHelper.closeButton());
-
-        GuiHelper.fillEmpty(inventory);
+        GuiHelper.decorate(inventory, GuiHelper.Theme.ISLAND);
         player.openInventory(inventory);
+        GuiHelper.playOpen(player);
     }
 
     @SuppressWarnings("deprecation")
     private void openMembers(Player player, Island island) {
         Inventory inventory = Bukkit.createInventory(null, 54,
                 PastequeSkyblockPlugin.color("&2&lPasteque &5&lMembres"));
-
-        GuiHelper.addTopBorder(inventory);
-        GuiHelper.addBottomBorder(inventory);
 
         int slot = 10;
         for (UUID uuid : island.getMembers()) {
@@ -624,18 +620,15 @@ public class IslandCommand implements CommandExecutor {
         // Back button at bottom-left area, close button at bottom center
         inventory.setItem(48, GuiHelper.backButton());
         inventory.setItem(49, GuiHelper.closeButton());
-
-        GuiHelper.fillEmpty(inventory);
+        GuiHelper.decorate(inventory, GuiHelper.Theme.ISLAND);
         player.openInventory(inventory);
+        GuiHelper.playOpen(player);
     }
 
     @SuppressWarnings("deprecation")
     private void openChallenges(Player player) {
         Inventory inventory = Bukkit.createInventory(null, 54,
                 PastequeSkyblockPlugin.color("&2&lPasteque &5&lDefis"));
-
-        GuiHelper.addTopBorder(inventory);
-        GuiHelper.addBottomBorder(inventory);
 
         int slot = 10;
         for (String challengeId : plugin.getChallengeManager().getChallengeIds()) {
@@ -677,8 +670,9 @@ public class IslandCommand implements CommandExecutor {
         inventory.setItem(48, GuiHelper.backButton());
         inventory.setItem(49, GuiHelper.closeButton());
 
-        GuiHelper.fillEmpty(inventory);
+        GuiHelper.decorate(inventory, GuiHelper.Theme.ISLAND);
         player.openInventory(inventory);
+        GuiHelper.playOpen(player);
     }
 
 }

@@ -25,9 +25,6 @@ public final class SkillGui {
     public static Inventory create(PastequeSkyblockPlugin plugin, PlayerSkills skills) {
         Inventory inv = Bukkit.createInventory(null, 36, TITLE);
 
-        // Row 0: decorative border
-        GuiHelper.addTopBorder(inv);
-
         // Row 1: skill items
         SkillType[] types = SkillType.values();
         for (int i = 0; i < types.length && i < SLOTS.length; i++) {
@@ -67,8 +64,7 @@ public final class SkillGui {
         // Row 3: back button
         inv.setItem(27, GuiHelper.backButton());
 
-        // Fill empty with black glass
-        GuiHelper.fillEmpty(inv);
+        GuiHelper.decorate(inv, GuiHelper.Theme.SKILL);
 
         return inv;
     }

@@ -30,8 +30,6 @@ public class ArenaKitService {
     public void open(Player player) {
         Inventory inv = Bukkit.createInventory(null, 27, GUI_TITLE);
 
-        GuiHelper.addTopBorder(inv);
-        GuiHelper.addBottomBorder(inv);
 
         // Kit item at center
         inv.setItem(13, createKitItem());
@@ -42,9 +40,10 @@ public class ArenaKitService {
         // Close button
         inv.setItem(18, GuiHelper.closeButton());
 
-        GuiHelper.fillEmpty(inv);
+        GuiHelper.decorate(inv, GuiHelper.Theme.PVP);
 
         player.openInventory(inv);
+        GuiHelper.playOpen(player);
     }
 
     private ItemStack createKitItem() {

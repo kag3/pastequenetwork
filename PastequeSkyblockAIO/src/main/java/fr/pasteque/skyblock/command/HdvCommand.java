@@ -120,8 +120,6 @@ public class HdvCommand implements CommandExecutor {
         page = Math.max(1, Math.min(page, totalPages));
         Inventory inventory = Bukkit.createInventory(null, 54, getTitle(page, totalPages));
 
-        GuiHelper.addTopBorder(inventory);
-        GuiHelper.addBottomBorder(inventory);
 
         SimpleDateFormat df = new SimpleDateFormat("dd/MM HH:mm", Locale.FRANCE);
         int slot = 10;
@@ -165,16 +163,15 @@ public class HdvCommand implements CommandExecutor {
                 "&8▸ &7Passer a la page suivante",
                 "&e▶ Clic pour naviguer"));
 
-        GuiHelper.fillEmpty(inventory);
+        GuiHelper.decorate(inventory, GuiHelper.Theme.ECO);
 
         player.openInventory(inventory);
+        GuiHelper.playOpen(player);
     }
 
     public void openReturns(Player player) {
         Inventory inventory = Bukkit.createInventory(null, 54, RETURNS_TITLE);
 
-        GuiHelper.addTopBorder(inventory);
-        GuiHelper.addBottomBorder(inventory);
 
         List<ItemStack> items = plugin.getAuctionManager().getClaimable(player.getUniqueId());
         int slot = 10;
@@ -194,9 +191,10 @@ public class HdvCommand implements CommandExecutor {
                 "&8▸ &7Recuperer tous les objets possibles",
                 "&a▶ Clic pour recuperer"));
 
-        GuiHelper.fillEmpty(inventory);
+        GuiHelper.decorate(inventory, GuiHelper.Theme.ECO);
 
         player.openInventory(inventory);
+        GuiHelper.playOpen(player);
     }
 
     private void sendHelp(Player player) {

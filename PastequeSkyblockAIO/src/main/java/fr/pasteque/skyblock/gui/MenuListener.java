@@ -23,70 +23,40 @@ public class MenuListener implements Listener {
         Player player = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
 
+        // Bruitage universel de clic sur le menu principal (hors vitres deco)
+        org.bukkit.inventory.ItemStack current = event.getCurrentItem();
+        if (current != null && current.getType() != org.bukkit.Material.AIR
+                && current.getType() != org.bukkit.Material.STAINED_GLASS_PANE) {
+            if (slot == 49) {
+                fr.pasteque.skyblock.gui.GuiHelper.playClose(player);
+            } else {
+                fr.pasteque.skyblock.gui.GuiHelper.playClick(player);
+            }
+        }
+
+        // Slots alignes sur le layout 4+4+4+2 de MainMenuGui
         switch (slot) {
-            // Row 1
-            case 10: // Mon Ile
-                player.closeInventory();
-                player.performCommand("is");
-                break;
-            case 12: // Arene PvP
-                player.closeInventory();
-                player.performCommand("arena");
-                break;
-            case 14: // Hotel des Ventes
-                player.closeInventory();
-                player.performCommand("hdv");
-                break;
-            case 16: // Boutique
-                player.closeInventory();
-                player.performCommand("myshop");
-                break;
+            // Row 1: Ile / Arene / HDV / Boutique
+            case 10: player.closeInventory(); player.performCommand("is"); break;
+            case 12: player.closeInventory(); player.performCommand("arena"); break;
+            case 14: player.closeInventory(); player.performCommand("hdv"); break;
+            case 16: player.closeInventory(); player.performCommand("myshop"); break;
 
-            // Row 2
-            case 19: // Competences
-                player.closeInventory();
-                player.performCommand("skills");
-                break;
-            case 21: // Collections
-                player.closeInventory();
-                player.performCommand("collection");
-                break;
-            case 23: // Animaux
-                player.closeInventory();
-                player.performCommand("pet");
-                break;
-            case 25: // Minions
-                player.closeInventory();
-                player.performCommand("minion");
-                break;
+            // Row 2: Competences / Collections / Animaux / Minions
+            case 19: player.closeInventory(); player.performCommand("skills"); break;
+            case 21: player.closeInventory(); player.performCommand("collection"); break;
+            case 23: player.closeInventory(); player.performCommand("pet"); break;
+            case 25: player.closeInventory(); player.performCommand("minions"); break;
 
-            // Row 3
-            case 20: // Duels
-                player.closeInventory();
-                player.performCommand("duel");
-                break;
-            case 22: // Passe de Combat
-                player.closeInventory();
-                player.performCommand("combatpass");
-                break;
-            case 24: // Slayers
-                player.closeInventory();
-                player.performCommand("slayer");
-                break;
+            // Row 3: Duels / Combat Pass / Slayers / Bounties
+            case 28: player.closeInventory(); player.performCommand("duel"); break;
+            case 30: player.closeInventory(); player.performCommand("combatpass"); break;
+            case 32: player.closeInventory(); player.performCommand("slayer"); break;
+            case 34: player.closeInventory(); player.performCommand("bounty list"); break;
 
-            // Row 4
-            case 29: // Bounties
-                player.closeInventory();
-                player.performCommand("bounty list");
-                break;
-            case 31: // Vente Sombre
-                player.closeInventory();
-                player.performCommand("darkauction");
-                break;
-            case 33: // Social
-                player.closeInventory();
-                player.performCommand("friends");
-                break;
+            // Row 4: Vente Sombre / Social
+            case 39: player.closeInventory(); player.performCommand("darkauction"); break;
+            case 41: player.closeInventory(); player.performCommand("friends"); break;
 
             // Close button
             case 49:

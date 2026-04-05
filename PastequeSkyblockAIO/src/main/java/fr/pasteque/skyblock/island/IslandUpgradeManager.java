@@ -121,12 +121,6 @@ public class IslandUpgradeManager {
         Inventory gui = Bukkit.createInventory(null, 27, GUI_TITLE);
         UUID owner = player.getUniqueId();
 
-        // Row 0: decorative border
-        GuiHelper.addTopBorder(gui);
-
-        // Row 2: decorative border
-        GuiHelper.addBottomBorder(gui);
-
         IslandUpgrade[] upgrades = IslandUpgrade.values();
         int[] slots = {10, 11, 12, 13, 14};
         Material[] icons = {Material.GRASS, Material.SKULL_ITEM, Material.DIAMOND_PICKAXE, Material.MOB_SPAWNER, Material.IRON_FENCE};
@@ -177,8 +171,9 @@ public class IslandUpgradeManager {
         gui.setItem(26, GuiHelper.closeButton());
 
         // Fill remaining slots with black glass
-        GuiHelper.fillEmpty(gui);
+        GuiHelper.decorate(gui, GuiHelper.Theme.ISLAND);
 
         player.openInventory(gui);
+        GuiHelper.playOpen(player);
     }
 }

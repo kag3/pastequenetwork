@@ -94,13 +94,13 @@ public class PlayerShopManager {
 
     public PendingShopCreation openCreation(Player player, String shopName, SignPlacementUtil.SignPlacement placement) {
         Inventory inventory = Bukkit.createInventory(player, 54, CREATE_GUI_TITLE + PastequeSkyblockPlugin.color(" &7- &f" + trim(shopName)));
-        GuiHelper.addTopBorder(inventory);
         inventory.setItem(49, GuiHelper.createItem(Material.EMERALD_BLOCK, "&a&lValider le depot des stocks"));
         inventory.setItem(45, GuiHelper.closeButton());
-        GuiHelper.fillEmpty(inventory);
+        GuiHelper.decorate(inventory, GuiHelper.Theme.ECO);
         PendingShopCreation pending = new PendingShopCreation(shopName, inventory, placement.getLocation(), placement.getMaterial(), placement.getWallFacing());
         pendingCreations.put(player.getUniqueId(), pending);
         player.openInventory(inventory);
+        GuiHelper.playOpen(player);
         return pending;
     }
 
@@ -209,8 +209,6 @@ public class PlayerShopManager {
         EconomyManager economy = plugin.getEconomyManager();
         ownerViewSessions.remove(player.getUniqueId());
         Inventory inventory = Bukkit.createInventory(player, 27, VIEW_GUI_TITLE + PastequeSkyblockPlugin.color(" &7- &f" + trim(shop.getName())));
-        GuiHelper.addTopBorder(inventory);
-        GuiHelper.addBottomBorder(inventory);
         inventory.setItem(13, withName(shop.getTemplate(), "&a" + shop.getName(), Arrays.asList(
                 PastequeSkyblockPlugin.color("&7Objet : &f" + readable(shop.getTemplate())),
                 PastequeSkyblockPlugin.color("&7Stock : &a" + shop.getStock()),
@@ -218,15 +216,15 @@ public class PlayerShopManager {
                 PastequeSkyblockPlugin.color("&8Clic droit pour acheter")
         )));
         inventory.setItem(18, GuiHelper.closeButton());
-        GuiHelper.fillEmpty(inventory);
+        GuiHelper.decorate(inventory, GuiHelper.Theme.ECO);
         player.openInventory(inventory);
+        GuiHelper.playOpen(player);
     }
 
     public void openOwnerManage(Player player, Shop shop) {
         EconomyManager economy = plugin.getEconomyManager();
         ownerViewSessions.put(player.getUniqueId(), shop);
         Inventory inventory = Bukkit.createInventory(player, 54, OWNER_GUI_TITLE + PastequeSkyblockPlugin.color(" &7- &f" + trim(shop.getName())));
-        GuiHelper.addTopBorder(inventory);
         inventory.setItem(13, withName(shop.getTemplate(), "&a" + shop.getName(), Arrays.asList(
                 PastequeSkyblockPlugin.color("&7Objet : &f" + readable(shop.getTemplate())),
                 PastequeSkyblockPlugin.color("&7Stock actuel : &a" + shop.getStock()),
@@ -237,8 +235,9 @@ public class PlayerShopManager {
         inventory.setItem(49, GuiHelper.createItem(Material.EMERALD_BLOCK, "&a&lValider l'ajout de stock"));
         inventory.setItem(50, GuiHelper.createItem(Material.CHEST, "&e&lRetirer 1 stack"));
         inventory.setItem(51, GuiHelper.createItem(Material.HOPPER, "&c&lRetirer tout le stock"));
-        GuiHelper.fillEmpty(inventory);
+        GuiHelper.decorate(inventory, GuiHelper.Theme.ECO);
         player.openInventory(inventory);
+        GuiHelper.playOpen(player);
     }
 
     public boolean handleOwnerInventory(Player player, Inventory inventory, Shop shop, int rawSlot) {

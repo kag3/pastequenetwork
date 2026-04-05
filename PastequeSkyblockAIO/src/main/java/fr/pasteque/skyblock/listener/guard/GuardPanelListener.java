@@ -1,5 +1,7 @@
 package fr.pasteque.skyblock.listener.guard;
 
+import fr.pasteque.skyblock.gui.GuiHelper;
+
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
 import fr.pasteque.skyblock.guard.GuardPanelGui;
 import fr.pasteque.skyblock.guard.ReportService;
@@ -51,5 +53,6 @@ public class GuardPanelListener implements Listener {
         reportService.markHandled(id, player.getName());
         player.sendMessage(plugin.getGuardPrefix() + plugin.color("&fLe signalement &d#" + id + " &fa été classé comme traité."));
         player.openInventory(GuardPanelGui.create(plugin, reportService));
+        GuiHelper.playOpen(player);
     }
 }

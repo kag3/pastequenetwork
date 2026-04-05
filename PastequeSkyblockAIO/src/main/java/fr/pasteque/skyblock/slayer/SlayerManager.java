@@ -293,10 +293,8 @@ public class SlayerManager {
         Inventory inv = Bukkit.createInventory(null, 45, SLAYER_GUI_TITLE);
 
         // Row 0: decorative border
-        GuiHelper.addTopBorder(inv);
 
         // Row 4: decorative border
-        GuiHelper.addBottomBorder(inv);
 
         PlayerSlayerData data = getData(player.getUniqueId());
 
@@ -362,9 +360,10 @@ public class SlayerManager {
         inv.setItem(44, GuiHelper.closeButton());
 
         // Fill remaining with black glass
-        GuiHelper.fillEmpty(inv);
+        GuiHelper.decorate(inv, GuiHelper.Theme.PVP);
 
         player.openInventory(inv);
+        GuiHelper.playOpen(player);
     }
 
     public void openTierGui(Player player, SlayerType type) {
@@ -372,10 +371,8 @@ public class SlayerManager {
         Inventory inv = Bukkit.createInventory(null, 27, title);
 
         // Row 0: decorative border
-        GuiHelper.addTopBorder(inv);
 
         // Row 2: decorative border
-        GuiHelper.addBottomBorder(inv);
 
         PlayerSlayerData data = getData(player.getUniqueId());
 
@@ -414,9 +411,10 @@ public class SlayerManager {
         inv.setItem(26, GuiHelper.closeButton());
 
         // Fill remaining with black glass
-        GuiHelper.fillEmpty(inv);
+        GuiHelper.decorate(inv, GuiHelper.Theme.PVP);
 
         player.openInventory(inv);
+        GuiHelper.playOpen(player);
     }
 
     private String buildProgressBar(double progress) {

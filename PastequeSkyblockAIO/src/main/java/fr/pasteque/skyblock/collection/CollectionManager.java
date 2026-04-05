@@ -180,7 +180,6 @@ public class CollectionManager {
         Inventory inv = Bukkit.createInventory(null, 36, MAIN_TITLE);
 
         // Row 0: decorative border
-        GuiHelper.addTopBorder(inv);
 
         // Row 1: category icons (centered)
         CollectionCategory[] categories = CollectionCategory.values();
@@ -221,9 +220,10 @@ public class CollectionManager {
         inv.setItem(27, GuiHelper.backButton());
 
         // Fill remaining with black glass
-        GuiHelper.fillEmpty(inv);
+        GuiHelper.decorate(inv, GuiHelper.Theme.SKILL);
 
         player.openInventory(inv);
+        GuiHelper.playOpen(player);
     }
 
     public void openCategoryGui(Player player, CollectionCategory category) {
@@ -242,10 +242,8 @@ public class CollectionManager {
         Inventory inv = Bukkit.createInventory(null, size, title);
 
         // Row 0: decorative border
-        GuiHelper.addTopBorder(inv);
 
         // Bottom border
-        GuiHelper.addBottomBorder(inv);
 
         // Back button at bottom-left, close button at bottom-right
         inv.setItem(size - 9, GuiHelper.backButton());
@@ -330,9 +328,10 @@ public class CollectionManager {
         }
 
         // Fill remaining with black glass
-        GuiHelper.fillEmpty(inv);
+        GuiHelper.decorate(inv, GuiHelper.Theme.SKILL);
 
         player.openInventory(inv);
+        GuiHelper.playOpen(player);
     }
 
     private String buildProgressBar(double progress) {

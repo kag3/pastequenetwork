@@ -22,7 +22,7 @@ public class MenuCommand implements CommandExecutor {
             return true;
         }
         Player player = (Player) sender;
-        player.openInventory(MainMenuGui.create(player));
+        MainMenuGui.open(player);
         return true;
     }
 }

@@ -241,10 +241,8 @@ public class PetManager {
         Inventory inv = Bukkit.createInventory(null, 54, GUI_TITLE);
 
         // Row 0: decorative border
-        GuiHelper.addTopBorder(inv);
 
         // Row 5: decorative border
-        GuiHelper.addBottomBorder(inv);
 
         UUID uuid = player.getUniqueId();
         PetType[] types = PetType.values();
@@ -326,9 +324,10 @@ public class PetManager {
         inv.setItem(53, GuiHelper.closeButton());
 
         // Fill remaining with black glass
-        GuiHelper.fillEmpty(inv);
+        GuiHelper.decorate(inv, GuiHelper.Theme.SKILL);
 
         player.openInventory(inv);
+        GuiHelper.playOpen(player);
     }
 
     // -- Getter ---------------------------------------------------------------

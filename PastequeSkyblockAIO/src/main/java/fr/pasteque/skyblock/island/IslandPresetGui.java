@@ -27,9 +27,6 @@ public class IslandPresetGui {
     public void open(Player player) {
         Inventory gui = Bukkit.createInventory(null, 36, GUI_TITLE);
 
-        // Row 0: decorative border
-        GuiHelper.addTopBorder(gui);
-
         // Row 1-2: preset items
         IslandPreset[] presets = IslandPreset.values();
         int[] slots;
@@ -67,9 +64,10 @@ public class IslandPresetGui {
                 "&8\u25B8 &7Chaque ile est unique."));
 
         // Fill remaining with black glass
-        GuiHelper.fillEmpty(gui);
+        GuiHelper.decorate(gui, GuiHelper.Theme.ISLAND);
 
         player.openInventory(gui);
+        GuiHelper.playOpen(player);
     }
 
     private ItemStack parseIcon(String iconStr) {

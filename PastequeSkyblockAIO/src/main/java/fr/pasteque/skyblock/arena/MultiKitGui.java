@@ -34,7 +34,6 @@ public class MultiKitGui {
         int playerLevel = data.getLevel();
 
         // Row 0: decorative border
-        GuiHelper.addTopBorder(inv);
 
         // Place kits in rows 1-3 (slots 10-16, 19-25, 28-34)
         int[] slots = new int[]{10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25};
@@ -83,12 +82,12 @@ public class MultiKitGui {
         }
 
         // Row 5: decorative border + back button
-        GuiHelper.addBottomBorder(inv);
         inv.setItem(45, GuiHelper.backButton());
 
         // Fill empty with black glass
-        GuiHelper.fillEmpty(inv);
+        GuiHelper.decorate(inv, GuiHelper.Theme.PVP);
         player.openInventory(inv);
+        GuiHelper.playOpen(player);
     }
 
     public ArenaKit getKitBySlot(int slot) {

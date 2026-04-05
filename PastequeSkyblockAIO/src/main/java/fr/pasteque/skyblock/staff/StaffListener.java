@@ -1,5 +1,7 @@
 package fr.pasteque.skyblock.staff;
 
+import fr.pasteque.skyblock.gui.GuiHelper;
+
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -253,5 +255,6 @@ public class StaffListener implements Listener {
         inv.setItem(49, info);
 
         staff.openInventory(inv);
+        GuiHelper.playOpen(staff);
     }
 }
