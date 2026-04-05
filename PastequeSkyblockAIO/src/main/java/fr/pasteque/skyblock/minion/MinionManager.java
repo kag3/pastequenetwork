@@ -208,11 +208,15 @@ public class MinionManager {
         }
         // Check if entity already exists at location
         for (Entity entity : loc.getChunk().getEntities()) {
-            if (entity instanceof Villager && entity.getCustomName() != null
-                    && entity.getCustomName().contains(MINION_TAG)) {
-                double dist = entity.getLocation().distance(loc);
-                if (dist < 1.5) {
-                    return; // Already exists
+            if (entity instanceof Villager) {
+                Villager v = (Villager) entity;
+                if (v.getCustomName() != null && v.getCustomName().contains(MINION_TAG)) {
+                    double dx = v.getLocation().getX() - loc.getX();
+                    double dy = v.getLocation().getY() - loc.getY();
+                    double dz = v.getLocation().getZ() - loc.getZ();
+                    if (dx * dx + dy * dy + dz * dz < 2.25) {
+                        return; // Already exists
+                    }
                 }
             }
         }
@@ -222,9 +226,8 @@ public class MinionManager {
         villager.setCustomName(PastequeSkyblockPlugin.color(
                 "&6" + minion.getType().getDisplayName() + " &7[Niv." + minion.getLevel() + "]"
         ) + MINION_TAG);
-        villager.setAI(false);
-        villager.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, Integer.MAX_VALUE, 255, false, false));
-        villager.setInvulnerable(true);
+        villager.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, Integer.MAX_VALUE, 255));
+        villager.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, Integer.MAX_VALUE, 255));
     }
 
     public void removeMinionEntity(Location location) {
