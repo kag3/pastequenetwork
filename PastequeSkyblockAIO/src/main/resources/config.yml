@@ -2,7 +2,7 @@
 # PastequeSkyblock All-In-One Configuration
 # ============================================
 
-prefix: "&6&lPasteque&b&lSkyblock &f>> "
+prefix: "&2Pasteque &5Skyblock &8» "
 
 # --- Worlds ---
 worlds:
@@ -122,7 +122,7 @@ border:
 
 # --- Guard (Moderation) ---
 guard:
-  prefix: "&2&lPasteque&b&lGuard &f>> "
+  prefix: "&2Pasteque &5Guard &8» "
   filter:
     min-delay-ms: 1200
     repeat-threshold: 3
@@ -132,7 +132,7 @@ guard:
     automute-duration: "10m"
     automute-violation-count: 4
   reports:
-    gui-title: "&dPastequeGuard &f- &dSignalements"
+    gui-title: "&2Pasteque &5Guard &8- &dSignalements"
     gui-size: 54
     item-material: BOOK_AND_QUILL
     close-material: BARRIER

@@ -3,17 +3,22 @@ package fr.pasteque.skyblock.island;
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
 import fr.pasteque.skyblock.island.model.IslandPreset;
 import fr.pasteque.skyblock.island.model.IslandUpgrade;
+import fr.pasteque.skyblock.model.Island;
 import fr.pasteque.skyblock.util.MessageUtil;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public class IslandUpgradeListener implements Listener {
@@ -22,6 +27,7 @@ public class IslandUpgradeListener implements Listener {
     private final IslandUpgradeManager upgradeManager;
     private final IslandWarpManager warpManager;
     private final Map<UUID, IslandPreset> pendingPresets = new HashMap<UUID, IslandPreset>();
+    private final Set<UUID> generatingPlayers = new HashSet<UUID>();
 
     public IslandUpgradeListener(PastequeSkyblockPlugin plugin, IslandUpgradeManager upgradeManager, IslandWarpManager warpManager) {
         this.plugin = plugin;
@@ -35,6 +41,10 @@ public class IslandUpgradeListener implements Listener {
 
     public boolean hasPendingPreset(UUID uuid) {
         return pendingPresets.containsKey(uuid);
+    }
+
+    public boolean isGenerating(UUID uuid) {
+        return generatingPlayers.contains(uuid);
     }
 
     @EventHandler
@@ -157,12 +167,50 @@ public class IslandUpgradeListener implements Listener {
                 return;
             }
 
-            IslandPreset preset = getPresetBySlot(slot);
-            if (preset != null) {
-                pendingPresets.put(player.getUniqueId(), preset);
-                player.closeInventory();
-                MessageUtil.send(player, plugin.getPrefix(), "&aType d'ile &e" + preset.getDisplayName() + " &aselectionne !");
+            final IslandPreset preset = getPresetBySlot(slot);
+            if (preset == null) {
+                return;
             }
+
+            // Prevent double-click
+            if (generatingPlayers.contains(player.getUniqueId())) {
+                return;
+            }
+
+            // Check if player already has an island
+            if (plugin.getIslandManager().hasIsland(player.getUniqueId())) {
+                player.closeInventory();
+                MessageUtil.send(player, plugin.getPrefix(), "&fTu as deja une ile.");
+                return;
+            }
+
+            generatingPlayers.add(player.getUniqueId());
+            player.closeInventory();
+            MessageUtil.send(player, plugin.getPrefix(), "&aType d'ile &e" + preset.getDisplayName() + " &aselectionne !");
+            MessageUtil.send(player, plugin.getPrefix(), "&aGeneration de ton ile en cours...");
+
+            // Create the island structure (grid allocation + data)
+            final Island island = plugin.getIslandManager().createIsland(player, preset);
+            if (island == null) {
+                generatingPlayers.remove(player.getUniqueId());
+                MessageUtil.send(player, plugin.getPrefix(), "&cErreur lors de la creation de l'ile.");
+                return;
+            }
+
+            // Teleport after generation completes (short delay for async block placement)
+            final UUID playerUuid = player.getUniqueId();
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    generatingPlayers.remove(playerUuid);
+                    Player p = Bukkit.getPlayer(playerUuid);
+                    if (p != null && p.isOnline()) {
+                        MessageUtil.send(p, plugin.getPrefix(), "&aTon ile est prete ! Teleportation...");
+                        p.teleport(plugin.getIslandManager().getSafeTeleport(island));
+                        plugin.getBorderManager().renderFor(p);
+                    }
+                }
+            }.runTaskLater(plugin, 60L); // 3 seconds delay for generation
         }
     }
 

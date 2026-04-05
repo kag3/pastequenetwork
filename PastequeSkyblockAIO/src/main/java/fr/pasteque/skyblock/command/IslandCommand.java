@@ -46,13 +46,14 @@ public class IslandCommand implements CommandExecutor {
 
         if (sub.equals("create")) {
             if (plugin.getIslandManager().hasIsland(player.getUniqueId())) {
-                MessageUtil.send(player, plugin.getPrefix(), "&fTu as déjà une île.");
+                MessageUtil.send(player, plugin.getPrefix(), "&fTu as deja une ile.");
                 return true;
             }
-            Island island = plugin.getIslandManager().createIsland(player);
-            MessageUtil.send(player, plugin.getPrefix(), "&aTon île vient d'être créée. &7Nom par défaut: &f" + island.getDisplayName(player.getName()));
-            player.teleport(plugin.getIslandManager().getSafeTeleport(island));
-            plugin.getBorderManager().renderFor(player);
+            if (plugin.getIslandUpgradeListener().isGenerating(player.getUniqueId())) {
+                MessageUtil.send(player, plugin.getPrefix(), "&fTon ile est en cours de generation, patiente...");
+                return true;
+            }
+            plugin.getIslandPresetGui().open(player);
             return true;
         }
 
