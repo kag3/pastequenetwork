@@ -3,32 +3,26 @@ package fr.pasteque.skyblock;
 import fr.pasteque.skyblock.command.*;
 import fr.pasteque.skyblock.listener.*;
 import fr.pasteque.skyblock.manager.*;
-import fr.pasteque.skyblock.guard.service.SanctionService;
-import fr.pasteque.skyblock.guard.service.ReportService;
-import fr.pasteque.skyblock.guard.service.FilterService;
-import fr.pasteque.skyblock.guard.command.PgCommand;
-import fr.pasteque.skyblock.guard.listener.GuardChatListener;
-import fr.pasteque.skyblock.guard.listener.GuardConnectionListener;
-import fr.pasteque.skyblock.guard.listener.PanelListener;
+import fr.pasteque.skyblock.guard.SanctionService;
+import fr.pasteque.skyblock.guard.ReportService;
+import fr.pasteque.skyblock.guard.FilterService;
+import fr.pasteque.skyblock.listener.guard.GuardChatListener;
+import fr.pasteque.skyblock.listener.guard.GuardConnectionListener;
+import fr.pasteque.skyblock.listener.guard.GuardPanelListener;
 import fr.pasteque.skyblock.playershop.PlayerShopManager;
-import fr.pasteque.skyblock.arena.service.ArenaWorldService;
-import fr.pasteque.skyblock.arena.service.PlayerDataService;
-import fr.pasteque.skyblock.arena.service.ArenaKitService;
-import fr.pasteque.skyblock.arena.service.ArenaLevelService;
-import fr.pasteque.skyblock.arena.service.CombatTagService;
-import fr.pasteque.skyblock.arena.service.SafeZoneService;
-import fr.pasteque.skyblock.arena.service.SelectionService;
-import fr.pasteque.skyblock.arena.service.EconomyBridge;
-import fr.pasteque.skyblock.arena.command.ArenaCommand;
-import fr.pasteque.skyblock.arena.command.ArenaKitCommand;
-import fr.pasteque.skyblock.arena.command.ArenaLevelCommand;
-import fr.pasteque.skyblock.arena.command.ArenaAdminCommand;
-import fr.pasteque.skyblock.arena.listener.ArenaCombatListener;
-import fr.pasteque.skyblock.arena.listener.ArenaKitListener;
-import fr.pasteque.skyblock.arena.listener.ArenaProtectionListener;
-import fr.pasteque.skyblock.arena.listener.ArenaSessionListener;
-import fr.pasteque.skyblock.arena.listener.GlobalChatListener;
-import fr.pasteque.skyblock.arena.listener.PlayerLifecycleListener;
+import fr.pasteque.skyblock.arena.ArenaWorldService;
+import fr.pasteque.skyblock.arena.PlayerDataService;
+import fr.pasteque.skyblock.arena.ArenaKitService;
+import fr.pasteque.skyblock.arena.ArenaLevelService;
+import fr.pasteque.skyblock.arena.CombatTagService;
+import fr.pasteque.skyblock.arena.SafeZoneService;
+import fr.pasteque.skyblock.arena.SelectionService;
+import fr.pasteque.skyblock.listener.arena.ArenaCombatListener;
+import fr.pasteque.skyblock.listener.arena.ArenaKitListener;
+import fr.pasteque.skyblock.listener.arena.ArenaProtectionListener;
+import fr.pasteque.skyblock.listener.arena.ArenaSessionListener;
+import fr.pasteque.skyblock.listener.arena.ArenaGlobalChatListener;
+import fr.pasteque.skyblock.listener.arena.ArenaLifecycleListener;
 import fr.pasteque.skyblock.util.MessageUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -81,7 +75,6 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     private CombatTagService combatTagService;
     private SafeZoneService safeZoneService;
     private SelectionService selectionService;
-    private EconomyBridge arenaEconomyBridge;
 
     /* ── Island chat toggles (persisted) ── */
     private final Map<UUID, Boolean> islandChatToggles = new HashMap<UUID, Boolean>();
@@ -130,12 +123,11 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         /* ── PastequeSkyBlockArena init ── */
         this.selectionService = new SelectionService();
         this.arenaWorldService = new ArenaWorldService(this);
-        this.arenaEconomyBridge = new EconomyBridge(this);
         this.safeZoneService = new SafeZoneService(this, arenaWorldService);
         this.playerDataService = new PlayerDataService(this, arenaWorldService);
         this.arenaLevelService = new ArenaLevelService(this, playerDataService);
-        this.combatTagService = new CombatTagService(this, arenaEconomyBridge, playerDataService, arenaWorldService);
-        this.arenaKitService = new ArenaKitService(this, arenaEconomyBridge, arenaWorldService);
+        this.combatTagService = new CombatTagService(this, playerDataService, arenaWorldService);
+        this.arenaKitService = new ArenaKitService(this, arenaWorldService);
 
         arenaWorldService.initializeArenaWorld();
         safeZoneService.load();
@@ -216,7 +208,7 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     }
 
     private void registerGuardCommands() {
-        PgCommand pgCommand = new PgCommand(this, sanctionService, reportService, filterService);
+        GuardCommand pgCommand = new GuardCommand(this, sanctionService, reportService, filterService);
         PluginCommand command = getCommand("pg");
         if (command != null) {
             command.setExecutor(pgCommand);
@@ -236,7 +228,7 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         ArenaCommand arenaCommand = new ArenaCommand(this, arenaWorldService);
         ArenaLevelCommand levelCommand = new ArenaLevelCommand(this, playerDataService, arenaLevelService);
         ArenaKitCommand kitCommand = new ArenaKitCommand(this, arenaKitService);
-        ArenaAdminCommand adminCommand = new ArenaAdminCommand(this, arenaWorldService, safeZoneService, selectionService, arenaEconomyBridge, playerDataService);
+        ArenaAdminCommand adminCommand = new ArenaAdminCommand(this, arenaWorldService, safeZoneService, selectionService, playerDataService);
 
         bind("arena", arenaCommand);
         bind("arenalevel", levelCommand);
@@ -276,7 +268,7 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     private void registerGuardListeners() {
         registerEvents(new GuardChatListener(this, sanctionService, filterService));
         registerEvents(new GuardConnectionListener(this, sanctionService));
-        registerEvents(new PanelListener(this, reportService));
+        registerEvents(new GuardPanelListener(this, reportService));
     }
 
     private void registerShopListeners() {
@@ -285,11 +277,11 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
 
     private void registerArenaListeners() {
         registerEvents(new ArenaProtectionListener(this, arenaWorldService, safeZoneService));
-        registerEvents(new ArenaCombatListener(this, arenaWorldService, safeZoneService, combatTagService, arenaLevelService, arenaEconomyBridge, playerDataService));
-        registerEvents(new PlayerLifecycleListener(this, arenaWorldService, combatTagService, playerDataService));
+        registerEvents(new ArenaCombatListener(this, arenaWorldService, safeZoneService, combatTagService, arenaLevelService, playerDataService));
+        registerEvents(new ArenaLifecycleListener(this, arenaWorldService, combatTagService, playerDataService));
         registerEvents(new ArenaKitListener(this, arenaKitService));
         registerEvents(new ArenaSessionListener(this, arenaWorldService, arenaLevelService, playerDataService));
-        registerEvents(new GlobalChatListener(this, arenaWorldService, playerDataService));
+        registerEvents(new ArenaGlobalChatListener(this, arenaWorldService, playerDataService));
     }
 
     private void registerEvents(Listener listener) {
@@ -405,5 +397,4 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     public CombatTagService getCombatTagService() { return combatTagService; }
     public SafeZoneService getSafeZoneService() { return safeZoneService; }
     public SelectionService getSelectionService() { return selectionService; }
-    public EconomyBridge getArenaEconomyBridge() { return arenaEconomyBridge; }
 }

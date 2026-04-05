@@ -76,18 +76,18 @@ public class ArenaKitService {
 
     public boolean tryPurchase(Player player) {
         if (!arenaWorldService.isArenaWorld(player.getWorld())) {
-            player.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.arena-only", "&fCette action doit etre utilisee depuis l'arene.")));
+            player.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.arena-only", "&fCette action doit etre utilisee depuis l'arene.")));
             return false;
         }
         double price = plugin.getConfig().getDouble("kit.price", 250.0D);
-        if (!plugin.getEconomyManager().withdraw(player.getUniqueId(), price)) {
-            player.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.not-enough-pasteque", "&fIl vous manque des &dPasteque&f pour cet achat.")));
+        if (!plugin.getEconomyManager().take(player.getUniqueId(), price)) {
+            player.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.not-enough-pasteque", "&fIl vous manque des &dPasteque&f pour cet achat.")));
             return false;
         }
         giveKit(player);
-        ArenaPlayerData data = plugin.getArenaPlayerDataService().get(player);
+        ArenaPlayerData data = plugin.getPlayerDataService().get(player);
         data.getPurchasedKits().add("default");
-        player.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.kit-purchased", "&fVous avez achete le kit d'arene pour &d%price% Pasteque&f.").replace("%price%", String.valueOf((int) price))));
+        player.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.kit-purchased", "&fVous avez achete le kit d'arene pour &d%price% Pasteque&f.").replace("%price%", String.valueOf((int) price))));
         return true;
     }
 

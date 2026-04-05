@@ -42,7 +42,7 @@ public class ArenaAdminCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("pastequearena.admin")) {
-            sender.sendMessage(plugin.color(plugin.prefix("arena") + "&fPermission insuffisante."));
+            sender.sendMessage(plugin.color(plugin.getPrefix() + "&fPermission insuffisante."));
             return true;
         }
         if (args.length == 0) {
@@ -51,28 +51,28 @@ public class ArenaAdminCommand implements CommandExecutor, TabCompleter {
         }
         if (args[0].equalsIgnoreCase("setspawn")) {
             if (!(sender instanceof Player)) {
-                sender.sendMessage(plugin.color(plugin.prefix("arena") + "&fCommande reservee aux joueurs."));
+                sender.sendMessage(plugin.color(plugin.getPrefix() + "&fCommande reservee aux joueurs."));
                 return true;
             }
             Player player = (Player) sender;
             if (!arenaWorldService.isArenaWorld(player.getWorld())) {
-                player.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.arena-only", "&fCette action doit etre utilisee depuis l'arene.")));
+                player.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.arena-only", "&fCette action doit etre utilisee depuis l'arene.")));
                 return true;
             }
             arenaWorldService.setConfiguredSpawn(player.getLocation());
-            player.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.spawn-set", "&fLe spawn d'arrivee de l'arene a ete mis a jour.")));
+            player.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.spawn-set", "&fLe spawn d'arrivee de l'arene a ete mis a jour.")));
             return true;
         }
         if (args[0].equalsIgnoreCase("reload")) {
             plugin.reloadConfig();
             safeZoneService.load();
             playerDataService.save();
-            sender.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.admin-reload", "&fLa configuration de l'arene a ete rechargee.")));
+            sender.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.admin-reload", "&fLa configuration de l'arene a ete rechargee.")));
             return true;
         }
         if (args[0].equalsIgnoreCase("safe")) {
             if (!(sender instanceof Player)) {
-                sender.sendMessage(plugin.color(plugin.prefix("arena") + "&fCommande reservee aux joueurs."));
+                sender.sendMessage(plugin.color(plugin.getPrefix() + "&fCommande reservee aux joueurs."));
                 return true;
             }
             Player player = (Player) sender;
@@ -83,12 +83,12 @@ public class ArenaAdminCommand implements CommandExecutor, TabCompleter {
             }
             if (args[1].equalsIgnoreCase("pos1")) {
                 selection.setPos1(player.getLocation());
-                player.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.safe-pos1", "&fPosition 1 de la zone safe enregistree.")));
+                player.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.safe-pos1", "&fPosition 1 de la zone safe enregistree.")));
                 return true;
             }
             if (args[1].equalsIgnoreCase("pos2")) {
                 selection.setPos2(player.getLocation());
-                player.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.safe-pos2", "&fPosition 2 de la zone safe enregistree.")));
+                player.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.safe-pos2", "&fPosition 2 de la zone safe enregistree.")));
                 return true;
             }
             if (args[1].equalsIgnoreCase("create")) {
@@ -97,11 +97,11 @@ public class ArenaAdminCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 if (!selection.isComplete()) {
-                    player.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.no-safe-selection", "&fVeuillez definir &dpos1 &fet &dpos2 &favant de creer la zone.")));
+                    player.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.no-safe-selection", "&fVeuillez definir &dpos1 &fet &dpos2 &favant de creer la zone.")));
                     return true;
                 }
                 safeZoneService.create(args[2], selection.getPos1(), selection.getPos2());
-                player.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.safe-created", "&fLa zone safe &d%name% &fa ete creee.").replace("%name%", args[2])));
+                player.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.safe-created", "&fLa zone safe &d%name% &fa ete creee.").replace("%name%", args[2])));
                 return true;
             }
             if (args[1].equalsIgnoreCase("delete")) {
@@ -110,11 +110,11 @@ public class ArenaAdminCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 safeZoneService.delete(args[2]);
-                player.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.safe-deleted", "&fLa zone safe &d%name% &fa ete supprimee.").replace("%name%", args[2])));
+                player.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.safe-deleted", "&fLa zone safe &d%name% &fa ete supprimee.").replace("%name%", args[2])));
                 return true;
             }
             if (args[1].equalsIgnoreCase("list")) {
-                player.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.safe-list-header", "&fZones safe connues :")));
+                player.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.safe-list-header", "&fZones safe connues :")));
                 for (SafeZone zone : safeZoneService.getZones()) {
                     player.sendMessage(plugin.color(plugin.getConfig().getString("messages.safe-list-entry", "&8- &d%name%").replace("%name%", zone.getName())));
                 }
@@ -124,17 +124,17 @@ public class ArenaAdminCommand implements CommandExecutor, TabCompleter {
         if (args[0].equalsIgnoreCase("stats") && args.length >= 2) {
             Player target = Bukkit.getPlayerExact(args[1]);
             if (target == null) {
-                sender.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.unknown-player", "&fJoueur introuvable.")));
+                sender.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.unknown-player", "&fJoueur introuvable.")));
                 return true;
             }
             ArenaPlayerData data = playerDataService.get(target);
-            sender.sendMessage(plugin.color(plugin.prefix("arena") + "&f" + target.getName() + " &8| &fNiveau : &d" + data.getLevel() + " &8| &fKills : &d" + data.getKills() + " &8| &fMorts : &d" + data.getDeaths()));
+            sender.sendMessage(plugin.color(plugin.getPrefix() + "&f" + target.getName() + " &8| &fNiveau : &d" + data.getLevel() + " &8| &fKills : &d" + data.getKills() + " &8| &fMorts : &d" + data.getDeaths()));
             return true;
         }
         if (args[0].equalsIgnoreCase("pasteque") && args.length >= 4) {
             Player target = Bukkit.getPlayerExact(args[2]);
             if (target == null) {
-                sender.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.unknown-player", "&fJoueur introuvable.")));
+                sender.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.unknown-player", "&fJoueur introuvable.")));
                 return true;
             }
             double amount;
@@ -146,24 +146,24 @@ public class ArenaAdminCommand implements CommandExecutor, TabCompleter {
             }
             EconomyManager eco = plugin.getEconomyManager();
             if (args[1].equalsIgnoreCase("give")) {
-                eco.deposit(target.getUniqueId(), amount);
-                sender.sendMessage(plugin.color(plugin.prefix("arena") + "&f" + (int) amount + " Pasteque ajoutees a &d" + target.getName()));
+                eco.add(target.getUniqueId(), amount);
+                sender.sendMessage(plugin.color(plugin.getPrefix() + "&f" + (int) amount + " Pasteque ajoutees a &d" + target.getName()));
                 return true;
             }
             if (args[1].equalsIgnoreCase("take")) {
-                eco.withdraw(target.getUniqueId(), amount);
-                sender.sendMessage(plugin.color(plugin.prefix("arena") + "&f" + (int) amount + " Pasteque retirees a &d" + target.getName()));
+                eco.take(target.getUniqueId(), amount);
+                sender.sendMessage(plugin.color(plugin.getPrefix() + "&f" + (int) amount + " Pasteque retirees a &d" + target.getName()));
                 return true;
             }
             if (args[1].equalsIgnoreCase("set")) {
                 double current = eco.getBalance(target.getUniqueId());
                 double diff = amount - current;
                 if (diff > 0) {
-                    eco.deposit(target.getUniqueId(), diff);
+                    eco.add(target.getUniqueId(), diff);
                 } else if (diff < 0) {
-                    eco.withdraw(target.getUniqueId(), -diff);
+                    eco.take(target.getUniqueId(), -diff);
                 }
-                sender.sendMessage(plugin.color(plugin.prefix("arena") + "&fSolde fixe a &d" + (int) amount + " Pasteque &fpour &d" + target.getName()));
+                sender.sendMessage(plugin.color(plugin.getPrefix() + "&fSolde fixe a &d" + (int) amount + " Pasteque &fpour &d" + target.getName()));
                 return true;
             }
         }
@@ -172,7 +172,7 @@ public class ArenaAdminCommand implements CommandExecutor, TabCompleter {
     }
 
     private void sendHelp(CommandSender sender) {
-        sender.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.command-help-header", "&fCommandes disponibles :")));
+        sender.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.command-help-header", "&fCommandes disponibles :")));
         sendLine(sender, "/arenaadmin setspawn", "Definit le spawn d'arrivee de l'arene");
         sendLine(sender, "/arenaadmin safe pos1", "Definit la premiere position d'une zone safe");
         sendLine(sender, "/arenaadmin safe pos2", "Definit la seconde position d'une zone safe");

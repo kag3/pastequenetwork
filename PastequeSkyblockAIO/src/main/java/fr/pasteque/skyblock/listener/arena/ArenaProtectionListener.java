@@ -40,7 +40,7 @@ public class ArenaProtectionListener implements Listener {
             return;
         }
         event.setCancelled(true);
-        event.getPlayer().sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.no-build", "&fLa construction est fermee dans l'arene.")));
+        event.getPlayer().sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.no-build", "&fLa construction est fermee dans l'arene.")));
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -52,7 +52,7 @@ public class ArenaProtectionListener implements Listener {
             return;
         }
         event.setCancelled(true);
-        event.getPlayer().sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.no-break", "&fLa casse est fermee dans l'arene.")));
+        event.getPlayer().sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.no-break", "&fLa casse est fermee dans l'arene.")));
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -80,7 +80,7 @@ public class ArenaProtectionListener implements Listener {
             return;
         }
         event.setCancelled(true);
-        event.getPlayer().sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.no-command", "&fCette commande est desactivee ici. Passez au hub pour l'utiliser.")));
+        event.getPlayer().sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.no-command", "&fCette commande est desactivee ici. Passez au hub pour l'utiliser.")));
     }
 
     private boolean isAllowedInteraction(Material material) {

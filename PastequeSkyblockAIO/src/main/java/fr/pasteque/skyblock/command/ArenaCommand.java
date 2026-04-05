@@ -20,12 +20,12 @@ public class ArenaCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(plugin.color(plugin.prefix("arena") + "&fCommande reservee aux joueurs."));
+            sender.sendMessage(plugin.color(plugin.getPrefix() + "&fCommande reservee aux joueurs."));
             return true;
         }
         Player player = (Player) sender;
         arenaWorldService.sendToArena(player);
-        player.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.arena-teleport", "&fVous rejoignez l'arene &dskyblockarena&f.")));
+        player.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.arena-teleport", "&fVous rejoignez l'arene &dskyblockarena&f.")));
         return true;
     }
 }

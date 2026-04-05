@@ -16,16 +16,6 @@ public class EmptyChunkGenerator extends ChunkGenerator {
     }
 
     @Override
-    public short[][] generateExtBlockSections(World world, Random random, int chunkX, int chunkZ, BiomeGrid biome) {
-        return null;
-    }
-
-    @Override
-    public ChunkData generateChunkData(World world, Random random, int chunkX, int chunkZ, BiomeGrid biome) {
-        return createChunkData(world);
-    }
-
-    @Override
     public boolean canSpawn(World world, int x, int z) {
         return false;
     }

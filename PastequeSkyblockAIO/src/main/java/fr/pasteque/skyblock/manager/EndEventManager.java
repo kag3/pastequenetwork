@@ -3,7 +3,6 @@ package fr.pasteque.skyblock.manager;
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
 import fr.pasteque.skyblock.util.MessageUtil;
 import org.bukkit.*;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.ComplexEntityPart;
 import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Entity;
@@ -182,7 +181,12 @@ public class EndEventManager {
         dragon.setCustomNameVisible(true);
         try { dragon.setRemoveWhenFarAway(false); } catch (Throwable ignored) {}
         double maxHealth = plugin.getConfig().getDouble("end-event.dragon-health", 300.0D);
-        try { dragon.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(maxHealth); } catch (Throwable ignored) {}
+        try {
+            Class<?> attrClass = Class.forName("org.bukkit.attribute.Attribute");
+            Object genericMaxHealth = Enum.valueOf((Class<Enum>) attrClass, "GENERIC_MAX_HEALTH");
+            Object attrInstance = dragon.getClass().getMethod("getAttribute", attrClass).invoke(dragon, genericMaxHealth);
+            attrInstance.getClass().getMethod("setBaseValue", double.class).invoke(attrInstance, maxHealth);
+        } catch (Throwable ignored) {}
         try { dragon.setHealth(Math.min(maxHealth, dragon.getMaxHealth())); } catch (Throwable ignored) {}
         dragonId = dragon.getUniqueId();
     }

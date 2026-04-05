@@ -4,8 +4,6 @@ import fr.pasteque.skyblock.PastequeSkyblockPlugin;
 import fr.pasteque.skyblock.model.CoopIsland;
 import fr.pasteque.skyblock.util.LocationUtil;
 import fr.pasteque.skyblock.util.MessageUtil;
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -247,7 +245,17 @@ public class CoopManager {
         StringBuilder bar = new StringBuilder();
         for (int i = 0; i < 10; i++) bar.append(i < filled ? "\u00a7a\u25a0" : "\u00a78\u25a0");
         String msg = "\u00a7dCoop Island \u00a77\u00bb " + bar + " \u00a7f" + accepted + "/" + total + " \u00a77- \u00a7e" + pending.remaining() + " attente(s)";
-        owner.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(msg));
+        try {
+            Class<?> chatMessageTypeClass = Class.forName("net.md_5.bungee.api.ChatMessageType");
+            Object actionBar = Enum.valueOf((Class<Enum>) chatMessageTypeClass, "ACTION_BAR");
+            Class<?> textComponentClass = Class.forName("net.md_5.bungee.api.chat.TextComponent");
+            Class<?> baseComponentClass = Class.forName("net.md_5.bungee.api.chat.BaseComponent");
+            Object component = textComponentClass.getConstructor(String.class).newInstance(msg);
+            Object spigot = owner.getClass().getMethod("spigot").invoke(owner);
+            spigot.getClass().getMethod("sendMessage", chatMessageTypeClass, baseComponentClass).invoke(spigot, actionBar, component);
+        } catch (Throwable ignored) {
+            owner.sendMessage(msg);
+        }
     }
 
     public CoopIsland createIsland(UUID owner, List<UUID> additionalMembers) {

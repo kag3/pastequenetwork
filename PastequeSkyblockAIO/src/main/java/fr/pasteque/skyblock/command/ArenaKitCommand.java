@@ -20,7 +20,7 @@ public class ArenaKitCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(plugin.color(plugin.prefix("arena") + "&fCommande reservee aux joueurs."));
+            sender.sendMessage(plugin.color(plugin.getPrefix() + "&fCommande reservee aux joueurs."));
             return true;
         }
         arenaKitService.open((Player) sender);

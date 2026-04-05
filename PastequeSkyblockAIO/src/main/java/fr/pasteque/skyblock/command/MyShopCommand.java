@@ -130,8 +130,7 @@ public class MyShopCommand implements CommandExecutor, TabCompleter {
 
     @SuppressWarnings("deprecation")
     private Block getTarget(Player player) {
-        Set<Material> transparent = new HashSet<Material>();
-        return player.getTargetBlock(transparent, plugin.getConfig().getInt("shops.look-distance", 6));
+        return player.getTargetBlock((java.util.HashSet<Byte>) null, plugin.getConfig().getInt("shops.look-distance", 6));
     }
 
     @Override

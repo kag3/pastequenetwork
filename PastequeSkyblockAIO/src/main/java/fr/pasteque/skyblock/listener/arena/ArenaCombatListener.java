@@ -51,7 +51,7 @@ public class ArenaCombatListener implements Listener {
         }
         if (safeZoneService.isSafe(victim.getLocation()) || safeZoneService.isSafe(attacker.getLocation())) {
             event.setCancelled(true);
-            attacker.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.no-pvp-safe", "&fLe combat n'est pas autorise dans cette zone.")));
+            attacker.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.no-pvp-safe", "&fLe combat n'est pas autorise dans cette zone.")));
             return;
         }
         combatTagService.tag(attacker, victim);
@@ -75,10 +75,10 @@ public class ArenaCombatListener implements Listener {
             double victimBalance = eco.getBalance(victim.getUniqueId());
             double stolen = Math.floor(victimBalance * plugin.getConfig().getDouble("pvp-pasteque-steal-percent", 0.10D));
             if (stolen > 0) {
-                eco.withdraw(victim.getUniqueId(), stolen);
-                eco.deposit(killer.getUniqueId(), stolen);
+                eco.take(victim.getUniqueId(), stolen);
+                eco.add(killer.getUniqueId(), stolen);
             }
-            String message = plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.kill-message", "&d%victim% &fa ete terrasse par &5%killer%&f.")
+            String message = plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.kill-message", "&d%victim% &fa ete terrasse par &5%killer%&f.")
                     .replace("%victim%", victim.getName())
                     .replace("%killer%", killer.getName()));
             for (Player online : Bukkit.getOnlinePlayers()) {

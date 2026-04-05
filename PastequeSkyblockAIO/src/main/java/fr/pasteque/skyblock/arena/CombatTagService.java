@@ -33,7 +33,7 @@ public class CombatTagService {
     private void applyTag(Player player, int seconds) {
         Integer old = combatSeconds.put(player.getUniqueId(), seconds);
         if (old == null || old <= 0) {
-            player.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.combat-enter", "&fMode combat active. Ne vous deconnectez pas pendant &d%seconds%s&f.").replace("%seconds%", String.valueOf(seconds))));
+            player.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.combat-enter", "&fMode combat active. Ne vous deconnectez pas pendant &d%seconds%s&f.").replace("%seconds%", String.valueOf(seconds))));
         }
     }
 
@@ -50,7 +50,7 @@ public class CombatTagService {
             if (next <= 0) {
                 Player player = Bukkit.getPlayer(entry.getKey());
                 if (player != null && player.isOnline()) {
-                    player.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.combat-leave", "&fMode combat termine. Vous pouvez souffler un peu.")));
+                    player.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.combat-leave", "&fMode combat termine. Vous pouvez souffler un peu.")));
                 }
                 iterator.remove();
             } else {
@@ -67,7 +67,7 @@ public class CombatTagService {
         ArenaPlayerData data = playerDataService.get(player);
         data.setPendingCombatPenalty(true);
         data.setPendingPenaltyAmount(amount);
-        plugin.getEconomyManager().withdraw(player.getUniqueId(), amount);
+        plugin.getEconomyManager().take(player.getUniqueId(), amount);
         player.getInventory().clear();
         player.getInventory().setArmorContents(new ItemStack[4]);
         combatSeconds.remove(player.getUniqueId());
@@ -78,7 +78,7 @@ public class CombatTagService {
         if (!data.isPendingCombatPenalty()) {
             return;
         }
-        player.sendMessage(plugin.color(plugin.prefix("arena") + plugin.getConfig().getString("messages.combat-penalty-notice", "&fLors de votre derniere deconnexion en combat, vous avez perdu &d%amount% Pasteque &fet votre inventaire a ete vide.").replace("%amount%", String.valueOf((int) data.getPendingPenaltyAmount()))));
+        player.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.combat-penalty-notice", "&fLors de votre derniere deconnexion en combat, vous avez perdu &d%amount% Pasteque &fet votre inventaire a ete vide.").replace("%amount%", String.valueOf((int) data.getPendingPenaltyAmount()))));
         data.setPendingCombatPenalty(false);
         data.setPendingPenaltyAmount(0.0D);
     }
