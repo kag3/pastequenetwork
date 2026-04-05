@@ -3,15 +3,22 @@ package fr.pasteque.skyblock.minion;
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
 import fr.pasteque.skyblock.minion.model.MinionType;
 import fr.pasteque.skyblock.minion.model.PlacedMinion;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.List;
 
@@ -157,5 +164,80 @@ public class MinionListener implements Listener {
     @EventHandler
     public void onChunkLoad(ChunkLoadEvent event) {
         minionManager.respawnMinionsInChunk(event.getChunk());
+    }
+
+    // ── Minion Shop GUI click ─────────────────────────────────────────────
+
+    @EventHandler(ignoreCancelled = true)
+    public void onShopClick(InventoryClickEvent event) {
+        if (event.getInventory() == null || !(event.getWhoClicked() instanceof Player)) return;
+        String title = event.getInventory().getTitle();
+        if (title == null || !title.equals(MinionShopGui.TITLE)) return;
+        event.setCancelled(true);
+        Player player = (Player) event.getWhoClicked();
+        ItemStack clicked = event.getCurrentItem();
+        if (clicked == null || clicked.getType() == Material.AIR) return;
+
+        // Close button
+        if (clicked.getType() == Material.REDSTONE_BLOCK) {
+            player.closeInventory();
+            return;
+        }
+
+        MinionType type = MinionShopGui.extractType(clicked);
+        if (type == null) return;
+
+        double price = MinionShopGui.getPrice(type);
+        if (!minionManager.getPlugin().getEconomyManager().take(player.getUniqueId(), price)) {
+            player.sendMessage(PastequeSkyblockPlugin.color(
+                    "&cVous n'avez pas assez de " + minionManager.getPlugin().getEconomyManager().getCurrencyName() + " !"));
+            return;
+        }
+        minionManager.getPlugin().getEconomyManager().save();
+
+        // Give player the minion item
+        ItemStack item = MinionShopGui.createMinionItem(type);
+        player.getInventory().addItem(item);
+        player.sendMessage(PastequeSkyblockPlugin.color(
+                "&6&l>> &aVous avez achete un &e" + type.getDisplayName() + " &apour &6" + ((long) price) + " Pasteque &a!"));
+        player.sendMessage(PastequeSkyblockPlugin.color(
+                "&7Faites un clic droit au sol avec l'oeuf pour le poser sur votre ile."));
+    }
+
+    // ── Place minion via item ─────────────────────────────────────────────
+
+    @EventHandler(ignoreCancelled = true)
+    public void onMinionItemInteract(PlayerInteractEvent event) {
+        if (event.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) return;
+        ItemStack item = event.getItem();
+        if (item == null || item.getType() != Material.MONSTER_EGG) return;
+        MinionType type = extractMinionTypeFromItem(item);
+        if (type == null) return;
+        event.setCancelled(true);
+        Block clicked = event.getClickedBlock();
+        if (clicked == null) return;
+        Location spawnLoc = clicked.getRelative(event.getBlockFace()).getLocation().add(0.5, 0, 0.5);
+        Player player = event.getPlayer();
+        if (minionManager.placeMinion(player, type, spawnLoc)) {
+            if (item.getAmount() > 1) {
+                item.setAmount(item.getAmount() - 1);
+            } else {
+                player.setItemInHand(new ItemStack(Material.AIR));
+            }
+        }
+    }
+
+    private MinionType extractMinionTypeFromItem(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) return null;
+        ItemMeta meta = item.getItemMeta();
+        if (!meta.hasLore()) return null;
+        for (String line : meta.getLore()) {
+            String stripped = ChatColor.stripColor(line);
+            if (stripped == null) continue;
+            for (MinionType t : MinionType.values()) {
+                if (stripped.equals(t.name())) return t;
+            }
+        }
+        return null;
     }
 }

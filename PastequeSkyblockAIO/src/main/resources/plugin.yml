@@ -86,6 +86,19 @@ commands:
   elo:
     description: Classement ELO
     aliases: [rank, classement]
+  koth:
+    description: Rejoindre le KOTH en cours
+  npc:
+    description: Gestion des NPCs (admin)
+  minions:
+    description: Ouvrir la boutique de minions
+    aliases: [minionshop]
+  top:
+    description: Classements (money/elo/ile) avec hologrammes
+    aliases: [leaderboard, classements]
+  dailychest:
+    description: Donner un coffre de recompense quotidienne (admin)
+    aliases: [dailyreward]
 
 permissions:
   pastequeskyblock.admin:

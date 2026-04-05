@@ -152,6 +152,11 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     /* ── Anti-cheat ── */
     private fr.pasteque.skyblock.anticheat.AntiCheatManager antiCheatManager;
 
+    /* ── NPC, Leaderboards, DailyReward ── */
+    private fr.pasteque.skyblock.npc.NpcManager npcManager;
+    private fr.pasteque.skyblock.leaderboard.LeaderboardManager leaderboardManager;
+    private fr.pasteque.skyblock.daily.DailyRewardManager dailyRewardManager;
+
     /* ── Island chat toggles (persisted) ── */
     private final Map<UUID, Boolean> islandChatToggles = new HashMap<UUID, Boolean>();
 
@@ -190,11 +195,23 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         /* ── Multi-event registry ── */
         this.eventManager = new fr.pasteque.skyblock.serverevent.EventManager(this);
         eventManager.register(new fr.pasteque.skyblock.serverevent.MeteorShowerEvent(this));
-        eventManager.register(new fr.pasteque.skyblock.serverevent.KingOfTheHillEvent(this));
+        fr.pasteque.skyblock.serverevent.KingOfTheHillEvent kothEvent =
+                new fr.pasteque.skyblock.serverevent.KingOfTheHillEvent(this);
+        eventManager.register(kothEvent);
         eventManager.register(new fr.pasteque.skyblock.serverevent.TreasureHuntEvent(this));
+        // Build KOTH world/arena once at startup
+        kothEvent.initializeWorld();
 
         /* ── Anti-cheat ── */
         this.antiCheatManager = new fr.pasteque.skyblock.anticheat.AntiCheatManager(this);
+
+        /* ── NPC / Leaderboard / DailyReward init ── */
+        this.npcManager = new fr.pasteque.skyblock.npc.NpcManager(this);
+        this.npcManager.load();
+        this.leaderboardManager = new fr.pasteque.skyblock.leaderboard.LeaderboardManager(this);
+        this.leaderboardManager.load();
+        this.dailyRewardManager = new fr.pasteque.skyblock.daily.DailyRewardManager(this);
+        this.dailyRewardManager.load();
 
         /* ── PastequeGuard init ── */
         this.sanctionService = new SanctionService(this);
@@ -330,6 +347,9 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
 
         /* ── Auto announcements (every 5 minutes) ── */
         announcementManager.startAutoAnnouncements();
+
+        /* ── Leaderboard hologram auto-refresh (30s) ── */
+        leaderboardManager.startAutoRefresh();
     }
 
     @Override
@@ -397,6 +417,11 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         /* PastequeSkyBlockArena save */
         safeZoneService.save();
         playerDataService.save();
+
+        /* NPC / Leaderboard / DailyReward save */
+        if (npcManager != null) npcManager.save();
+        if (leaderboardManager != null) leaderboardManager.save();
+        if (dailyRewardManager != null) dailyRewardManager.save();
     }
 
     // =========================================================================
@@ -421,6 +446,11 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         getCommand("endevent").setExecutor(new EndEventCommand(this));
         getCommand("aend").setExecutor(new EndEventCommand(this));
         getCommand("aevent").setExecutor(new ServerEventCommand(this));
+        getCommand("koth").setExecutor(new KothCommand(this));
+        getCommand("npc").setExecutor(new NpcCommand(this, npcManager));
+        getCommand("minions").setExecutor(new MinionsCommand(this));
+        getCommand("top").setExecutor(new TopCommand(this, leaderboardManager));
+        getCommand("dailychest").setExecutor(new DailyChestCommand(this, dailyRewardManager));
     }
 
     private void registerGuardCommands() {
@@ -525,6 +555,8 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         registerEvents(new EndEventListener(this));
         registerEvents(new fr.pasteque.skyblock.serverevent.ServerEventListener(this, eventManager));
         registerEvents(new fr.pasteque.skyblock.anticheat.AntiCheatListener(this, antiCheatManager));
+        registerEvents(new fr.pasteque.skyblock.npc.NpcListener(this, npcManager));
+        registerEvents(new fr.pasteque.skyblock.daily.DailyRewardListener(this, dailyRewardManager));
     }
 
     private void registerGuardListeners() {
@@ -676,6 +708,9 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     public DataFile getDataFile() { return dataFile; }
     public fr.pasteque.skyblock.serverevent.EventManager getEventManager() { return eventManager; }
     public fr.pasteque.skyblock.anticheat.AntiCheatManager getAntiCheatManager() { return antiCheatManager; }
+    public fr.pasteque.skyblock.npc.NpcManager getNpcManager() { return npcManager; }
+    public fr.pasteque.skyblock.leaderboard.LeaderboardManager getLeaderboardManager() { return leaderboardManager; }
+    public fr.pasteque.skyblock.daily.DailyRewardManager getDailyRewardManager() { return dailyRewardManager; }
 
     // =========================================================================
     //  PastequeGuard getters
