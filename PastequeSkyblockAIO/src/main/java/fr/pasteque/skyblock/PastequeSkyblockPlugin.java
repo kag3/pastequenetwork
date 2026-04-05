@@ -487,4 +487,11 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     // =========================================================================
 
     public CombatPassManager getCombatPassManager() { return combatPassManager; }
+
+    // =========================================================================
+    //  GUI getters
+    // =========================================================================
+
+    public ScoreboardManager getScoreboardManager() { return scoreboardManager; }
+    public TabListManager getTabListManager() { return tabListManager; }
 }

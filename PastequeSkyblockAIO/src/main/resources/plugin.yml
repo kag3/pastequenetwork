@@ -55,6 +55,11 @@ commands:
   menu:
     description: Ouvrir le menu principal
     aliases: [mainmenu]
+  isupgrade:
+    description: Ameliorations d'ile
+    aliases: [isup]
+  iswarp:
+    description: Warps d'ile
 
 permissions:
   pastequeskyblock.admin:
