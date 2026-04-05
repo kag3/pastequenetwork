@@ -30,6 +30,8 @@ commands:
     description: Evenement End Dragon
   aend:
     description: Admin End Event
+  aevent:
+    description: Admin multi-event system (meteor, koth, treasure)
   psky:
     description: Admin skyblock
   pg:

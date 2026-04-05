@@ -146,6 +146,12 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     /* ── Old PvP 1.8 ── */
     private OldPvPListener oldPvPListener;
 
+    /* ── Multi-event system ── */
+    private fr.pasteque.skyblock.serverevent.EventManager eventManager;
+
+    /* ── Anti-cheat ── */
+    private fr.pasteque.skyblock.anticheat.AntiCheatManager antiCheatManager;
+
     /* ── Island chat toggles (persisted) ── */
     private final Map<UUID, Boolean> islandChatToggles = new HashMap<UUID, Boolean>();
 
@@ -180,6 +186,15 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         this.combatManager = new CombatManager(this);
         this.invasionManager = new InvasionManager(this);
         this.endEventManager = new EndEventManager(this);
+
+        /* ── Multi-event registry ── */
+        this.eventManager = new fr.pasteque.skyblock.serverevent.EventManager(this);
+        eventManager.register(new fr.pasteque.skyblock.serverevent.MeteorShowerEvent(this));
+        eventManager.register(new fr.pasteque.skyblock.serverevent.KingOfTheHillEvent(this));
+        eventManager.register(new fr.pasteque.skyblock.serverevent.TreasureHuntEvent(this));
+
+        /* ── Anti-cheat ── */
+        this.antiCheatManager = new fr.pasteque.skyblock.anticheat.AntiCheatManager(this);
 
         /* ── PastequeGuard init ── */
         this.sanctionService = new SanctionService(this);
@@ -405,6 +420,7 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         getCommand("pvpwarp").setExecutor(new PvpWarpCommand(this));
         getCommand("endevent").setExecutor(new EndEventCommand(this));
         getCommand("aend").setExecutor(new EndEventCommand(this));
+        getCommand("aevent").setExecutor(new ServerEventCommand(this));
     }
 
     private void registerGuardCommands() {
@@ -507,6 +523,8 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         registerEvents(new EmbassyListener(this));
         registerEvents(new MiscServerListener(this));
         registerEvents(new EndEventListener(this));
+        registerEvents(new fr.pasteque.skyblock.serverevent.ServerEventListener(this, eventManager));
+        registerEvents(new fr.pasteque.skyblock.anticheat.AntiCheatListener(this, antiCheatManager));
     }
 
     private void registerGuardListeners() {
@@ -656,6 +674,8 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     public InvasionManager getInvasionManager() { return invasionManager; }
     public EndEventManager getEndEventManager() { return endEventManager; }
     public DataFile getDataFile() { return dataFile; }
+    public fr.pasteque.skyblock.serverevent.EventManager getEventManager() { return eventManager; }
+    public fr.pasteque.skyblock.anticheat.AntiCheatManager getAntiCheatManager() { return antiCheatManager; }
 
     // =========================================================================
     //  PastequeGuard getters

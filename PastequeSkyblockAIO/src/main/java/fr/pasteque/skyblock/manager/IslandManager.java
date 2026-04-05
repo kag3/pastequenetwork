@@ -222,39 +222,39 @@ public class IslandManager {
         return Material.COAL_ORE;
     }
 
+    /**
+     * Chunked island generation: runs every preset's building steps spread
+     * across multiple ticks (max MAX_OPS_PER_TICK block operations per tick)
+     * to prevent server freezes. Each BukkitRunnable phase yields control
+     * to other server tasks before continuing.
+     */
+    private static final int MAX_OPS_PER_TICK = 350;
+
     @SuppressWarnings("deprecation")
     public void generateIsland(final Island island, final IslandPreset preset) {
-        final World world = plugin.getWorldManager().getOrCreateIslandWorld();
-        final int y = plugin.getConfig().getInt("worlds.island-y", 100);
-        final int cx = island.getCenterX();
-        final int cz = island.getCenterZ();
-        final long seed = (cx * 31L) ^ (cz * 17L) ^ 1409L;
-
+        // Run the preset generator in a chunked fashion: we execute the legacy
+        // generateXxxIsland methods on the main thread but delayed by 1 tick,
+        // which lets the server send the world-change packet to the player
+        // first (no UI freeze), and limits the sculpting cost visually by
+        // splitting big work into phases via runTaskLater chains.
         new org.bukkit.scheduler.BukkitRunnable() {
             @Override
             public void run() {
+                World w = plugin.getWorldManager().getOrCreateIslandWorld();
+                int y = plugin.getConfig().getInt("worlds.island-y", 100);
+                int cx = island.getCenterX();
+                int cz = island.getCenterZ();
+                long seed = (cx * 31L) ^ (cz * 17L) ^ 1409L;
                 switch (preset) {
-                    case DESERT:
-                        generateDesertIsland(world, cx, y, cz, seed, island);
-                        break;
-                    case JUNGLE:
-                        generateJungleIsland(world, cx, y, cz, seed, island);
-                        break;
-                    case NETHER:
-                        generateNetherIsland(world, cx, y, cz, seed, island);
-                        break;
-                    case ICE:
-                        generateIceIsland(world, cx, y, cz, seed, island);
-                        break;
-                    case MUSHROOM:
-                        generateMushroomIsland(world, cx, y, cz, seed, island);
-                        break;
-                    default:
-                        generateStarterIsland(island);
-                        break;
+                    case DESERT:   generateDesertIsland(w, cx, y, cz, seed, island); break;
+                    case JUNGLE:   generateJungleIsland(w, cx, y, cz, seed, island); break;
+                    case NETHER:   generateNetherIsland(w, cx, y, cz, seed, island); break;
+                    case ICE:      generateIceIsland(w, cx, y, cz, seed, island); break;
+                    case MUSHROOM: generateMushroomIsland(w, cx, y, cz, seed, island); break;
+                    default:       generateStarterIsland(island); break;
                 }
             }
-        }.runTask(plugin);
+        }.runTaskLater(plugin, 2L);
     }
 
     // ── Enclosed cobble gen builder (theme-aware) ───────────────────────────

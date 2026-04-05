@@ -22,6 +22,7 @@ public class ArenaWorldService {
     private final PastequeSkyblockPlugin plugin;
     private final Map<UUID, GameMode> previousGamemodes = new HashMap<UUID, GameMode>();
     private World arenaWorld;
+    private World duelWorld;
 
     private int nextMatchId = 1;
     private final Random random = new Random();
@@ -44,6 +45,39 @@ public class ArenaWorldService {
         }
         this.arenaWorld = world;
         applyWorldRules(world);
+
+        // Dedicated duel world (isolated from general arena, zero corruption)
+        String duelWorldName = plugin.getConfig().getString("duel-world-name", "skyblockduels");
+        World dWorld = plugin.getServer().getWorld(duelWorldName);
+        if (dWorld == null) {
+            WorldCreator dCreator = new WorldCreator(duelWorldName);
+            dCreator.type(WorldType.NORMAL);
+            dCreator.generator(new EmptyChunkGenerator());
+            dWorld = dCreator.createWorld();
+        }
+        if (dWorld != null) {
+            this.duelWorld = dWorld;
+            dWorld.setStorm(false);
+            dWorld.setThundering(false);
+            dWorld.setWeatherDuration(Integer.MAX_VALUE);
+            dWorld.setDifficulty(Difficulty.PEACEFUL);
+            dWorld.setPVP(true);
+            dWorld.setGameRuleValue("doMobSpawning", "false");
+            dWorld.setGameRuleValue("doFireTick", "false");
+            dWorld.setGameRuleValue("mobGriefing", "false");
+            dWorld.setGameRuleValue("doDaylightCycle", "false");
+            dWorld.setGameRuleValue("doWeatherCycle", "false");
+            dWorld.setGameRuleValue("naturalRegeneration", "true");
+            dWorld.setSpawnLocation(0, 80, 0);
+        }
+    }
+
+    public World getDuelWorld() {
+        return duelWorld;
+    }
+
+    public boolean isDuelWorld(World world) {
+        return duelWorld != null && world != null && duelWorld.getName().equalsIgnoreCase(world.getName());
     }
 
     private void applyWorldRules(World world) {
@@ -125,10 +159,11 @@ public class ArenaWorldService {
     }
 
     /**
-     * Returns the center Location for a given match arena.
+     * Returns the center Location for a given match arena (in the DEDICATED duel world).
      */
     public Location getMatchCenter(int matchId) {
-        return new Location(arenaWorld, matchId * 200, 80, 0);
+        World w = duelWorld != null ? duelWorld : arenaWorld;
+        return new Location(w, matchId * 200, 80, 0);
     }
 
     /**
@@ -454,15 +489,17 @@ public class ArenaWorldService {
     // =========================================================================
 
     private void setBlock(int x, int y, int z, Material material) {
-        if (arenaWorld == null) return;
-        Block block = arenaWorld.getBlockAt(x, y, z);
+        World w = duelWorld != null ? duelWorld : arenaWorld;
+        if (w == null) return;
+        Block block = w.getBlockAt(x, y, z);
         block.setType(material);
     }
 
     @SuppressWarnings("deprecation")
     private void setBlockWithData(int x, int y, int z, Material material, byte data) {
-        if (arenaWorld == null) return;
-        Block block = arenaWorld.getBlockAt(x, y, z);
+        World w = duelWorld != null ? duelWorld : arenaWorld;
+        if (w == null) return;
+        Block block = w.getBlockAt(x, y, z);
         block.setType(material);
         block.setData(data);
     }
