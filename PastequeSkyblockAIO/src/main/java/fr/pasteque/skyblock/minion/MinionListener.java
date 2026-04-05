@@ -84,8 +84,20 @@ public class MinionListener implements Listener {
             return;
         }
 
-        // Collect button (slot 11)
-        if (slot == 11) {
+        // Back button (slot 18)
+        if (slot == 18) {
+            player.closeInventory();
+            return;
+        }
+
+        // Close button (slot 26)
+        if (slot == 26) {
+            player.closeInventory();
+            return;
+        }
+
+        // Collect button (slot 12)
+        if (slot == 12) {
             if (targetMinion.getStorageCount() == 0) {
                 player.sendMessage(PastequeSkyblockPlugin.color("&cLe stockage du minion est vide !"));
                 return;
@@ -96,8 +108,8 @@ public class MinionListener implements Listener {
             return;
         }
 
-        // Upgrade button (slot 15)
-        if (slot == 15) {
+        // Upgrade button (slot 14)
+        if (slot == 14) {
             if (targetMinion.getLevel() >= 5) {
                 player.sendMessage(PastequeSkyblockPlugin.color("&cCe minion est deja au niveau maximum !"));
                 return;

@@ -32,8 +32,14 @@ public class PetListener implements Listener {
         UUID uuid = player.getUniqueId();
         int slot = event.getRawSlot();
 
-        // Map slots to pet types
-        int[] slots = {10, 11, 12, 13, 14, 15, 16, 19};
+        // Close button (slot 49) or back button (slot 45)
+        if (slot == 49 || slot == 45) {
+            player.closeInventory();
+            return;
+        }
+
+        // Map slots to pet types (matching PetManager.openPetGui layout)
+        int[] slots = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25};
         PetType[] types = PetType.values();
         PetType clickedType = null;
         for (int i = 0; i < slots.length && i < types.length; i++) {

@@ -46,11 +46,11 @@ public class CombatPassListener implements Listener {
         if (slot < 0 || slot >= 54) return;
 
         int page = CombatPassGui.pageFromTitle(title);
-        int startTier = page * 9 + 1;
+        int startTier = page * 7 + 1; // 7 tiers per page
 
-        // Row 1 (slots 9-17): click on free tier to claim
-        if (slot >= 9 && slot <= 17) {
-            int tier = startTier + (slot - 9);
+        // Row 1 (slots 10-16): click on free tier to claim
+        if (slot >= 10 && slot <= 16) {
+            int tier = startTier + (slot - 10);
             if (tier >= 1 && tier <= 30) {
                 manager.claimReward(player, tier, false);
                 CombatPassGui.open(manager, player, page);
@@ -58,9 +58,9 @@ public class CombatPassListener implements Listener {
             return;
         }
 
-        // Row 3 (slots 27-35): click on premium tier to claim
-        if (slot >= 27 && slot <= 35) {
-            int tier = startTier + (slot - 27);
+        // Row 3 (slots 28-34): click on premium tier to claim
+        if (slot >= 28 && slot <= 34) {
+            int tier = startTier + (slot - 28);
             if (tier >= 1 && tier <= 30) {
                 manager.claimReward(player, tier, true);
                 CombatPassGui.open(manager, player, page);
@@ -68,9 +68,9 @@ public class CombatPassListener implements Listener {
             return;
         }
 
-        // Row 4 (slots 36-44): claim buttons - try both free and premium
-        if (slot >= 36 && slot <= 44) {
-            int tier = startTier + (slot - 36);
+        // Row 4 (slots 37-43): claim buttons - try both free and premium
+        if (slot >= 37 && slot <= 43) {
+            int tier = startTier + (slot - 37);
             if (tier >= 1 && tier <= 30) {
                 PlayerPassData data = manager.getData(player.getUniqueId());
                 int freeKey = tier;
@@ -98,8 +98,8 @@ public class CombatPassListener implements Listener {
             return;
         }
 
-        // Slot 51: buy premium
-        if (slot == 51) {
+        // Slot 47: buy premium
+        if (slot == 47) {
             PlayerPassData data = manager.getData(player.getUniqueId());
             if (!data.isPremium()) {
                 double price = 25000;

@@ -26,8 +26,7 @@ public class GuardPanelListener implements Listener {
             return;
         }
         String title = event.getView().getTitle();
-        String expectedTitle = plugin.color(plugin.getConfig().getString("reports.gui-title", "&dPastequeGuard &f• &dSignalements"));
-        if (!title.equals(expectedTitle)) {
+        if (!title.equals(GuardPanelGui.GUI_TITLE)) {
             return;
         }
         event.setCancelled(true);
@@ -35,6 +34,12 @@ public class GuardPanelListener implements Listener {
             return;
         }
         Player player = (Player) event.getWhoClicked();
+        // Close button (slot 49)
+        if (event.getRawSlot() == 49) {
+            player.closeInventory();
+            return;
+        }
+
         if (event.getCurrentItem() == null || event.getCurrentItem().getType() == Material.AIR || !event.getCurrentItem().hasItemMeta()) {
             return;
         }

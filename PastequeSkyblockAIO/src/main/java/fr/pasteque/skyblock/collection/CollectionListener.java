@@ -125,7 +125,7 @@ public class CollectionListener implements Listener {
         if (CollectionManager.MAIN_TITLE.equals(title)) {
             event.setCancelled(true);
             int slot = event.getRawSlot();
-            int[] catSlots = {10, 11, 12, 13, 14};
+            int[] catSlots = {11, 12, 13, 14, 15};
             CollectionCategory[] categories = CollectionCategory.values();
             for (int i = 0; i < catSlots.length && i < categories.length; i++) {
                 if (slot == catSlots[i]) {
@@ -142,8 +142,14 @@ public class CollectionListener implements Listener {
             int slot = event.getRawSlot();
             int size = event.getInventory().getSize();
 
-            // Back button
-            if (slot == size - 5) {
+            // Close button (last slot)
+            if (slot == size - 1) {
+                player.closeInventory();
+                return;
+            }
+
+            // Back button (size - 9)
+            if (slot == size - 9) {
                 collectionManager.openCollectionGui(player);
                 return;
             }

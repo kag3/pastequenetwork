@@ -27,7 +27,7 @@ public class PSkyAdminCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player)) { sender.sendMessage("Commande joueur uniquement."); return true; }
+        if (!(sender instanceof Player)) { sender.sendMessage(PastequeSkyblockPlugin.color("&2&lPasteque &8\u00bb &cCommande joueur uniquement.")); return true; }
         Player player = (Player) sender;
         if (!player.hasPermission("pastequeskyblock.admin")) { MessageUtil.send(player, plugin.getPrefix(), "&fCommande admin."); return true; }
         if (args.length == 0) { openAdminMenu(player); return true; }

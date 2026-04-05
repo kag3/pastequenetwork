@@ -84,8 +84,20 @@ public class SlayerListener implements Listener {
                 return;
             }
 
-            // Slots 11-15 map to slayer types
             int slot = event.getRawSlot();
+
+            // Back button (slot 36)
+            if (slot == 36) {
+                player.closeInventory();
+                return;
+            }
+            // Close button (slot 44)
+            if (slot == 44) {
+                player.closeInventory();
+                return;
+            }
+
+            // Slots 11-15 map to slayer types
             if (slot >= 11 && slot <= 15) {
                 int index = slot - 11;
                 SlayerType[] types = SlayerType.values();
@@ -110,10 +122,15 @@ public class SlayerListener implements Listener {
 
             int slot = event.getRawSlot();
 
-            // Back button
-            if (slot == 22 && event.getCurrentItem().getType() == Material.ARROW) {
-                player.closeInventory();
+            // Back button (slot 18)
+            if (slot == 18 && event.getCurrentItem().getType() == Material.ARROW) {
                 manager.openSlayerGui(player);
+                return;
+            }
+
+            // Close button (slot 26)
+            if (slot == 26) {
+                player.closeInventory();
                 return;
             }
 
@@ -121,10 +138,10 @@ public class SlayerListener implements Listener {
             if (slot >= 11 && slot <= 15) {
                 int tier = slot - 10;
                 // Find which slayer type from title
-                String typeName = title.substring(tierPrefix.length());
+                String typeName = org.bukkit.ChatColor.stripColor(title.substring(tierPrefix.length()));
                 SlayerType type = null;
                 for (SlayerType st : SlayerType.values()) {
-                    if (typeName.equals(st.getDisplayName())) {
+                    if (typeName.equals(st.getDisplayName()) || typeName.contains(st.getDisplayName())) {
                         type = st;
                         break;
                     }

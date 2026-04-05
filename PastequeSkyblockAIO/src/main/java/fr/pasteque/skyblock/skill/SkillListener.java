@@ -119,6 +119,10 @@ public class SkillListener implements Listener {
         }
         if (SkillGui.TITLE.equals(event.getInventory().getTitle())) {
             event.setCancelled(true);
+            // Back button at slot 27
+            if (event.getWhoClicked() instanceof Player && event.getRawSlot() == 27) {
+                event.getWhoClicked().closeInventory();
+            }
         }
     }
 }

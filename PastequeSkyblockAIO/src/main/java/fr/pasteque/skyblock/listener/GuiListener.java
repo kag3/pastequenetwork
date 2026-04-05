@@ -35,6 +35,25 @@ public class GuiListener implements Listener {
         String title = event.getInventory().getTitle();
         String plainTitle = title == null ? "" : ChatColor.stripColor(title);
 
+        // Universal close button handler for all Pasteque GUIs
+        if (plainTitle.startsWith("Pasteque")) {
+            Material clickedType = event.getCurrentItem().getType();
+            // Close button (REDSTONE_BLOCK at slot 49 or anywhere)
+            if (clickedType == Material.REDSTONE_BLOCK) {
+                event.setCancelled(true);
+                player.closeInventory();
+                return;
+            }
+            // Back button (ARROW) - close current GUI
+            if (clickedType == Material.ARROW && event.getCurrentItem().hasItemMeta()
+                    && event.getCurrentItem().getItemMeta().getDisplayName() != null
+                    && ChatColor.stripColor(event.getCurrentItem().getItemMeta().getDisplayName()).contains("Retour")) {
+                event.setCancelled(true);
+                player.closeInventory();
+                return;
+            }
+        }
+
         if (plainTitle.contains("Pasteque Skyblock")) {
             event.setCancelled(true);
             Material type = event.getCurrentItem().getType();
@@ -87,8 +106,8 @@ public class GuiListener implements Listener {
             Material type = event.getCurrentItem().getType();
             if (type == Material.COMPASS) player.performCommand("psky islands");
             else if (type == Material.CHEST) player.performCommand("psky hdv list");
-            else if (type == Material.IRON_SWORD) player.sendMessage(ChatColor.GRAY + "PvP: /psky pvp pos1, /psky pvp pos2, /psky pvp create <nom>, /psky pvp delete <nom>");
-            else if (type == Material.NETHER_STAR) player.sendMessage(ChatColor.GRAY + "Commande: /psky setpvpwarp");
+            else if (type == Material.IRON_SWORD) player.sendMessage(PastequeSkyblockPlugin.color("&2&lPasteque &8\u00bb &7PvP: &f/psky pvp pos1, pos2, create, delete"));
+            else if (type == Material.NETHER_STAR) player.sendMessage(PastequeSkyblockPlugin.color("&2&lPasteque &8\u00bb &7Commande: &f/psky setpvpwarp"));
             else if (type == Material.MONSTER_EGG) player.performCommand("psky events invasion");
             return;
         }
