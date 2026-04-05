@@ -261,7 +261,7 @@ public class PetManager {
 
             Material iconMat = Material.matchMaterial(type.getIconMaterial());
             if (iconMat == null) {
-                iconMat = Material.BARRIER;
+                iconMat = Material.BEDROCK;
             }
 
             ItemStack item;

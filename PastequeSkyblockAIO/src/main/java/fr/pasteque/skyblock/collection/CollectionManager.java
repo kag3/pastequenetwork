@@ -194,7 +194,7 @@ public class CollectionManager {
             CollectionCategory cat = categories[i];
             Material iconMat = Material.matchMaterial(cat.getIcon());
             if (iconMat == null) {
-                iconMat = Material.BARRIER;
+                iconMat = Material.BEDROCK;
             }
             ItemStack item = new ItemStack(iconMat);
             ItemMeta meta = item.getItemMeta();
@@ -266,7 +266,7 @@ public class CollectionManager {
             }
             Material iconMat = Material.matchMaterial(entry.getMaterial());
             if (iconMat == null) {
-                iconMat = Material.BARRIER;
+                iconMat = Material.BEDROCK;
             }
             ItemStack item = new ItemStack(iconMat);
             ItemMeta meta = item.getItemMeta();

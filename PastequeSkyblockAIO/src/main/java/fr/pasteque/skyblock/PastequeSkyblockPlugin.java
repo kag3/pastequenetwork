@@ -396,6 +396,18 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         bind("pet", new PetCommand(petManager));
     }
 
+    private void registerDarkAuctionCommands() {
+        bind("darkauction", new DarkAuctionCommand(this, darkAuctionManager));
+    }
+
+    private void registerSlayerCommands() {
+        bind("slayer", new SlayerCommand(this, slayerManager));
+    }
+
+    private void registerStaffCommands() {
+        bind("staff", new StaffCommand(this, staffModeManager));
+    }
+
     private void registerArenaCommands() {
         ArenaCommand arenaCommand = new ArenaCommand(this, arenaWorldService);
         ArenaLevelCommand levelCommand = new ArenaLevelCommand(this, playerDataService, arenaLevelService);
@@ -474,6 +486,18 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
 
     private void registerPetListeners() {
         registerEvents(new PetListener(petManager));
+    }
+
+    private void registerDarkAuctionListeners() {
+        registerEvents(new DarkAuctionListener(this, darkAuctionManager));
+    }
+
+    private void registerSlayerListeners() {
+        registerEvents(new SlayerListener(this, slayerManager));
+    }
+
+    private void registerStaffListeners() {
+        registerEvents(new StaffListener(this, staffModeManager));
     }
 
     private void registerArenaListeners() {
@@ -634,4 +658,12 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     public CollectionManager getCollectionManager() { return collectionManager; }
     public MinionManager getMinionManager() { return minionManager; }
     public PetManager getPetManager() { return petManager; }
+
+    // =========================================================================
+    //  Dark Auction, Slayer, Staff getters
+    // =========================================================================
+
+    public DarkAuctionManager getDarkAuctionManager() { return darkAuctionManager; }
+    public SlayerManager getSlayerManager() { return slayerManager; }
+    public StaffModeManager getStaffModeManager() { return staffModeManager; }
 }

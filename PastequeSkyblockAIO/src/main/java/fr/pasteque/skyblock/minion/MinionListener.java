@@ -4,16 +4,14 @@ import fr.pasteque.skyblock.PastequeSkyblockPlugin;
 import fr.pasteque.skyblock.minion.model.MinionType;
 import fr.pasteque.skyblock.minion.model.PlacedMinion;
 import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Villager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
-import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
 
@@ -25,21 +23,21 @@ public class MinionListener implements Listener {
         this.minionManager = minionManager;
     }
 
-    // ── Right-click armor stand ──────────────────────────────────────────
+    // ── Right-click villager minion ───────────────────────────────────────
 
     @EventHandler(ignoreCancelled = true)
-    public void onInteractAtEntity(PlayerInteractAtEntityEvent event) {
-        if (!(event.getRightClicked() instanceof ArmorStand)) {
+    public void onInteractEntity(PlayerInteractEntityEvent event) {
+        if (!(event.getRightClicked() instanceof Villager)) {
             return;
         }
-        ArmorStand stand = (ArmorStand) event.getRightClicked();
-        if (stand.getCustomName() == null || !stand.getCustomName().contains(MinionManager.MINION_TAG)) {
+        Entity entity = event.getRightClicked();
+        if (entity.getCustomName() == null || !entity.getCustomName().contains(MinionManager.MINION_TAG)) {
             return;
         }
         event.setCancelled(true);
 
         Player player = event.getPlayer();
-        PlacedMinion minion = minionManager.getMinionAt(stand.getLocation());
+        PlacedMinion minion = minionManager.getMinionAt(entity.getLocation());
         if (minion == null) {
             player.sendMessage(PastequeSkyblockPlugin.color("&cMinion introuvable."));
             return;
@@ -71,15 +69,12 @@ public class MinionListener implements Listener {
         int slot = event.getRawSlot();
 
         // Find the minion this GUI belongs to
-        // We need to search by matching the title to a minion type
         PlacedMinion targetMinion = null;
         List<PlacedMinion> minions = minionManager.getMinions(player.getUniqueId());
         for (PlacedMinion minion : minions) {
             String expectedTitle = MinionManager.GUI_TITLE_PREFIX
                     + PastequeSkyblockPlugin.color("&e" + minion.getType().getDisplayName());
             if (title.equals(expectedTitle)) {
-                // If player has multiple of same type, we take the first one
-                // In practice this is fine - they can only have one GUI open
                 targetMinion = minion;
                 break;
             }
@@ -119,14 +114,15 @@ public class MinionListener implements Listener {
             player.sendMessage(PastequeSkyblockPlugin.color(
                     "&6&l>> &aMinion ameliore au niveau &e" + nextLevel + " &a!"
             ));
-            // Update armor stand name
+            // Update villager name
             Location loc = targetMinion.getLocation();
             if (loc != null && loc.getWorld() != null) {
-                for (Entity entity : loc.getWorld().getNearbyEntities(loc, 1.0, 1.0, 1.0)) {
-                    if (entity instanceof ArmorStand) {
-                        ArmorStand as = (ArmorStand) entity;
-                        if (as.getCustomName() != null && as.getCustomName().contains(MinionManager.MINION_TAG)) {
-                            as.setCustomName(PastequeSkyblockPlugin.color(
+                for (Entity entity : loc.getChunk().getEntities()) {
+                    if (entity instanceof Villager && entity.getCustomName() != null
+                            && entity.getCustomName().contains(MinionManager.MINION_TAG)) {
+                        double dist = entity.getLocation().distance(loc);
+                        if (dist < 1.5) {
+                            entity.setCustomName(PastequeSkyblockPlugin.color(
                                     "&6" + targetMinion.getType().getDisplayName()
                                             + " &7[Niv." + nextLevel + "]"
                             ) + MinionManager.MINION_TAG);
@@ -139,7 +135,7 @@ public class MinionListener implements Listener {
         }
     }
 
-    // ── Chunk load - respawn armor stands ────────────────────────────────
+    // ── Chunk load - respawn villagers ────────────────────────────────────
 
     @EventHandler
     public void onChunkLoad(ChunkLoadEvent event) {
