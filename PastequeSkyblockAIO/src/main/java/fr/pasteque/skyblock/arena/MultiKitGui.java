@@ -3,6 +3,7 @@ package fr.pasteque.skyblock.arena;
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
 import fr.pasteque.skyblock.arena.model.ArenaKit;
 import fr.pasteque.skyblock.arena.model.ArenaPlayerData;
+import fr.pasteque.skyblock.gui.GuiHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -13,9 +14,10 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("deprecation")
 public class MultiKitGui {
 
-    public static final String GUI_TITLE = PastequeSkyblockPlugin.color("&5&lKits d'Arene");
+    public static final String GUI_TITLE = PastequeSkyblockPlugin.color("&2&lPasteque &5&lKits d'Arene");
     private static final int SIZE = 54;
 
     private final PastequeSkyblockPlugin plugin;
@@ -31,23 +33,15 @@ public class MultiKitGui {
         ArenaPlayerData data = plugin.getPlayerDataService().get(player);
         int playerLevel = data.getLevel();
 
-        // Place kits in slots: row 0 (slots 10-16) and row 1 (slots 19-25) for up to 14 kits
+        // Row 0: decorative border
+        GuiHelper.addTopBorder(inv);
+
+        // Place kits in rows 1-3 (slots 10-16, 19-25, 28-34)
         int[] slots = new int[]{10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25};
         for (int i = 0; i < kits.size() && i < slots.length; i++) {
             ArenaKit kit = kits.get(i);
             int slot = slots[i];
             boolean canUse = playerLevel >= kit.getRequiredLevel();
-
-            // Background glass pane
-            short glassColor = canUse ? (short) 5 : (short) 14; // green or red
-            int bgSlot = slot - 9; // row above
-            if (bgSlot >= 0 && bgSlot < SIZE) {
-                ItemStack glass = new ItemStack(Material.STAINED_GLASS_PANE, 1, glassColor);
-                ItemMeta glassMeta = glass.getItemMeta();
-                glassMeta.setDisplayName(" ");
-                glass.setItemMeta(glassMeta);
-                inv.setItem(bgSlot, glass);
-            }
 
             // Kit icon
             Material iconMat;
@@ -65,20 +59,22 @@ public class MultiKitGui {
 
             List<String> lore = new ArrayList<String>();
             lore.add("");
-            lore.add(PastequeSkyblockPlugin.color("&7Kit de combat pour l'arene"));
+            lore.add(PastequeSkyblockPlugin.color("&8\u258E &7Contenu"));
+            lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Armure: &f" + kit.getDisplayName()));
+            lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Arme: &f" + kit.getIcon()));
             lore.add("");
-            lore.add(PastequeSkyblockPlugin.color("&fNiveau requis : &d" + kit.getRequiredLevel()));
+            lore.add(PastequeSkyblockPlugin.color("&8\u258E &7Niveau requis: &d" + kit.getRequiredLevel()));
             if (kit.getPrice() > 0) {
-                lore.add(PastequeSkyblockPlugin.color("&fPrix : &d" + kit.getPrice() + " " + plugin.getEconomyManager().getCurrencyName()));
+                lore.add(PastequeSkyblockPlugin.color("&8\u258E &7Prix: &e" + kit.getPrice() + "$"));
             } else {
-                lore.add(PastequeSkyblockPlugin.color("&fPrix : &aGratuit"));
+                lore.add(PastequeSkyblockPlugin.color("&8\u258E &7Prix: &aGratuit"));
             }
             lore.add("");
 
             if (canUse) {
-                lore.add(PastequeSkyblockPlugin.color("&a&l[CLIQUER POUR EQUIPER]"));
+                lore.add(PastequeSkyblockPlugin.color("&a\u25B6 Clic pour equiper!"));
             } else {
-                lore.add(PastequeSkyblockPlugin.color("&c&l[NIVEAU " + kit.getRequiredLevel() + " REQUIS]"));
+                lore.add(PastequeSkyblockPlugin.color("&c\u2716 Niveau " + kit.getRequiredLevel() + " requis"));
             }
 
             meta.setLore(lore);
@@ -86,8 +82,12 @@ public class MultiKitGui {
             inv.setItem(slot, icon);
         }
 
-        // Fill empty border slots
-        fillBorders(inv);
+        // Row 5: decorative border + back button
+        GuiHelper.addBottomBorder(inv);
+        inv.setItem(45, GuiHelper.backButton());
+
+        // Fill empty with black glass
+        GuiHelper.fillEmpty(inv);
         player.openInventory(inv);
     }
 
@@ -137,18 +137,5 @@ public class MultiKitGui {
 
         player.sendMessage(PastequeSkyblockPlugin.color(plugin.getPrefix() + "&fVous etes equipe du kit &d" + kit.getDisplayName() + "&f."));
         player.closeInventory();
-    }
-
-    private void fillBorders(Inventory inv) {
-        ItemStack pane = new ItemStack(Material.STAINED_GLASS_PANE, 1, (short) 15);
-        ItemMeta meta = pane.getItemMeta();
-        meta.setDisplayName(" ");
-        pane.setItemMeta(meta);
-
-        for (int i = 0; i < SIZE; i++) {
-            if (inv.getItem(i) == null) {
-                inv.setItem(i, pane.clone());
-            }
-        }
     }
 }
