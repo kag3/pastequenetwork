@@ -38,7 +38,7 @@ public class MainMenuGui {
         inv.setItem(13, createItem(Material.EMERALD, "&2&lBoutique", "&7Shops joueurs"));
         inv.setItem(14, createItem(Material.GOLD_INGOT, "&6&lCollections", "&7Progresse tes collections"));
         inv.setItem(15, createItem(Material.SKULL_ITEM, "&d&lPets", "&7Tes compagnons"));
-        inv.setItem(16, createItem(Material.ARMOR_STAND, "&8&lMinions", "&7Tes minions"));
+        inv.setItem(16, createItem(Material.BREWING_STAND_ITEM, "&8&lMinions", "&7Tes minions"));
 
         // Row 3 (slots 20-24)
         inv.setItem(20, createItem(Material.IRON_SWORD, "&c&lArene PvP", "&7Combats et classements"));
@@ -53,7 +53,7 @@ public class MainMenuGui {
         inv.setItem(31, createItem(Material.BOOK_AND_QUILL, "&f&lAmis & Social", "&7Amis, ennemis, alliances"));
 
         // Slot 40: BARRIER - close
-        inv.setItem(40, createItem(Material.BARRIER, "&c&lFermer", null));
+        inv.setItem(40, createItem(Material.REDSTONE_BLOCK, "&c&lFermer", null));
 
         return inv;
     }

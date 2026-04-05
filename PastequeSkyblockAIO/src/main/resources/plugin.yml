@@ -60,6 +60,12 @@ commands:
     aliases: [isup]
   iswarp:
     description: Warps d'ile
+  collection:
+    description: Collections de ressources
+    aliases: [collections]
+  pet:
+    description: Animaux de compagnie
+    aliases: [pets]
 
 permissions:
   pastequeskyblock.admin:

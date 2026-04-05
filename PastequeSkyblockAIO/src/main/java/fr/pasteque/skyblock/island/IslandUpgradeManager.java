@@ -121,7 +121,7 @@ public class IslandUpgradeManager {
 
         IslandUpgrade[] upgrades = IslandUpgrade.values();
         int[] slots = {10, 11, 12, 13, 14};
-        Material[] icons = {Material.GRASS, Material.SKULL_ITEM, Material.DIAMOND_PICKAXE, Material.MOB_SPAWNER, Material.ARMOR_STAND};
+        Material[] icons = {Material.GRASS, Material.SKULL_ITEM, Material.DIAMOND_PICKAXE, Material.MOB_SPAWNER, Material.IRON_FENCE};
 
         for (int i = 0; i < upgrades.length && i < slots.length; i++) {
             IslandUpgrade upgrade = upgrades[i];

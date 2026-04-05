@@ -11,6 +11,8 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
+import org.bukkit.OfflinePlayer;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -60,8 +62,10 @@ public class ScoreboardManager {
 
         for (int i = 0; i < ENTRIES.length; i++) {
             Team team = board.registerNewTeam("line_" + i);
-            team.addEntry(ENTRIES[i]);
-            obj.getScore(ENTRIES[i]).setScore(i);
+            @SuppressWarnings("deprecation")
+            OfflinePlayer fakePlayer = Bukkit.getOfflinePlayer(ENTRIES[i]);
+            team.addPlayer(fakePlayer);
+            obj.getScore(fakePlayer).setScore(i);
         }
 
         playerBoards.put(player.getUniqueId(), board);

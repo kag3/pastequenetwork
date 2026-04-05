@@ -279,6 +279,17 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
             skillManager.save();
         }
 
+        /* Collections, Minions, Pets save */
+        if (collectionManager != null) {
+            collectionManager.save();
+        }
+        if (minionManager != null) {
+            minionManager.save();
+        }
+        if (petManager != null) {
+            petManager.save();
+        }
+
         /* PastequeMyLittleShop save */
         if (playerShopManager != null) {
             playerShopManager.save();
@@ -347,6 +358,14 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         bind("skills", new SkillsCommand(skillManager));
     }
 
+    private void registerCollectionCommands() {
+        bind("collection", new CollectionCommand(collectionManager));
+    }
+
+    private void registerPetCommands() {
+        bind("pet", new PetCommand(petManager));
+    }
+
     private void registerArenaCommands() {
         ArenaCommand arenaCommand = new ArenaCommand(this, arenaWorldService);
         ArenaLevelCommand levelCommand = new ArenaLevelCommand(this, playerDataService, arenaLevelService);
@@ -413,6 +432,18 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
 
     private void registerSkillListeners() {
         registerEvents(new SkillListener(skillManager));
+    }
+
+    private void registerCollectionListeners() {
+        registerEvents(new CollectionListener(collectionManager));
+    }
+
+    private void registerMinionListeners() {
+        registerEvents(new MinionListener(minionManager));
+    }
+
+    private void registerPetListeners() {
+        registerEvents(new PetListener(petManager));
     }
 
     private void registerArenaListeners() {
@@ -565,4 +596,12 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     public IslandWarpManager getIslandWarpManager() { return islandWarpManager; }
     public IslandPresetGui getIslandPresetGui() { return islandPresetGui; }
     public IslandUpgradeListener getIslandUpgradeListener() { return islandUpgradeListener; }
+
+    // =========================================================================
+    //  Collections, Minions, Pets getters
+    // =========================================================================
+
+    public CollectionManager getCollectionManager() { return collectionManager; }
+    public MinionManager getMinionManager() { return minionManager; }
+    public PetManager getPetManager() { return petManager; }
 }
