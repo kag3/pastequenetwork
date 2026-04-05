@@ -33,7 +33,7 @@ import java.util.UUID;
 @SuppressWarnings("deprecation")
 public class MinionManager {
 
-    public static final String GUI_TITLE_PREFIX = PastequeSkyblockPlugin.color("&2&lPasteque &5&lMinion");
+    public static final String GUI_TITLE_PREFIX = PastequeSkyblockPlugin.color("&2&lPasteque &5&lMinion - ");
     public static final String MINION_TAG = "\u00A7r\u00A70\u00A7minion";
 
     private final PastequeSkyblockPlugin plugin;

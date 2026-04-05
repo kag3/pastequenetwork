@@ -1,6 +1,7 @@
 package fr.pasteque.skyblock.slayer;
 
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
+import fr.pasteque.skyblock.gui.GuiHelper;
 import fr.pasteque.skyblock.manager.DataFile;
 import fr.pasteque.skyblock.slayer.model.PlayerSlayerData;
 import fr.pasteque.skyblock.slayer.model.SlayerType;
@@ -21,10 +22,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@SuppressWarnings("deprecation")
 public class SlayerManager {
 
-    public static final String SLAYER_GUI_TITLE = "Slayers";
-    public static final String TIER_GUI_PREFIX = "Slayer - ";
+    public static final String SLAYER_GUI_TITLE = PastequeSkyblockPlugin.color("&2&lPasteque &5&lSlayers");
+    public static final String TIER_GUI_PREFIX = PastequeSkyblockPlugin.color("&2&lPasteque &5&l");
     public static final String BOSS_NAME_TAG = "&c[Boss Slayer]";
 
     private final PastequeSkyblockPlugin plugin;
@@ -288,19 +290,20 @@ public class SlayerManager {
     // ------------------------------------------------------------------
 
     public void openSlayerGui(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 45, PastequeSkyblockPlugin.color(SLAYER_GUI_TITLE));
+        Inventory inv = Bukkit.createInventory(null, 45, SLAYER_GUI_TITLE);
 
-        // Fill border
-        ItemStack filler = createItem(Material.STAINED_GLASS_PANE, (short) 15, " ");
-        for (int i = 0; i < 45; i++) {
-            inv.setItem(i, filler);
-        }
+        // Row 0: decorative border
+        GuiHelper.addTopBorder(inv);
+
+        // Row 4: decorative border
+        GuiHelper.addBottomBorder(inv);
 
         PlayerSlayerData data = getData(player.getUniqueId());
 
-        // Display slayer types in a row (slots 11-15)
+        // Display slayer types centered in row 1 (slots 11-15)
         SlayerType[] types = SlayerType.values();
-        for (int i = 0; i < types.length; i++) {
+        int[] slots = {11, 12, 13, 14, 15};
+        for (int i = 0; i < types.length && i < slots.length; i++) {
             SlayerType type = types[i];
             Material mat;
             try {
@@ -314,93 +317,126 @@ public class SlayerManager {
             meta.setDisplayName(PastequeSkyblockPlugin.color(type.getColor() + "&l" + type.getDisplayName()));
 
             List<String> lore = new ArrayList<String>();
-            lore.add(PastequeSkyblockPlugin.color("&7Niveau: " + type.getColor() + data.getLevel(type) + "/5"));
-            lore.add(PastequeSkyblockPlugin.color("&7XP: " + type.getColor() + data.getXp(type)));
+            lore.add("");
+            lore.add(PastequeSkyblockPlugin.color("&8\u258E &7Statistiques"));
+            lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Niveau: " + type.getColor() + data.getLevel(type) + "&8/&f5"));
+            lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7XP: " + type.getColor() + data.getXp(type)));
             if (data.getLevel(type) < 5) {
-                lore.add(PastequeSkyblockPlugin.color("&7Prochain: &e" + type.getXpForTier(data.getLevel(type) + 1) + " XP"));
+                int nextXp = type.getXpForTier(data.getLevel(type) + 1);
+                lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Prochain niveau: &e" + nextXp + " XP"));
+                lore.add("");
+                lore.add(buildProgressBar((double) data.getXp(type) / nextXp));
             } else {
+                lore.add("");
                 lore.add(PastequeSkyblockPlugin.color("&a&lNIVEAU MAX"));
             }
             lore.add("");
-            lore.add(PastequeSkyblockPlugin.color("&eClic pour voir les tiers"));
+            lore.add(PastequeSkyblockPlugin.color("&e\u25B6 Clic pour voir les tiers"));
             meta.setLore(lore);
             icon.setItemMeta(meta);
-            inv.setItem(11 + i, icon);
+            inv.setItem(slots[i], icon);
         }
 
         // Quest status at slot 31
-        ItemStack questInfo = createItem(Material.BOOK, (short) 0, "&d&lQuete Active");
+        ItemStack questInfo = GuiHelper.createItem(Material.BOOK, "&d&lQuete Active");
         ItemMeta questMeta = questInfo.getItemMeta();
         List<String> questLore = new ArrayList<String>();
+        questLore.add("");
         if (data.hasActiveQuest()) {
-            questLore.add(PastequeSkyblockPlugin.color("&7" + data.getProgress()));
+            questLore.add(PastequeSkyblockPlugin.color("&8\u258E &7Progression"));
+            questLore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7" + data.getProgress()));
             int pct = (int) ((data.getQuestKillCount() * 100.0) / data.getQuestKillTarget());
-            questLore.add(PastequeSkyblockPlugin.color("&7Progression: &e" + pct + "%"));
+            questLore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Avancement: &e" + pct + "%"));
+            questLore.add("");
+            questLore.add(buildProgressBar(data.getQuestKillCount() / (double) data.getQuestKillTarget()));
         } else {
-            questLore.add(PastequeSkyblockPlugin.color("&7Aucune quete active"));
-            questLore.add(PastequeSkyblockPlugin.color("&7Choisissez un slayer pour commencer !"));
+            questLore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Aucune quete active"));
+            questLore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Choisissez un slayer pour commencer !"));
         }
         questMeta.setLore(questLore);
         questInfo.setItemMeta(questMeta);
         inv.setItem(31, questInfo);
 
+        // Back button at bottom-left, close button at bottom-right
+        inv.setItem(36, GuiHelper.backButton());
+        inv.setItem(44, GuiHelper.closeButton());
+
+        // Fill remaining with black glass
+        GuiHelper.fillEmpty(inv);
+
         player.openInventory(inv);
     }
 
     public void openTierGui(Player player, SlayerType type) {
-        String title = TIER_GUI_PREFIX + type.getDisplayName();
-        Inventory inv = Bukkit.createInventory(null, 27, PastequeSkyblockPlugin.color(title));
+        String title = TIER_GUI_PREFIX + PastequeSkyblockPlugin.color(type.getColor() + type.getDisplayName());
+        Inventory inv = Bukkit.createInventory(null, 27, title);
 
-        ItemStack filler = createItem(Material.STAINED_GLASS_PANE, (short) 15, " ");
-        for (int i = 0; i < 27; i++) {
-            inv.setItem(i, filler);
-        }
+        // Row 0: decorative border
+        GuiHelper.addTopBorder(inv);
+
+        // Row 2: decorative border
+        GuiHelper.addBottomBorder(inv);
 
         PlayerSlayerData data = getData(player.getUniqueId());
 
-        // Tier items at slots 11-15
+        // Tier items centered at slots 11-15
         for (int tier = 1; tier <= 5; tier++) {
             boolean unlocked = (tier == 1) || (data.getLevel(type) >= tier - 1);
             Material mat = unlocked ? Material.SLIME_BALL : Material.MAGMA_CREAM;
-            short durability = 0;
 
             ItemStack tierItem = new ItemStack(mat, tier);
             ItemMeta meta = tierItem.getItemMeta();
             meta.setDisplayName(PastequeSkyblockPlugin.color(type.getColor() + "&lTier " + tier));
 
             List<String> lore = new ArrayList<String>();
-            lore.add(PastequeSkyblockPlugin.color("&7Cout: &6" + plugin.getEconomyManager().format(type.getCostForTier(tier))));
-            lore.add(PastequeSkyblockPlugin.color("&7Kills requis: &e" + (tier * 10 + 5)));
-            lore.add(PastequeSkyblockPlugin.color("&7XP recompense: &e" + type.getXpForTier(tier)));
+            lore.add("");
+            lore.add(PastequeSkyblockPlugin.color("&8\u258E &7Details"));
+            lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Cout: &6" + plugin.getEconomyManager().format(type.getCostForTier(tier))));
+            lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Kills requis: &e" + (tier * 10 + 5)));
+            lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7XP recompense: &e" + type.getXpForTier(tier)));
             lore.add("");
             if (!unlocked) {
-                lore.add(PastequeSkyblockPlugin.color("&c&lVERROUILLE - Niveau " + (tier - 1) + " requis"));
+                lore.add(PastequeSkyblockPlugin.color("&c\u2716 Verrouille - Niveau " + (tier - 1) + " requis"));
             } else if (data.hasActiveQuest()) {
-                lore.add(PastequeSkyblockPlugin.color("&c&lQuete deja en cours"));
+                lore.add(PastequeSkyblockPlugin.color("&c\u2716 Quete deja en cours"));
             } else {
-                lore.add(PastequeSkyblockPlugin.color("&a&lClic pour demarrer"));
+                lore.add(PastequeSkyblockPlugin.color("&e\u25B6 Clic pour demarrer!"));
             }
             meta.setLore(lore);
             tierItem.setItemMeta(meta);
             inv.setItem(10 + tier, tierItem);
         }
 
-        // Back button at slot 22
-        ItemStack back = createItem(Material.ARROW, (short) 0, "&cRetour");
-        inv.setItem(22, back);
+        // Back button at bottom-left
+        inv.setItem(18, GuiHelper.backButton());
+
+        // Close button at bottom-right
+        inv.setItem(26, GuiHelper.closeButton());
+
+        // Fill remaining with black glass
+        GuiHelper.fillEmpty(inv);
 
         player.openInventory(inv);
     }
 
-    // ------------------------------------------------------------------
-    //  Helpers
-    // ------------------------------------------------------------------
-
-    private ItemStack createItem(Material material, short data, String name) {
-        ItemStack item = new ItemStack(material, 1, data);
-        ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(PastequeSkyblockPlugin.color(name));
-        item.setItemMeta(meta);
-        return item;
+    private String buildProgressBar(double progress) {
+        int totalBars = 20;
+        int filled = (int) (progress * totalBars);
+        if (filled > totalBars) {
+            filled = totalBars;
+        }
+        if (filled < 0) {
+            filled = 0;
+        }
+        StringBuilder bar = new StringBuilder();
+        bar.append("&a");
+        for (int i = 0; i < filled; i++) {
+            bar.append("|");
+        }
+        bar.append("&7");
+        for (int i = filled; i < totalBars; i++) {
+            bar.append("|");
+        }
+        return PastequeSkyblockPlugin.color(bar.toString());
     }
 }

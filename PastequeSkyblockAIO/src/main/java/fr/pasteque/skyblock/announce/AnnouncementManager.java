@@ -2,6 +2,7 @@ package fr.pasteque.skyblock.announce;
 
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -80,13 +81,24 @@ public class AnnouncementManager {
                     if (!player.isOnline()) {
                         return;
                     }
-                    player.sendTitle(
+                    sendTitle(player,
                             PastequeSkyblockPlugin.color("&2&lBienvenue"),
-                            PastequeSkyblockPlugin.color("&7sur &2Pasteque &5Skyblock"),
-                            10, 70, 20
-                    );
+                            PastequeSkyblockPlugin.color("&7sur &2Pasteque &5Skyblock"));
                 }
             }.runTaskLater(plugin, 20L * 2L);
         }
+    }
+
+    private static void sendTitle(Player player, String title, String subtitle) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                "title " + player.getName() + " times 10 70 20");
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                "title " + player.getName() + " title {\"text\":\"" + escapeJson(title) + "\"}");
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                "title " + player.getName() + " subtitle {\"text\":\"" + escapeJson(subtitle) + "\"}");
+    }
+
+    private static String escapeJson(String text) {
+        return text.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

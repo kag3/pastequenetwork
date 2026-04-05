@@ -2,13 +2,16 @@ package fr.pasteque.skyblock.darkauction;
 
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
 import fr.pasteque.skyblock.darkauction.model.AuctionItem;
+import fr.pasteque.skyblock.gui.GuiHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -19,9 +22,10 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
+@SuppressWarnings("deprecation")
 public class DarkAuctionManager {
 
-    public static final String GUI_TITLE = "Enchere Sombre";
+    public static final String GUI_TITLE = PastequeSkyblockPlugin.color("&2&lPasteque &5&lVente Sombre");
 
     private final PastequeSkyblockPlugin plugin;
     private final List<AuctionItem> pool;
@@ -176,49 +180,91 @@ public class DarkAuctionManager {
     // ------------------------------------------------------------------
 
     public void openAuctionGui(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 27, PastequeSkyblockPlugin.color(GUI_TITLE));
+        Inventory inv = Bukkit.createInventory(null, 27, GUI_TITLE);
 
-        // Fill border with dark glass
-        ItemStack filler = createItem(Material.STAINED_GLASS_PANE, (short) 15, " ");
-        for (int i = 0; i < 27; i++) {
-            inv.setItem(i, filler);
-        }
+        // Row 0: decorative border
+        GuiHelper.addTopBorder(inv);
+
+        // Row 2: decorative border
+        GuiHelper.addBottomBorder(inv);
 
         if (currentItem != null) {
-            // Show current item at slot 13
+            // Center slot (13): auction item with enchant glow
             ItemStack display = createRewardItem(currentItem);
-            inv.setItem(13, display);
-
-            // Info item at slot 4
-            ItemStack info = createItem(Material.PAPER, (short) 0, "&d&lEnchere Sombre");
-            ItemMeta infoMeta = info.getItemMeta();
-            List<String> infoLore = new ArrayList<String>();
-            infoLore.add(PastequeSkyblockPlugin.color("&7Enchere actuelle: &6" + formatMoney(highestBid)));
+            ItemMeta displayMeta = display.getItemMeta();
+            List<String> displayLore = new ArrayList<String>();
+            displayLore.add("");
+            displayLore.add(PastequeSkyblockPlugin.color("&8\u258E &7Description"));
+            displayLore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7" + currentItem.getLore()));
+            displayLore.add("");
+            displayLore.add(PastequeSkyblockPlugin.color("&8\u258E &7Enchere"));
+            displayLore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Enchere actuelle: &6" + formatMoney(highestBid)));
             if (highestBidder != null) {
                 Player bidder = Bukkit.getPlayer(highestBidder);
                 String name = bidder != null ? bidder.getName() : "???";
-                infoLore.add(PastequeSkyblockPlugin.color("&7Meilleur encherisseur: &e" + name));
+                displayLore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Encherisseur: &e" + name));
             } else {
-                infoLore.add(PastequeSkyblockPlugin.color("&7Aucun encherisseur"));
+                displayLore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Aucun encherisseur"));
             }
-            infoLore.add(PastequeSkyblockPlugin.color("&7Temps restant: &e" + timeLeft + "s"));
-            infoMeta.setLore(infoLore);
-            info.setItemMeta(infoMeta);
-            inv.setItem(4, info);
+            displayLore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Temps restant: &e" + timeLeft + "s"));
+            displayLore.add("");
+            displayLore.add(PastequeSkyblockPlugin.color("&5&lENCHERE SOMBRE"));
+            displayMeta.setLore(displayLore);
+            displayMeta.addEnchant(Enchantment.DURABILITY, 1, true);
+            displayMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+            display.setItemMeta(displayMeta);
+            inv.setItem(13, display);
 
-            // Bid button at slot 22
-            ItemStack bidButton = createItem(Material.GOLD_BLOCK, (short) 0, "&6&lEncherir");
-            ItemMeta bidMeta = bidButton.getItemMeta();
-            bidMeta.setLore(Arrays.asList(
-                    PastequeSkyblockPlugin.color("&7Cliquez pour placer une enchere"),
-                    PastequeSkyblockPlugin.color("&7Minimum: &6" + formatMoney(highestBid * 1.10))
-            ));
-            bidButton.setItemMeta(bidMeta);
+            // Slot 11: CLOCK - time remaining
+            ItemStack clockItem = GuiHelper.createItem(Material.WATCH,
+                    "&7&lTemps Restant",
+                    "",
+                    "&8\u25B8 &e" + timeLeft + " &7secondes");
+            inv.setItem(11, clockItem);
+
+            // Slot 15: SKULL_ITEM - best bidder
+            ItemStack skullItem = new ItemStack(Material.SKULL_ITEM, 1, (short) 3);
+            SkullMeta skullMeta = (SkullMeta) skullItem.getItemMeta();
+            skullMeta.setDisplayName(PastequeSkyblockPlugin.color("&d&lMeilleur Encherisseur"));
+            List<String> skullLore = new ArrayList<String>();
+            skullLore.add("");
+            if (highestBidder != null) {
+                Player bidder = Bukkit.getPlayer(highestBidder);
+                String name = bidder != null ? bidder.getName() : "???";
+                skullLore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Joueur: &e" + name));
+                skullLore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Montant: &6" + formatMoney(highestBid)));
+                if (bidder != null) {
+                    skullMeta.setOwner(bidder.getName());
+                }
+            } else {
+                skullLore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Aucun encherisseur"));
+            }
+            skullMeta.setLore(skullLore);
+            skullItem.setItemMeta(skullMeta);
+            inv.setItem(15, skullItem);
+
+            // Slot 22: GOLD_BLOCK - bid button
+            ItemStack bidButton = GuiHelper.createItem(Material.GOLD_BLOCK,
+                    "&e&lEncherir",
+                    "",
+                    "&7Clic pour placer une enchere",
+                    "&7Minimum: &6" + formatMoney(highestBid * 1.10),
+                    "",
+                    "&e\u25B6 Clic pour encherir!");
             inv.setItem(22, bidButton);
         } else {
-            ItemStack noAuction = createItem(Material.STAINED_GLASS_PANE, (short) 14, "&c&lAucune enchere en cours");
-            inv.setItem(13, noAuction);
+            // No auction active
+            inv.setItem(13, GuiHelper.createItem(Material.STAINED_GLASS_PANE, 14,
+                    "&c&lAucune enchere en cours",
+                    "",
+                    "&8\u25B8 &7Revenez plus tard !"));
         }
+
+        // Close button at bottom-right
+        inv.setItem(26, GuiHelper.closeButton());
+
+        // Fill remaining with black glass
+        GuiHelper.fillEmpty(inv);
 
         player.openInventory(inv);
     }
@@ -251,14 +297,6 @@ public class DarkAuctionManager {
     // ------------------------------------------------------------------
     //  Helpers
     // ------------------------------------------------------------------
-
-    private ItemStack createItem(Material material, short data, String name) {
-        ItemStack item = new ItemStack(material, 1, data);
-        ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(PastequeSkyblockPlugin.color(name));
-        item.setItemMeta(meta);
-        return item;
-    }
 
     private String formatMoney(double amount) {
         return plugin.getEconomyManager().format(amount);

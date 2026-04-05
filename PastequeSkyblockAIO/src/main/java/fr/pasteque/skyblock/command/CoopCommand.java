@@ -1,18 +1,16 @@
 package fr.pasteque.skyblock.command;
 
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
+import fr.pasteque.skyblock.gui.GuiHelper;
 import fr.pasteque.skyblock.model.CoopIsland;
 import fr.pasteque.skyblock.util.MessageUtil;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,6 +21,8 @@ import java.util.UUID;
 
 public class CoopCommand implements CommandExecutor {
     private final PastequeSkyblockPlugin plugin;
+
+    public static final String MENU_TITLE = PastequeSkyblockPlugin.color("&2&lPasteque &5&lIle Coop");
 
     public CoopCommand(PastequeSkyblockPlugin plugin) {
         this.plugin = plugin;
@@ -51,7 +51,7 @@ public class CoopCommand implements CommandExecutor {
             for (int i = 1; i < args.length; i++) {
                 Player target = Bukkit.getPlayerExact(args[i]);
                 if (target == null) {
-                    MessageUtil.send(player, plugin.getPrefix(), "&fLe joueur &e" + args[i] + " &fdoit etre connecte pour rejoindre une coop.");
+                    MessageUtil.send(player, plugin.getPrefix(), "&cLe joueur &e" + args[i] + " &cdoit etre connecte pour rejoindre une coop.");
                     return true;
                 }
                 if (target.getUniqueId().equals(player.getUniqueId()) || seen.contains(target.getUniqueId())) {
@@ -61,11 +61,11 @@ public class CoopCommand implements CommandExecutor {
                 targets.add(target);
             }
             if (targets.isEmpty()) {
-                MessageUtil.send(player, plugin.getPrefix(), "&fTu dois inviter au moins 1 autre joueur.");
+                MessageUtil.send(player, plugin.getPrefix(), "&cTu dois inviter au moins 1 autre joueur.");
                 return true;
             }
             if (targets.size() > 5) {
-                MessageUtil.send(player, plugin.getPrefix(), "&fMaximum 6 joueurs au total sur une coop.");
+                MessageUtil.send(player, plugin.getPrefix(), "&cMaximum 6 joueurs au total sur une coop.");
                 return true;
             }
             if (plugin.getCoopManager().beginCreation(player, targets)) {
@@ -75,36 +75,39 @@ public class CoopCommand implements CommandExecutor {
         }
 
         if (sub.equals("accept")) {
-            MessageUtil.send(player, plugin.getPrefix(), plugin.getCoopManager().acceptInvite(player) ? "&aInvitation coop acceptee." : "&fTu n'as aucune invitation coop valide.");
+            MessageUtil.send(player, plugin.getPrefix(), plugin.getCoopManager().acceptInvite(player) ? "&aInvitation coop acceptee." : "&cTu n'as aucune invitation coop valide.");
             return true;
         }
         if (sub.equals("deny")) {
-            MessageUtil.send(player, plugin.getPrefix(), plugin.getCoopManager().denyInvite(player) ? "&fInvitation coop refusee." : "&fTu n'as aucune invitation coop valide.");
+            MessageUtil.send(player, plugin.getPrefix(), plugin.getCoopManager().denyInvite(player) ? "&7Invitation coop refusee." : "&cTu n'as aucune invitation coop valide.");
             return true;
         }
         if (sub.equals("pending")) {
             int remaining = plugin.getCoopManager().getRemainingApprovals(player.getUniqueId());
-            if (remaining < 0) MessageUtil.send(player, plugin.getPrefix(), "&fAucune creation coop en attente.");
-            else MessageUtil.send(player, plugin.getPrefix(), "&fCreation coop en attente : &e" + remaining + " &fvalidation(s) restante(s).");
+            if (remaining < 0) {
+                MessageUtil.send(player, plugin.getPrefix(), "&7Aucune creation coop en attente.");
+            } else {
+                MessageUtil.send(player, plugin.getPrefix(), "&7Creation coop en attente : &e" + remaining + " &7validation(s) restante(s).");
+            }
             return true;
         }
         if (sub.equals("list")) {
             Collection<CoopIsland> islands = plugin.getCoopManager().getPlayerIslands(player.getUniqueId());
             if (islands.isEmpty()) {
-                MessageUtil.send(player, plugin.getPrefix(), "&fTu n'es membre d'aucune ile coop.");
+                MessageUtil.send(player, plugin.getPrefix(), "&cTu n'es membre d'aucune ile coop.");
                 return true;
             }
-            MessageUtil.send(player, plugin.getPrefix(), "&dTes iles coop :");
+            MessageUtil.send(player, plugin.getPrefix(), "&5Tes iles coop :");
             for (CoopIsland island : islands) {
                 String ownerName = Bukkit.getOfflinePlayer(island.getOwner()).getName();
-                player.sendMessage(MessageUtil.color("&7- &f" + island.getName() + " &8[" + island.getId() + "] &7Owner: &f" + (ownerName == null ? island.getOwner().toString() : ownerName)));
+                player.sendMessage(MessageUtil.color("&8▸ &7" + island.getName() + " &8[" + island.getId() + "] &7Owner: &d" + (ownerName == null ? island.getOwner().toString() : ownerName)));
             }
             return true;
         }
         if (sub.equals("home")) {
             CoopIsland island = args.length >= 2 ? plugin.getCoopManager().getIsland(args[1]) : plugin.getCoopManager().getFirstIsland(player.getUniqueId());
             if (island == null || !island.isMember(player.getUniqueId())) {
-                MessageUtil.send(player, plugin.getPrefix(), "&fAucune ile coop trouvee.");
+                MessageUtil.send(player, plugin.getPrefix(), "&cAucune ile coop trouvee.");
                 return true;
             }
             player.teleport(plugin.getCoopManager().getSafeTeleport(island));
@@ -114,11 +117,11 @@ public class CoopCommand implements CommandExecutor {
         if (sub.equals("mine") || sub.equals("mining") || sub.equals("minage")) {
             CoopIsland island = args.length >= 2 ? plugin.getCoopManager().getIsland(args[1]) : plugin.getCoopManager().getFirstIsland(player.getUniqueId());
             if (island == null || !island.isMember(player.getUniqueId())) {
-                MessageUtil.send(player, plugin.getPrefix(), "&fAucune ile coop trouvee.");
+                MessageUtil.send(player, plugin.getPrefix(), "&cAucune ile coop trouvee.");
                 return true;
             }
             if (!island.isMiningUnlocked() || island.getMiningHome() == null) {
-                MessageUtil.send(player, plugin.getPrefix(), "&fIle de minage coop verrouillee. Utilise &e/iscoop unlock mine&f.");
+                MessageUtil.send(player, plugin.getPrefix(), "&cIle de minage coop verrouillee. Utilise &e/iscoop unlock mine&c.");
                 return true;
             }
             player.teleport(island.getMiningHome());
@@ -128,7 +131,7 @@ public class CoopCommand implements CommandExecutor {
         if (sub.equals("sethome")) {
             CoopIsland island = plugin.getCoopManager().getIslandAt(player.getLocation());
             if (island == null || !island.isMember(player.getUniqueId())) {
-                MessageUtil.send(player, plugin.getPrefix(), "&fTu dois etre sur une ile coop dont tu es membre.");
+                MessageUtil.send(player, plugin.getPrefix(), "&cTu dois etre sur une ile coop dont tu es membre.");
                 return true;
             }
             plugin.getCoopManager().setHome(island, player.getLocation());
@@ -138,7 +141,7 @@ public class CoopCommand implements CommandExecutor {
         if (sub.equals("rename")) {
             CoopIsland island = plugin.getCoopManager().getIslandAt(player.getLocation());
             if (island == null || !island.isMember(player.getUniqueId())) {
-                MessageUtil.send(player, plugin.getPrefix(), "&fTu dois etre sur ton ile coop.");
+                MessageUtil.send(player, plugin.getPrefix(), "&cTu dois etre sur ton ile coop.");
                 return true;
             }
             if (args.length < 2) {
@@ -152,7 +155,7 @@ public class CoopCommand implements CommandExecutor {
             }
             String name = sb.toString().trim();
             if (name.length() < 3 || name.length() > 24) {
-                MessageUtil.send(player, plugin.getPrefix(), "&fLe nom doit contenir entre 3 et 24 caracteres.");
+                MessageUtil.send(player, plugin.getPrefix(), "&cLe nom doit contenir entre 3 et 24 caracteres.");
                 return true;
             }
             plugin.getCoopManager().rename(island, name);
@@ -162,12 +165,12 @@ public class CoopCommand implements CommandExecutor {
         if (sub.equals("unlock") && args.length >= 2 && (args[1].equalsIgnoreCase("mine") || args[1].equalsIgnoreCase("mining") || args[1].equalsIgnoreCase("minage"))) {
             CoopIsland island = plugin.getCoopManager().getIslandAt(player.getLocation());
             if (island == null || !island.isMember(player.getUniqueId())) {
-                MessageUtil.send(player, plugin.getPrefix(), "&fTu dois etre sur ton ile coop.");
+                MessageUtil.send(player, plugin.getPrefix(), "&cTu dois etre sur ton ile coop.");
                 return true;
             }
             int price = plugin.getConfig().getInt("island-expansions.coop.mining-price", 50000);
             if (!plugin.getCoopManager().unlockMining(island)) {
-                MessageUtil.send(player, plugin.getPrefix(), "&fDeblocage impossible. Prix : &e" + price + " Pasteque&f ou deja debloquee.");
+                MessageUtil.send(player, plugin.getPrefix(), "&cDeblocage impossible. Prix : &e" + price + " Pasteque &cou deja debloquee.");
                 return true;
             }
             MessageUtil.send(player, plugin.getPrefix(), "&aIle de minage coop debloquee pour &e" + price + " Pasteque&a.");
@@ -179,50 +182,74 @@ public class CoopCommand implements CommandExecutor {
     }
 
     private void openMenu(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 54, ChatColor.DARK_PURPLE + "Iles Coop Premium");
+        Inventory inv = Bukkit.createInventory(null, 54, MENU_TITLE);
+
+        GuiHelper.addTopBorder(inv);
+        GuiHelper.addBottomBorder(inv);
+
         Collection<CoopIsland> myIslands = plugin.getCoopManager().getPlayerIslands(player.getUniqueId());
         CoopIsland first = plugin.getCoopManager().getFirstIsland(player.getUniqueId());
         int pending = plugin.getCoopManager().getRemainingApprovals(player.getUniqueId());
         int minePrice = plugin.getConfig().getInt("island-expansions.coop.mining-price", 50000);
-        String mineState = first != null && first.isMiningUnlocked() ? ChatColor.GREEN + "Debloquee" : ChatColor.RED + "Verrouillee";
-        ItemStack green = pane((short) 5);
-        ItemStack magenta = pane((short) 2);
-        for (int slot = 0; slot < 54; slot++) {
-            if (slot < 9 || slot >= 45 || slot % 9 == 0 || slot % 9 == 8) {
-                inv.setItem(slot, (slot % 2 == 0) ? green : magenta);
-            }
-        }
-        inv.setItem(20, item(Material.SAPLING, ChatColor.GREEN + "Creer une coop elite", ChatColor.GRAY + "Commande : /iscoop create <joueurs...>", ChatColor.GRAY + "2 a 6 joueurs, validation de toute l'equipe"));
-        inv.setItem(22, item(Material.COMPASS, ChatColor.AQUA + "Mes iles coop", ChatColor.GRAY + "Nombre actuel: " + ChatColor.GOLD + myIslands.size(), ChatColor.GRAY + "Commande : /iscoop list"));
-        inv.setItem(24, item(Material.BED, ChatColor.LIGHT_PURPLE + "Home coop", ChatColor.GRAY + "Commande : /iscoop home"));
-        inv.setItem(30, item(Material.IRON_PICKAXE, ChatColor.GOLD + "Secteur minage coop", ChatColor.GRAY + "Etat: " + mineState, ChatColor.GRAY + "Prix unlock: " + ChatColor.YELLOW + minePrice, ChatColor.GRAY + "Commande : /iscoop unlock mine"));
-        inv.setItem(31, item(Material.NAME_TAG, ChatColor.WHITE + "Renommer la coop", ChatColor.GRAY + "Commande : /iscoop rename <nom>"));
-        inv.setItem(32, item(Material.PAPER, ChatColor.YELLOW + "Creation en attente", ChatColor.GRAY + (pending < 0 ? "Aucune invitation en attente" : (pending + " validation(s) restante(s)")), ChatColor.GRAY + "Commande : /iscoop pending"));
-        inv.setItem(40, item(Material.BOOK, ChatColor.LIGHT_PURPLE + "Lister mes coops", ChatColor.GRAY + "Commande : /iscoop list"));
-        inv.setItem(41, item(Material.DIAMOND_PICKAXE, ChatColor.GRAY + "Home minage coop", ChatColor.GRAY + "Commande : /iscoop mine"));
+        String mineState = first != null && first.isMiningUnlocked() ? "&aDebloquee" : "&cVerrouillee";
+
+        inv.setItem(20, GuiHelper.createItem(Material.SAPLING, "&a&lCreer une coop",
+                "",
+                "&8▎ &7Creation d'ile coop",
+                "&8▸ &7Commande: &d/iscoop create <joueurs...>",
+                "&8▸ &72 a 6 joueurs, validation de toute l'equipe",
+                "",
+                "&e▶ Clic pour voir les instructions"));
+
+        inv.setItem(22, GuiHelper.createItem(Material.COMPASS, "&b&lMes iles coop",
+                "",
+                "&8▎ &7Informations",
+                "&8▸ &7Nombre actuel: &e" + myIslands.size(),
+                "",
+                "&e▶ Clic pour lister"));
+
+        inv.setItem(24, GuiHelper.createItem(Material.BED, "&d&lHome coop",
+                "",
+                "&8▸ &7Teleportation vers ton ile coop",
+                "",
+                "&e▶ Clic pour se teleporter"));
+
+        inv.setItem(30, GuiHelper.createItem(Material.IRON_PICKAXE, "&e&lSecteur minage coop",
+                "",
+                "&8▎ &7Minage coop",
+                "&8▸ &7Etat: " + mineState,
+                "&8▸ &7Prix unlock: &e" + minePrice,
+                "",
+                "&e▶ Clic pour debloquer"));
+
+        inv.setItem(31, GuiHelper.createItem(Material.NAME_TAG, "&7&lRenommer la coop",
+                "",
+                "&8▸ &7Commande: &d/iscoop rename <nom>",
+                "",
+                "&e▶ Clic pour voir les instructions"));
+
+        inv.setItem(32, GuiHelper.createItem(Material.PAPER, "&e&lCreation en attente",
+                "",
+                "&8▸ &7" + (pending < 0 ? "Aucune invitation en attente" : (pending + " validation(s) restante(s)")),
+                "",
+                "&e▶ Clic pour voir le statut"));
+
+        inv.setItem(40, GuiHelper.createItem(Material.BOOK, "&d&lLister mes coops",
+                "",
+                "&8▸ &7Commande: &d/iscoop list",
+                "",
+                "&e▶ Clic pour lister"));
+
+        inv.setItem(41, GuiHelper.createItem(Material.DIAMOND_PICKAXE, "&7&lHome minage coop",
+                "",
+                "&8▸ &7Commande: &d/iscoop mine",
+                "",
+                "&e▶ Clic pour se teleporter"));
+
+        inv.setItem(49, GuiHelper.closeButton());
+
+        GuiHelper.fillEmpty(inv);
+
         player.openInventory(inv);
-    }
-
-    private ItemStack pane(short data) {
-        ItemStack item = new ItemStack(Material.STAINED_GLASS_PANE, 1, data);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(" ");
-            item.setItemMeta(meta);
-        }
-        return item;
-    }
-
-    private ItemStack item(Material material, String name, String... loreLines) {
-        ItemStack item = new ItemStack(material, 1);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(name);
-            List<String> lore = new ArrayList<String>();
-            for (String line : loreLines) lore.add(line);
-            meta.setLore(lore);
-            item.setItemMeta(meta);
-        }
-        return item;
     }
 }
