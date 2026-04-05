@@ -1,6 +1,7 @@
 package fr.pasteque.skyblock.command;
 
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
+import fr.pasteque.skyblock.gui.GuiHelper;
 import fr.pasteque.skyblock.model.AuctionListing;
 import fr.pasteque.skyblock.model.Island;
 import fr.pasteque.skyblock.util.MessageUtil;
@@ -14,7 +15,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.*;
 
@@ -151,36 +151,50 @@ public class PSkyAdminCommand implements CommandExecutor {
         MessageUtil.send(player, plugin.getPrefix(), "&7/psky pvp <pos1|pos2|create|delete>");
     }
 
+    @SuppressWarnings("deprecation")
     private void openAdminMenu(Player player) {
-        Inventory inventory = Bukkit.createInventory(null, 54, "§4Admin Skyblock");
-        ItemStack green = pane((short) 5);
-        ItemStack magenta = pane((short) 2);
-        for (int slot = 0; slot < 54; slot++) {
-            if (slot < 9 || slot >= 45 || slot % 9 == 0 || slot % 9 == 8) {
-                inventory.setItem(slot, (slot % 2 == 0) ? green : magenta);
-            }
-        }
-        inventory.setItem(20, item(Material.COMPASS, "§6Liste des îles", "§7Voir les îles connues"));
-        inventory.setItem(21, item(Material.NETHER_STAR, "§dWarp PvP Hardcore", "§7Commande : /psky setpvpwarp"));
-        inventory.setItem(22, item(Material.CHEST, "§6Modération HDV", "§7Voir / supprimer les annonces"));
-        inventory.setItem(23, item(Material.MONSTER_EGG, "§dInvasion Hub", "§7Lancer une invasion"));
-        inventory.setItem(24, item(Material.IRON_SWORD, "§5Zones PvP", "§7Créer / supprimer les zones PvP du monde world"));
-        inventory.setItem(31, item(Material.PAPER, "§fReload", "§7/psky reload"));
-        inventory.setItem(32, item(Material.GOLD_INGOT, "§eÉconomie", "§7/psky money ..."));
-        player.openInventory(inventory);
-    }
+        Inventory inv = Bukkit.createInventory(null, 54,
+                PastequeSkyblockPlugin.color("&2&lPasteque &5&lAdmin"));
 
-    private ItemStack pane(short data) {
-        ItemStack item = new ItemStack(Material.STAINED_GLASS_PANE, 1, data);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) { meta.setDisplayName(" "); item.setItemMeta(meta); }
-        return item;
-    }
+        // Borders
+        GuiHelper.addTopBorder(inv);
+        GuiHelper.addBottomBorder(inv);
 
-    private ItemStack item(Material material, String name, String... loreLines) {
-        ItemStack item = new ItemStack(material, 1);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) { meta.setDisplayName(name); List<String> lore = new ArrayList<String>(); Collections.addAll(lore, loreLines); meta.setLore(lore); item.setItemMeta(meta); }
-        return item;
+        // Content items - symmetric placement in rows 2-4
+        inv.setItem(20, GuiHelper.createItem(Material.COMPASS,
+                "&2Liste des iles",
+                "", "&7Voir toutes les iles connues.", "", "&8Clic pour afficher."));
+
+        inv.setItem(21, GuiHelper.createItem(Material.NETHER_STAR,
+                "&5Warp PvP Hardcore",
+                "", "&7Definir le warp PvP hardcore.", "", "&8/psky setpvpwarp"));
+
+        inv.setItem(22, GuiHelper.createItem(Material.CHEST,
+                "&2Moderation HDV",
+                "", "&7Voir / supprimer les annonces", "&7du marche aux encheres.", "", "&8/psky hdv list"));
+
+        inv.setItem(23, GuiHelper.createItem(Material.MONSTER_EGG,
+                "&5Invasion Hub",
+                "", "&7Lancer une invasion de", "&7monstres sur le hub.", "", "&8Clic pour lancer."));
+
+        inv.setItem(24, GuiHelper.createItem(Material.IRON_SWORD,
+                "&2Zones PvP",
+                "", "&7Creer / supprimer les zones", "&7PvP du monde world.", "", "&8/psky pvp ..."));
+
+        inv.setItem(30, GuiHelper.createItem(Material.PAPER,
+                "&7Reload",
+                "", "&7Recharger la configuration", "&7complete du plugin.", "", "&8/psky reload"));
+
+        inv.setItem(32, GuiHelper.createItem(Material.GOLD_INGOT,
+                "&5Economie",
+                "", "&7Gerer l'economie des joueurs.", "", "&8/psky money <give|take|set>"));
+
+        // Close button - bottom center
+        inv.setItem(49, GuiHelper.closeButton());
+
+        // Fill remaining empty slots with black glass
+        GuiHelper.fillEmpty(inv);
+
+        player.openInventory(inv);
     }
 }

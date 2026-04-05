@@ -35,7 +35,7 @@ public class GuiListener implements Listener {
         String title = event.getInventory().getTitle();
         String plainTitle = title == null ? "" : ChatColor.stripColor(title);
 
-        if (plainTitle.contains("Menu Skyblock") || plainTitle.contains("Skyblock Premium")) {
+        if (plainTitle.contains("Pasteque Skyblock")) {
             event.setCancelled(true);
             Material type = event.getCurrentItem().getType();
             if (type == Material.SAPLING) player.performCommand("is create");
@@ -63,7 +63,7 @@ public class GuiListener implements Listener {
             return;
         }
 
-        if (plainTitle.contains("Iles Coop") || plainTitle.contains("\u00celes Coop")) {
+        if (plainTitle.contains("Pasteque Ile Cooperative")) {
             event.setCancelled(true);
             Material type = event.getCurrentItem().getType();
             if (type == Material.SAPLING) {
@@ -82,7 +82,7 @@ public class GuiListener implements Listener {
             return;
         }
 
-        if (plainTitle.contains("Admin Skyblock")) {
+        if (plainTitle.contains("Pasteque Admin")) {
             event.setCancelled(true);
             Material type = event.getCurrentItem().getType();
             if (type == Material.COMPASS) player.performCommand("psky islands");
@@ -93,7 +93,7 @@ public class GuiListener implements Listener {
             return;
         }
 
-        if (plainTitle.startsWith("HDV [")) {
+        if (plainTitle.contains("Pasteque HDV")) {
             event.setCancelled(true);
             int currentPage = 1;
             try {
@@ -144,7 +144,7 @@ public class GuiListener implements Listener {
             return;
         }
 
-        if (plainTitle.equalsIgnoreCase("Retours HDV")) {
+        if (plainTitle.contains("Pasteque Retours HDV")) {
             event.setCancelled(true);
             if (event.getSlot() == 49) {
                 player.performCommand("hdv recup all");
@@ -153,7 +153,7 @@ public class GuiListener implements Listener {
             return;
         }
 
-        if (plainTitle.equalsIgnoreCase("Defis Skyblock") || plainTitle.equalsIgnoreCase("D\u00e9fis Skyblock")) {
+        if (plainTitle.contains("Pasteque Defis")) {
             event.setCancelled(true);
             ItemStack item = event.getCurrentItem();
             if (item == null || !item.hasItemMeta()) return;
@@ -168,7 +168,7 @@ public class GuiListener implements Listener {
             return;
         }
 
-        if (plainTitle.contains("Membres d")) {
+        if (plainTitle.contains("Pasteque Membres")) {
             event.setCancelled(true);
             ItemStack item = event.getCurrentItem();
             if (item == null || !item.hasItemMeta() || !item.getItemMeta().hasLore()) return;

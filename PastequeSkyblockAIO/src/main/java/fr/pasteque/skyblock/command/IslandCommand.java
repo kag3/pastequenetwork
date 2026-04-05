@@ -1,11 +1,11 @@
 package fr.pasteque.skyblock.command;
 
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
+import fr.pasteque.skyblock.gui.GuiHelper;
 import fr.pasteque.skyblock.manager.ConfirmationManager;
 import fr.pasteque.skyblock.model.Island;
 import fr.pasteque.skyblock.util.MessageUtil;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -14,7 +14,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -532,132 +531,108 @@ public class IslandCommand implements CommandExecutor {
         MessageUtil.send(player, plugin.getPrefix(), "&7/is reset, delete, rollback, chat, challenges, unlock");
     }
 
+    @SuppressWarnings("deprecation")
     private void openMenuPremium(Player player) {
-        Inventory inventory = Bukkit.createInventory(null, 54, ChatColor.DARK_GREEN + "Skyblock Premium");
+        Inventory inventory = Bukkit.createInventory(null, 54,
+                PastequeSkyblockPlugin.color("&2&lPasteque &5&lSkyblock"));
         Island island = plugin.getIslandManager().getIslandByPlayer(player.getUniqueId());
         int level = island == null ? 0 : plugin.getIslandManager().getLevel(island);
         int farmPrice = plugin.getConfig().getInt("island-expansions.solo.farming-price", 10000);
         int minePrice = plugin.getConfig().getInt("island-expansions.solo.mining-price", 10000);
-        String farmState = island != null && island.isFarmingUnlocked() ? ChatColor.GREEN + "Debloquee" : ChatColor.RED + "Verrouillee";
-        String mineState = island != null && island.isMiningUnlocked() ? ChatColor.GREEN + "Debloquee" : ChatColor.RED + "Verrouillee";
-        String pvpState = island != null && island.isPvpEnabled() ? ChatColor.GREEN + "Actif" : ChatColor.RED + "Inactif";
+        String farmState = island != null && island.isFarmingUnlocked() ? "&aDebloquee" : "&cVerrouillee";
+        String mineState = island != null && island.isMiningUnlocked() ? "&aDebloquee" : "&cVerrouillee";
+        String pvpState = island != null && island.isPvpEnabled() ? "&aActif" : "&cInactif";
         String bank = island == null ? "0" : String.valueOf((int) island.getBankBalance());
-        ItemStack green = pane((short) 5);
-        ItemStack magenta = pane((short) 2);
-        for (int slot = 0; slot < 54; slot++) {
-            if (slot < 9 || slot >= 45 || slot % 9 == 0 || slot % 9 == 8) {
-                inventory.setItem(slot, (slot % 2 == 0) ? green : magenta);
-            }
-        }
+
+        GuiHelper.addTopBorder(inventory);
+        GuiHelper.addBottomBorder(inventory);
+
+        // Row 2: main actions (slots 20-24, symmetric around 22)
         if (island == null) {
-            inventory.setItem(20, item(Material.SAPLING, ChatColor.GREEN + "Creer mon ile", ChatColor.GRAY + "Commande : /is create"));
+            inventory.setItem(20, GuiHelper.createItem(Material.SAPLING,
+                    "&2&lCreer mon ile", "&8&m                    ", "&7Commande : &f/is create", "&8&m                    "));
         } else {
-            inventory.setItem(20, item(Material.GRASS, ChatColor.GREEN + "Retour sur mon ile", ChatColor.GRAY + "Teleportation vers ton ile principale"));
+            inventory.setItem(20, GuiHelper.createItem(Material.GRASS,
+                    "&2&lRetour sur mon ile", "&8&m                    ", "&7Teleportation vers ton ile principale", "&8&m                    "));
         }
-        inventory.setItem(21, item(Material.BED, ChatColor.LIGHT_PURPLE + "Definir le home", ChatColor.GRAY + "Commande : /is sethome"));
-        inventory.setItem(22, item(Material.BOOK, ChatColor.AQUA + "Defis Skyblock", ChatColor.GRAY + "Voir et valider tes defis"));
-        inventory.setItem(23, item(Material.PAPER, ChatColor.YELLOW + "Niveau d'ile", ChatColor.GRAY + "Niveau actuel: " + ChatColor.GOLD + level));
-        inventory.setItem(24, item(Material.DIAMOND_SWORD, ChatColor.DARK_PURPLE + "PvP d'ile", ChatColor.GRAY + "Etat: " + pvpState, ChatColor.GRAY + "Commande : /is pvp"));
-        inventory.setItem(29, item(Material.SKULL_ITEM, ChatColor.GOLD + "Membres", ChatColor.GRAY + "Gerer les membres et permissions"));
-        inventory.setItem(30, item(Material.CARROT_ITEM, ChatColor.GREEN + "Farming", ChatColor.GRAY + "Etat: " + farmState, ChatColor.GRAY + "Prix unlock: " + ChatColor.GOLD + farmPrice, ChatColor.GRAY + "Commande : /is unlock farming"));
-        inventory.setItem(31, item(Material.IRON_PICKAXE, ChatColor.GRAY + "Minage", ChatColor.GRAY + "Etat: " + mineState, ChatColor.GRAY + "Prix unlock: " + ChatColor.GOLD + minePrice, ChatColor.GRAY + "Commande : /is unlock mining"));
-        inventory.setItem(32, item(Material.NAME_TAG, ChatColor.LIGHT_PURPLE + "Renommer l'ile", ChatColor.GRAY + "Commande : /is rename <nom>"));
-        inventory.setItem(33, item(Material.CHEST, ChatColor.GOLD + "Banque d'ile", ChatColor.GRAY + "Solde: " + ChatColor.YELLOW + bank + " " + plugin.getEconomyManager().getCurrencyName(), ChatColor.GRAY + "Commande : /is bank"));
-        inventory.setItem(34, item(Material.GOLD_INGOT, ChatColor.GOLD + "Top mondial iles", ChatColor.GRAY + "Commande : /is top"));
-        inventory.setItem(39, item(Material.COMPASS, ChatColor.GREEN + "Home Farming", ChatColor.GRAY + "Commande : /is farm"));
-        inventory.setItem(40, item(Material.SIGN, ChatColor.WHITE + "Iles publiques / privees", ChatColor.GRAY + "Commandes : /is public ou /is private"));
-        inventory.setItem(41, item(Material.DIAMOND_PICKAXE, ChatColor.GRAY + "Home Minage", ChatColor.GRAY + "Commande : /is mine"));
-        inventory.setItem(42, item(Material.BOOK_AND_QUILL, ChatColor.LIGHT_PURPLE + "Profil ile", ChatColor.GRAY + "Commande : /is stats"));
+        inventory.setItem(21, GuiHelper.createItem(Material.BED,
+                "&5&lDefinir le home", "&8&m                    ", "&7Commande : &f/is sethome", "&8&m                    "));
+        inventory.setItem(22, GuiHelper.createItem(Material.BOOK,
+                "&2&lDefis Skyblock", "&8&m                    ", "&7Voir et valider tes defis", "&8&m                    "));
+        inventory.setItem(23, GuiHelper.createItem(Material.PAPER,
+                "&5&lNiveau d'ile", "&8&m                    ", "&7Niveau actuel: &e" + level, "&8&m                    "));
+        inventory.setItem(24, GuiHelper.createItem(Material.DIAMOND_SWORD,
+                "&2&lPvP d'ile", "&8&m                    ", "&7Etat: " + pvpState, "&7Commande : &f/is pvp", "&8&m                    "));
+
+        // Row 3: management (slots 29-34, symmetric around 31-32)
+        inventory.setItem(29, GuiHelper.createItem(Material.SKULL_ITEM,
+                "&5&lMembres", "&8&m                    ", "&7Gerer les membres et permissions", "&8&m                    "));
+        inventory.setItem(30, GuiHelper.createItem(Material.CARROT_ITEM,
+                "&2&lFarming", "&8&m                    ", "&7Etat: " + farmState, "&7Prix unlock: &e" + farmPrice, "&7Commande : &f/is unlock farming", "&8&m                    "));
+        inventory.setItem(31, GuiHelper.createItem(Material.IRON_PICKAXE,
+                "&7&lMinage", "&8&m                    ", "&7Etat: " + mineState, "&7Prix unlock: &e" + minePrice, "&7Commande : &f/is unlock mining", "&8&m                    "));
+        inventory.setItem(32, GuiHelper.createItem(Material.NAME_TAG,
+                "&5&lRenommer l'ile", "&8&m                    ", "&7Commande : &f/is rename <nom>", "&8&m                    "));
+        inventory.setItem(33, GuiHelper.createItem(Material.CHEST,
+                "&2&lBanque d'ile", "&8&m                    ", "&7Solde: &e" + bank + " " + plugin.getEconomyManager().getCurrencyName(), "&7Commande : &f/is bank", "&8&m                    "));
+        inventory.setItem(34, GuiHelper.createItem(Material.GOLD_INGOT,
+                "&5&lTop mondial iles", "&8&m                    ", "&7Commande : &f/is top", "&8&m                    "));
+
+        // Row 4: secondary actions (slots 39-42, symmetric around 40-41)
+        inventory.setItem(39, GuiHelper.createItem(Material.COMPASS,
+                "&2&lHome Farming", "&8&m                    ", "&7Commande : &f/is farm", "&8&m                    "));
+        inventory.setItem(40, GuiHelper.createItem(Material.SIGN,
+                "&7&lIles publiques / privees", "&8&m                    ", "&7Commandes : &f/is public &7ou &f/is private", "&8&m                    "));
+        inventory.setItem(41, GuiHelper.createItem(Material.DIAMOND_PICKAXE,
+                "&5&lHome Minage", "&8&m                    ", "&7Commande : &f/is mine", "&8&m                    "));
+        inventory.setItem(42, GuiHelper.createItem(Material.BOOK_AND_QUILL,
+                "&2&lProfil ile", "&8&m                    ", "&7Commande : &f/is stats", "&8&m                    "));
+
+        // Close button at bottom center
+        inventory.setItem(49, GuiHelper.closeButton());
+
+        GuiHelper.fillEmpty(inventory);
         player.openInventory(inventory);
     }
 
-    @SuppressWarnings("unused")
-    private void openMenuLegacyUnused(Player player) {
-        Inventory inventory = Bukkit.createInventory(null, 54, "§2Skyblock Premium");
-        ItemStack green = pane((short) 5);
-        ItemStack magenta = pane((short) 2);
-        for (int slot = 0; slot < 54; slot++) {
-            if (slot < 9 || slot >= 45 || slot % 9 == 0 || slot % 9 == 8) {
-                inventory.setItem(slot, (slot % 2 == 0) ? green : magenta);
-            }
-        }
-        inventory.setItem(20, item(Material.GRASS, "§aRetour sur mon île", "§7Téléportation vers ton île principale"));
-        inventory.setItem(21, item(Material.BED, "§dDéfinir le home", "§7Définit le point de retour de l'île"));
-        inventory.setItem(22, item(Material.BOOK, "§bDéfis", "§7Voir les défis et leurs récompenses"));
-        inventory.setItem(23, item(Material.PAPER, "§eNiveau d'île", "§7Consulter la valeur et la progression"));
-        inventory.setItem(24, item(Material.DIAMOND_SWORD, "§5PvP d'île", "§7Activer ou désactiver le PvP en survie"));
-        inventory.setItem(29, item(Material.SKULL_ITEM, "§6Membres", "§7Gérer les membres, trusts et visiteurs"));
-        inventory.setItem(30, item(Material.CARROT_ITEM, "§aDébloquer l'île Farming", "§710000 Pasteque", "§7Pont + île agricole détaillée"));
-        inventory.setItem(31, item(Material.IRON_PICKAXE, "§7Débloquer l'île Minage", "§710000 Pasteque", "§7Pont + île minérale"));
-        inventory.setItem(32, item(Material.NAME_TAG, "§dRenommer l'île", "§7Commande : /is rename <nom>"));
-        inventory.setItem(33, item(Material.CHEST, "§6Banque d'île", "§7Commande : /is bank"));
-        inventory.setItem(40, item(Material.SIGN, "§fÎles publiques / privées", "§7Commandes : /is public ou /is private"));
-        inventory.setItem(41, item(Material.COMPASS, "§bVisiter / Home Farming/Minage", "§7Utilise /is visit ou /is home"));
-        inventory.setItem(20, item(Material.GRASS, "Â§aRetour sur mon ile", "Â§7Teleportation vers ton ile principale"));
-        inventory.setItem(21, item(Material.BED, "Â§dDefinir le home", "Â§7Definit le point de retour de l'ile"));
-        inventory.setItem(22, item(Material.BOOK, "Â§bDefis", "Â§7Voir les defis et recompenses"));
-        inventory.setItem(23, item(Material.PAPER, "Â§eNiveau d'ile", "Â§7Commande : /is level"));
-        inventory.setItem(24, item(Material.DIAMOND_SWORD, "Â§5PvP d'ile", "Â§7Commande : /is pvp"));
-        inventory.setItem(30, item(Material.CARROT_ITEM, "Â§aDebloquer Farming", "Â§710000 Pasteque", "Â§7Commande : /is unlock farming"));
-        inventory.setItem(31, item(Material.IRON_PICKAXE, "Â§7Debloquer Minage", "Â§710000 Pasteque", "Â§7Commande : /is unlock mining"));
-        inventory.setItem(34, item(Material.GOLD_INGOT, "Â§6Top iles", "Â§7Commande : /is top"));
-        inventory.setItem(39, item(Material.COMPASS, "Â§aHome Farming", "Â§7Commande : /is farm"));
-        inventory.setItem(41, item(Material.DIAMOND_PICKAXE, "Â§7Home Minage", "Â§7Commande : /is mine"));
-        inventory.setItem(42, item(Material.BOOK_AND_QUILL, "Â§dProfil ile", "Â§7Commande : /is stats"));
-        player.openInventory(inventory);
-    }
-
+    @SuppressWarnings("deprecation")
     private void openMembers(Player player, Island island) {
-        Inventory inventory = Bukkit.createInventory(null, 54, "§dMembres d'île");
-        ItemStack green = pane((short) 5);
-        ItemStack magenta = pane((short) 2);
-        for (int slot = 0; slot < 54; slot++) {
-            if (slot < 9 || slot >= 45 || slot % 9 == 0 || slot % 9 == 8) {
-                inventory.setItem(slot, (slot % 2 == 0) ? green : magenta);
-            }
-        }
+        Inventory inventory = Bukkit.createInventory(null, 54,
+                PastequeSkyblockPlugin.color("&2&lPasteque &5&lMembres"));
+
+        GuiHelper.addTopBorder(inventory);
+        GuiHelper.addBottomBorder(inventory);
+
         int slot = 10;
         for (UUID uuid : island.getMembers()) {
             OfflinePlayer member = Bukkit.getOfflinePlayer(uuid);
-            ItemStack skull = item(Material.SKULL_ITEM, "§e" + (member.getName() == null ? uuid.toString() : member.getName()), "§7Clique pour expulser ce membre", "§8UUID:" + uuid.toString());
-            inventory.setItem(slot++, skull);
+            String memberName = member.getName() == null ? uuid.toString() : member.getName();
+            inventory.setItem(slot++, GuiHelper.createItem(Material.SKULL_ITEM,
+                    "&5&l" + memberName,
+                    "&8&m                    ",
+                    "&7Clique pour expulser ce membre",
+                    "&8UUID:" + uuid.toString(),
+                    "&8&m                    "));
             if (slot % 9 == 8) slot += 2;
             if (slot >= 44) break;
         }
+
+        // Back button at bottom-left area, close button at bottom center
+        inventory.setItem(48, GuiHelper.backButton());
+        inventory.setItem(49, GuiHelper.closeButton());
+
+        GuiHelper.fillEmpty(inventory);
         player.openInventory(inventory);
     }
 
-    private ItemStack pane(short data) {
-        ItemStack item = new ItemStack(Material.STAINED_GLASS_PANE, 1, data);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) { meta.setDisplayName(" "); item.setItemMeta(meta); }
-        return item;
-    }
-
-    private ItemStack item(Material material, String name, String... loreLines) {
-        ItemStack item = new ItemStack(material, 1);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(name);
-            List<String> lore = new ArrayList<String>();
-            for (String line : loreLines) {
-                lore.add(line);
-            }
-            meta.setLore(lore);
-            item.setItemMeta(meta);
-        }
-        return item;
-    }
-
+    @SuppressWarnings("deprecation")
     private void openChallenges(Player player) {
-        Inventory inventory = Bukkit.createInventory(null, 54, "§bDéfis Skyblock");
-        ItemStack green = pane((short) 5);
-        ItemStack magenta = pane((short) 2);
-        for (int slot = 0; slot < 54; slot++) {
-            if (slot < 9 || slot >= 45 || slot % 9 == 0 || slot % 9 == 8) {
-                inventory.setItem(slot, (slot % 2 == 0) ? green : magenta);
-            }
-        }
+        Inventory inventory = Bukkit.createInventory(null, 54,
+                PastequeSkyblockPlugin.color("&2&lPasteque &5&lDefis"));
+
+        GuiHelper.addTopBorder(inventory);
+        GuiHelper.addBottomBorder(inventory);
+
         int slot = 10;
         for (String challengeId : plugin.getChallengeManager().getChallengeIds()) {
             org.bukkit.configuration.ConfigurationSection section =
@@ -675,29 +650,30 @@ public class IslandCommand implements CommandExecutor {
             int amount = section.getInt("amount", 1);
             double reward = section.getDouble("reward", 0.0D);
 
-            List<String> lore = new ArrayList<String>();
-            lore.add("§7Objectif : " + amount + "x " + section.getString("material", "ITEM"));
-            lore.add("§7Récompense : §a" + reward + " Pasteque");
+            String statusLine;
             if (plugin.getChallengeManager().isCompleted(challengeId, player.getUniqueId())) {
-                lore.add("§aDéjà complété");
+                statusLine = "&aComplete";
             } else {
-                lore.add("§eClique pour tenter le défi");
-            }
-            lore.add("§8ID:" + challengeId);
-
-            ItemStack item = new ItemStack(material, 1);
-            ItemMeta meta = item.getItemMeta();
-            if (meta != null) {
-                meta.setDisplayName("§b" + name);
-                meta.setLore(lore);
-                item.setItemMeta(meta);
+                statusLine = "&eClique pour tenter le defi";
             }
 
-            inventory.setItem(slot++, item);
+            inventory.setItem(slot++, GuiHelper.createItem(material,
+                    "&2&l" + name,
+                    "&8&m                    ",
+                    "&7Objectif : &f" + amount + "x " + section.getString("material", "ITEM"),
+                    "&7Recompense : &a" + reward + " Pasteque",
+                    statusLine,
+                    "&8ID:" + challengeId,
+                    "&8&m                    "));
             if (slot % 9 == 8) slot += 2;
             if (slot >= 44) break;
         }
 
+        // Back button at bottom-left area, close button at bottom center
+        inventory.setItem(48, GuiHelper.backButton());
+        inventory.setItem(49, GuiHelper.closeButton());
+
+        GuiHelper.fillEmpty(inventory);
         player.openInventory(inventory);
     }
 

@@ -37,7 +37,7 @@ public class CombatPassListener implements Listener {
         String title = inv.getTitle();
         if (title == null) return;
         String stripped = ChatColor.stripColor(title);
-        if (!stripped.startsWith("Passe de Combat")) return;
+        if (!stripped.startsWith("Pasteque Passe")) return;
 
         event.setCancelled(true);
 
