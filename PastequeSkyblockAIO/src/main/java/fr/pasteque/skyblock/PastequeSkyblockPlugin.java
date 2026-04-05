@@ -100,6 +100,11 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     /* ── PastequeSkills ── */
     private SkillManager skillManager;
 
+    /* ── Collections, Minions, Pets ── */
+    private CollectionManager collectionManager;
+    private MinionManager minionManager;
+    private PetManager petManager;
+
     /* ── Island upgrades, warps, presets ── */
     private IslandUpgradeManager islandUpgradeManager;
     private IslandWarpManager islandWarpManager;
@@ -174,6 +179,14 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         this.skillManager = new SkillManager(this);
         this.skillManager.load();
 
+        /* ── Collections, Minions, Pets init ── */
+        this.collectionManager = new CollectionManager(this);
+        this.collectionManager.load();
+        this.minionManager = new MinionManager(this);
+        this.minionManager.load();
+        this.petManager = new PetManager(this);
+        this.petManager.load();
+
         /* ── Island upgrades, warps, presets init ── */
         this.islandUpgradeManager = new IslandUpgradeManager(this);
         this.islandWarpManager = new IslandWarpManager(this);
@@ -193,6 +206,8 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         registerCombatPassCommands();
         registerMenuCommands();
         registerIslandUpgradeCommands();
+        registerCollectionCommands();
+        registerPetCommands();
 
         /* ── Listeners ── */
         registerSkyblockListeners();
@@ -203,6 +218,9 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         registerCombatPassListeners();
         registerMenuListeners();
         registerIslandUpgradeListeners();
+        registerCollectionListeners();
+        registerMinionListeners();
+        registerPetListeners();
 
         /* ── Scoreboard update task (every 3 seconds) ── */
         Bukkit.getScheduler().runTaskTimer(this, new Runnable() {
@@ -223,6 +241,9 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         }, 20L * 60L, 20L * 60L);
 
         startArenaActivityTicker();
+
+        /* ── Minion ticker (every second) ── */
+        minionManager.startTicking();
     }
 
     @Override
