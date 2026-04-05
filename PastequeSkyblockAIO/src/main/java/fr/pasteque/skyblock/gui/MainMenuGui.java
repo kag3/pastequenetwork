@@ -24,103 +24,92 @@ public class MainMenuGui {
         // Theme PASTEQUE (vert/lime/magenta) applique en fin de methode via decorate().
 
         // ── Row 1 : Ile / Arene / HDV / Boutique ────────────────────────
-        inv.setItem(10, GuiHelper.createItem(Material.GRASS,
+        inv.setItem(10, GuiHelper.fluidItem(Material.GRASS,
                 "&a&lMon Ile",
-                "&7Gere ton ile skyblock",
-                "&8\u25B8 Niveau, membres, parametres",
-                "",
-                "&e\u25B6 Clic pour ouvrir!"));
+                "Ton royaume flottant t'attend.",
+                new String[]{"Niveau et experience d'ile", "Gestion des membres et coop", "Ameliorations et warps"},
+                "Clic pour acceder a ton ile"));
 
-        inv.setItem(12, GuiHelper.createItem(Material.DIAMOND_SWORD,
+        inv.setItem(12, GuiHelper.fluidItem(Material.DIAMOND_SWORD,
                 "&c&lArene PvP",
-                "&7Combats dans l'arene",
-                "&8\u25B8 Kits, classement, duels",
-                "",
-                "&e\u25B6 Clic pour ouvrir!"));
+                "Prouve ta valeur au combat.",
+                new String[]{"Kits equilibres a selectionner", "Classement ELO competitif", "Duels et tournois"},
+                "Clic pour entrer dans l'arene"));
 
-        inv.setItem(14, GuiHelper.createItem(Material.CHEST,
+        inv.setItem(14, GuiHelper.fluidItem(Material.CHEST,
                 "&e&lHotel des Ventes",
-                "&7Achete et vends des items",
-                "&8\u25B8 Encheres, recherche",
-                "",
-                "&e\u25B6 Clic pour ouvrir!"));
+                "Marche central du serveur.",
+                new String[]{"Mets en vente tes tresors", "Recherche par categorie", "Systeme d'encheres en temps reel"},
+                "Clic pour ouvrir l'HDV"));
 
-        inv.setItem(16, GuiHelper.createItem(Material.EMERALD,
-                "&a&lBoutique",
-                "&7Boutiques des joueurs",
-                "",
-                "&e\u25B6 Clic pour ouvrir!"));
+        inv.setItem(16, GuiHelper.fluidItem(Material.EMERALD,
+                "&a&lBoutiques Joueurs",
+                "Les shops tenus par la communaute.",
+                new String[]{"Visite les meilleurs vendeurs", "Cree ta propre boutique", "Prix libres et negociables"},
+                "Clic pour parcourir"));
 
         // ── Row 2 : Competences / Collections / Animaux / Minions ───────
-        inv.setItem(19, GuiHelper.createItem(Material.BOOK_AND_QUILL,
+        inv.setItem(19, GuiHelper.fluidItem(Material.BOOK_AND_QUILL,
                 "&d&lCompetences",
-                "&7Tes 5 arbres de competences",
-                "&8\u25B8 Combat, Minage, Peche...",
-                "",
-                "&e\u25B6 Clic pour ouvrir!"));
+                "Cinq arbres pour te specialiser.",
+                new String[]{"Combat, Minage, Peche, Foresterie, Farming", "Bonus passifs exclusifs", "Defis de maitrise a debloquer"},
+                "Clic pour progresser"));
 
-        inv.setItem(21, GuiHelper.createItem(Material.GOLD_INGOT,
+        inv.setItem(21, GuiHelper.fluidItem(Material.GOLD_INGOT,
                 "&6&lCollections",
-                "&7Progresse tes collections",
-                "&8\u25B8 Debloquer des recompenses",
-                "",
-                "&e\u25B6 Clic pour ouvrir!"));
+                "Collectionne tout, recompense-toi.",
+                new String[]{"Debloque des paliers uniques", "Recettes et objets exclusifs", "Progression persistante"},
+                "Clic pour consulter"));
 
-        inv.setItem(23, GuiHelper.createItem(Material.SKULL_ITEM, 3,
+        inv.setItem(23, GuiHelper.fluidItem(Material.SKULL_ITEM, 3,
                 "&d&lAnimaux",
-                "&7Tes compagnons de combat",
-                "&8\u25B8 Bonus passifs uniques",
-                "",
-                "&e\u25B6 Clic pour ouvrir!"));
+                "Des compagnons fideles a tes cotes.",
+                new String[]{"Bonus passifs uniques par pet", "Montee en niveau individuelle", "Invoque le pet de ton choix"},
+                "Clic pour gerer tes pets"));
 
-        inv.setItem(25, GuiHelper.createItem(Material.BREWING_STAND_ITEM,
+        inv.setItem(25, GuiHelper.fluidItem(Material.BREWING_STAND_ITEM,
                 "&8&lMinions",
-                "&7Tes ouvriers automatiques",
-                "&8\u25B8 Farm, mine, peche...",
-                "",
-                "&e\u25B6 Clic pour ouvrir!"));
+                "Tes ouvriers automatiques infatigables.",
+                new String[]{"Farm, mine, peche, bucheronnage", "Ameliorations de vitesse et stockage", "Revenus passifs 24/7"},
+                "Clic pour deployer"));
 
         // ── Row 3 : Duels / Pass / Slayers / Bounties ───────────────────
-        inv.setItem(28, GuiHelper.createItem(Material.IRON_SWORD,
+        inv.setItem(28, GuiHelper.fluidItem(Material.IRON_SWORD,
                 "&5&lDuels",
-                "&7Defie un joueur en 1v1",
-                "&8\u25B8 Arenes privees, ELO",
-                "",
-                "&e\u25B6 Clic pour ouvrir!"));
+                "Affronte un adversaire en 1v1.",
+                new String[]{"Arenes privees sans interruption", "Classement ELO individuel", "Parie des pasteques sur le resultat"},
+                "Clic pour lancer un defi"));
 
-        inv.setItem(30, GuiHelper.createItem(Material.PAPER,
+        inv.setItem(30, GuiHelper.fluidItem(Material.PAPER,
                 "&d&lPasse de Combat",
-                "&7Saison 1 - Recompenses",
-                "&8\u25B8 30 paliers a debloquer",
-                "",
-                "&e\u25B6 Clic pour ouvrir!"));
+                "Saison 1 - recompenses exclusives.",
+                new String[]{"30 paliers gratuits et premium", "Cosmetiques, pasteques, pets", "Defis hebdomadaires pour progresser"},
+                "Clic pour voir ta progression"));
 
-        inv.setItem(32, GuiHelper.createItem(Material.BLAZE_ROD,
+        inv.setItem(32, GuiHelper.fluidItem(Material.BLAZE_ROD,
                 "&6&lSlayers",
-                "&7Invoque et terrasse des boss",
-                "&8\u25B8 5 types, niveaux 1-5",
-                "",
-                "&e\u25B6 Clic pour ouvrir!"));
+                "Invoque et terrasse des boss legendaires.",
+                new String[]{"5 types de slayers distincts", "Niveaux 1 a 5 de difficulte", "Drops rares et XP massive"},
+                "Clic pour partir en chasse"));
 
-        inv.setItem(34, GuiHelper.createItem(Material.GOLDEN_APPLE,
+        inv.setItem(34, GuiHelper.fluidItem(Material.GOLDEN_APPLE,
                 "&e&lBounties",
-                "&7Primes sur les joueurs",
-                "",
-                "&e\u25B6 Clic pour ouvrir!"));
+                "Des primes sur les meilleurs joueurs.",
+                new String[]{"Depose ta tete de gibier", "Chasse les tetes les plus cheres", "Recompenses en pasteques d'or"},
+                "Clic pour voir les primes"));
 
         // ── Row 4 : Vente Sombre / Social (symetriques autour de 40) ────
-        inv.setItem(39, GuiHelper.createItem(Material.NETHER_STAR,
+        inv.setItem(39, GuiHelper.fluidItem(Material.NETHER_STAR,
                 "&5&lVente Sombre",
-                "&7Encheres sur items legendaires",
-                "&8\u25B8 Toutes les 2 heures",
-                "",
-                "&e\u25B6 Clic pour ouvrir!"));
+                "Encheres mysterieuses d'items rarissimes.",
+                new String[]{"Nouvelle vente toutes les 2 heures", "Items legendaires exclusifs", "Enchere publique ou privee"},
+                "Clic pour participer"));
 
-        inv.setItem(41, GuiHelper.createItem(Material.BOOK_AND_QUILL,
+        inv.setItem(41, GuiHelper.fluidItem(Material.BOOK_AND_QUILL,
                 "&a&lSocial",
-                "&7Amis, ennemis, alliances",
-                "",
-                "&e\u25B6 Clic pour ouvrir!"));
+                "Ton reseau sur le serveur.",
+                new String[]{"Amis, ennemis et alliances", "Messages prives et parties", "Statut et historique"},
+                "Clic pour gerer"));
 
         // ── Row 5 : bottom border + close ───────────────────────────────
         inv.setItem(49, GuiHelper.closeButton());

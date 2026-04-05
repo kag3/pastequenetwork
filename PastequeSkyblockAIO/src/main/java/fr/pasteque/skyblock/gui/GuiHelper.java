@@ -311,6 +311,38 @@ public final class GuiHelper {
     }
 
     /**
+     * Fabrique un item style magazine (nom + lore fluidifie: description italique,
+     * details en puces, call-to-action).
+     */
+    public static ItemStack fluidItem(Material mat, String name, String description, String[] details, String cta) {
+        ItemStack item = new ItemStack(mat, 1);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(PastequeSkyblockPlugin.color(name));
+        List<String> lore = fluidLore(description, details, cta);
+        List<String> colored = new ArrayList<String>();
+        for (String line : lore) {
+            colored.add(PastequeSkyblockPlugin.color(line));
+        }
+        meta.setLore(colored);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    public static ItemStack fluidItem(Material mat, int dataValue, String name, String description, String[] details, String cta) {
+        ItemStack item = new ItemStack(mat, 1, (short) dataValue);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(PastequeSkyblockPlugin.color(name));
+        List<String> lore = fluidLore(description, details, cta);
+        List<String> colored = new ArrayList<String>();
+        for (String line : lore) {
+            colored.add(PastequeSkyblockPlugin.color(line));
+        }
+        meta.setLore(colored);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /**
      * Ligne de separation decorative pour entetes de lore.
      */
     public static String separator() {
