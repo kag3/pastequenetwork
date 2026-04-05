@@ -324,22 +324,51 @@ public class CoopManager {
     }
 
     private void sculptIsland(World world, int cx, int baseY, int cz, int radiusX, int radiusZ, int maxLift, Material top, Material fill, long seed) {
-        for (int x = cx - radiusX - 2; x <= cx + radiusX + 2; x++) {
-            for (int z = cz - radiusZ - 2; z <= cz + radiusZ + 2; z++) {
+        int rootDepth = Math.max(6, Math.min(radiusX, radiusZ) - 2);
+        double noiseAmpEdge = 0.18D;
+        for (int x = cx - radiusX - 4; x <= cx + radiusX + 4; x++) {
+            for (int z = cz - radiusZ - 4; z <= cz + radiusZ + 4; z++) {
                 double nx = (x - cx) / (double) radiusX;
                 double nz = (z - cz) / (double) radiusZ;
                 double dist = (nx * nx) + (nz * nz);
-                if (dist > 1.0D) continue;
-                double edge = Math.max(0.0D, 1.0D - dist);
                 double noise = terrainNoise(x, z, seed);
+                double warpedDist = dist - noise * noiseAmpEdge;
+                if (warpedDist > 1.0D) continue;
+                double edge = Math.max(0.0D, 1.0D - warpedDist);
                 int h = 0;
-                if (edge > 0.10D) h = 1;
-                if (edge > 0.42D && noise > -0.05D) h = 2;
-                if (maxLift >= 3 && edge > 0.70D && noise > 0.35D) h = 3;
-                if (maxLift >= 4 && edge > 0.82D && noise > 0.55D) h = 4;
+                if (edge > 0.05D) h = 1;
+                if (edge > 0.35D && noise > -0.15D) h = 2;
+                if (maxLift >= 3 && edge > 0.60D && noise > 0.20D) h = 3;
+                if (maxLift >= 4 && edge > 0.78D && noise > 0.45D) h = 4;
                 if (h > maxLift) h = maxLift;
                 terrainColumn(world, x, baseY, z, Math.max(0, h), top, fill);
+                // Organic tapered underside so coop islands also have natural roots
+                terrainUnderside(world, x, baseY - 4, z, edge, rootDepth, noise, fill);
             }
+        }
+    }
+
+    /**
+     * Tapered organic underside under a surface column (coop islands).
+     * Depth follows an edge^0.65 curve so the bottom is rounded, not conical.
+     */
+    private void terrainUnderside(World world, int x, int baseY, int z,
+                                  double edge, int depth, double noise, Material fill) {
+        if (edge <= 0.0D) return;
+        double shape = Math.pow(Math.max(0.0D, edge), 0.65D);
+        int rootDepth = (int) Math.round(shape * depth + noise * 1.2D);
+        if (rootDepth < 1) return;
+        if (rootDepth > depth) rootDepth = depth;
+        Material accent = (fill == Material.DIRT) ? Material.STONE : null;
+        for (int i = 0; i < rootDepth; i++) {
+            int yy = (baseY - 1) - i;
+            if (yy <= 1) break;
+            Material use = fill;
+            if (accent != null) {
+                int hv = (int) (((long) x * 73856093L) ^ ((long) z * 19349663L) ^ ((long) yy * 83492791L));
+                if ((hv & 0x7FFFFFFF) % 13 == 0) use = accent;
+            }
+            world.getBlockAt(x, yy, z).setType(use);
         }
     }
 

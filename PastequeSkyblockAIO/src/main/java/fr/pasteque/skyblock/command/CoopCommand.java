@@ -193,6 +193,10 @@ public class CoopCommand implements CommandExecutor {
         int minePrice = plugin.getConfig().getInt("island-expansions.coop.mining-price", 50000);
         String mineState = first != null && first.isMiningUnlocked() ? "&aDebloquee" : "&cVerrouillee";
 
+        // Layout parfaitement symetrique: 3+3+2 items repartis sur 3 rangees
+        // Rangee 2 (18-26): 20, 22, 24 — Creer, Info, Home
+        // Rangee 3 (27-35): 29, 31, 33 — Mine, Rename, Pending
+        // Rangee 4 (36-44): 39, 41     — Lister, Home Mine (symetriques autour de 40)
         inv.setItem(20, GuiHelper.createItem(Material.SAPLING, "&a&lCreer une Coop",
                 "",
                 "&8\u25CE &7Creation d'ile cooperative",
@@ -214,7 +218,7 @@ public class CoopCommand implements CommandExecutor {
                 "",
                 "&a\u25B6 Clic pour se teleporter"));
 
-        inv.setItem(30, GuiHelper.createItem(Material.IRON_PICKAXE, "&e&lSecteur Minage Coop",
+        inv.setItem(29, GuiHelper.createItem(Material.IRON_PICKAXE, "&e&lSecteur Minage Coop",
                 "",
                 "&8\u25CE &7Minage cooperatif",
                 "&8\u25B8 &7Etat: " + mineState,
@@ -228,13 +232,13 @@ public class CoopCommand implements CommandExecutor {
                 "",
                 "&e\u25B6 Clic pour voir les instructions"));
 
-        inv.setItem(32, GuiHelper.createItem(Material.PAPER, "&e&lCreation en Attente",
+        inv.setItem(33, GuiHelper.createItem(Material.PAPER, "&e&lCreation en Attente",
                 "",
                 "&8\u25B8 &7" + (pending < 0 ? "Aucune invitation en attente" : (pending + " validation(s) restante(s)")),
                 "",
                 "&e\u25B6 Clic pour voir le statut"));
 
-        inv.setItem(40, GuiHelper.createItem(Material.BOOK, "&d&lLister mes Coops",
+        inv.setItem(39, GuiHelper.createItem(Material.BOOK, "&d&lLister mes Coops",
                 "",
                 "&8\u25B8 &7Commande: &d/iscoop list",
                 "",
