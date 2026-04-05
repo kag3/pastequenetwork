@@ -379,9 +379,12 @@ public class MinionManager {
         // Base 5 + island_level / 10, max 20
         int islandLevel = 0;
         if (plugin.getIslandManager() != null) {
-            // Attempt to get island level if available
             try {
-                islandLevel = plugin.getIslandManager().getIslandLevel(player.getUniqueId());
+                fr.pasteque.skyblock.model.Island island =
+                        plugin.getIslandManager().getIslandByPlayer(player.getUniqueId());
+                if (island != null) {
+                    islandLevel = plugin.getIslandManager().getLevel(island);
+                }
             } catch (Exception ignored) {
             }
         }

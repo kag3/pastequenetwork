@@ -7,6 +7,12 @@ import fr.pasteque.skyblock.listener.*;
 import fr.pasteque.skyblock.manager.*;
 import fr.pasteque.skyblock.skill.SkillManager;
 import fr.pasteque.skyblock.skill.SkillListener;
+import fr.pasteque.skyblock.collection.CollectionManager;
+import fr.pasteque.skyblock.collection.CollectionListener;
+import fr.pasteque.skyblock.minion.MinionManager;
+import fr.pasteque.skyblock.minion.MinionListener;
+import fr.pasteque.skyblock.pet.PetManager;
+import fr.pasteque.skyblock.pet.PetListener;
 import fr.pasteque.skyblock.guard.SanctionService;
 import fr.pasteque.skyblock.guard.ReportService;
 import fr.pasteque.skyblock.guard.FilterService;
@@ -234,6 +240,14 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         /* Persist island chat toggles */
         saveIslandChatToggles();
 
+        /* Island upgrades & warps save */
+        if (islandUpgradeManager != null) {
+            islandUpgradeManager.save();
+        }
+        if (islandWarpManager != null) {
+            islandWarpManager.save();
+        }
+
         /* CombatPass save */
         if (combatPassManager != null) {
             combatPassManager.save();
@@ -370,6 +384,10 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     private void registerMenuListeners() {
         registerEvents(new MenuListener());
         registerEvents(new ScoreboardListener(this, scoreboardManager, tabListManager));
+    }
+
+    private void registerIslandUpgradeListeners() {
+        registerEvents(islandUpgradeListener);
     }
 
     private void registerSkillListeners() {
@@ -517,4 +535,13 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
 
     public ScoreboardManager getScoreboardManager() { return scoreboardManager; }
     public TabListManager getTabListManager() { return tabListManager; }
+
+    // =========================================================================
+    //  Island upgrades, warps, presets getters
+    // =========================================================================
+
+    public IslandUpgradeManager getIslandUpgradeManager() { return islandUpgradeManager; }
+    public IslandWarpManager getIslandWarpManager() { return islandWarpManager; }
+    public IslandPresetGui getIslandPresetGui() { return islandPresetGui; }
+    public IslandUpgradeListener getIslandUpgradeListener() { return islandUpgradeListener; }
 }
