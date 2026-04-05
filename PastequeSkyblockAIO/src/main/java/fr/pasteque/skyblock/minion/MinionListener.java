@@ -30,14 +30,14 @@ public class MinionListener implements Listener {
         if (!(event.getRightClicked() instanceof Villager)) {
             return;
         }
-        Entity entity = event.getRightClicked();
-        if (entity.getCustomName() == null || !entity.getCustomName().contains(MinionManager.MINION_TAG)) {
+        Villager villager = (Villager) event.getRightClicked();
+        if (villager.getCustomName() == null || !villager.getCustomName().contains(MinionManager.MINION_TAG)) {
             return;
         }
         event.setCancelled(true);
 
         Player player = event.getPlayer();
-        PlacedMinion minion = minionManager.getMinionAt(entity.getLocation());
+        PlacedMinion minion = minionManager.getMinionAt(villager.getLocation());
         if (minion == null) {
             player.sendMessage(PastequeSkyblockPlugin.color("&cMinion introuvable."));
             return;
@@ -118,15 +118,20 @@ public class MinionListener implements Listener {
             Location loc = targetMinion.getLocation();
             if (loc != null && loc.getWorld() != null) {
                 for (Entity entity : loc.getChunk().getEntities()) {
-                    if (entity instanceof Villager && entity.getCustomName() != null
-                            && entity.getCustomName().contains(MinionManager.MINION_TAG)) {
-                        double dist = entity.getLocation().distance(loc);
-                        if (dist < 1.5) {
-                            entity.setCustomName(PastequeSkyblockPlugin.color(
-                                    "&6" + targetMinion.getType().getDisplayName()
-                                            + " &7[Niv." + nextLevel + "]"
-                            ) + MinionManager.MINION_TAG);
-                            break;
+                    if (entity instanceof Villager) {
+                        Villager v = (Villager) entity;
+                        if (v.getCustomName() != null
+                                && v.getCustomName().contains(MinionManager.MINION_TAG)) {
+                            double dx = v.getLocation().getX() - loc.getX();
+                            double dy = v.getLocation().getY() - loc.getY();
+                            double dz = v.getLocation().getZ() - loc.getZ();
+                            if (dx * dx + dy * dy + dz * dz < 2.25) {
+                                v.setCustomName(PastequeSkyblockPlugin.color(
+                                        "&6" + targetMinion.getType().getDisplayName()
+                                                + " &7[Niv." + nextLevel + "]"
+                                ) + MinionManager.MINION_TAG);
+                                break;
+                            }
                         }
                     }
                 }

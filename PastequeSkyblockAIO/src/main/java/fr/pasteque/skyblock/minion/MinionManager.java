@@ -235,11 +235,15 @@ public class MinionManager {
             return;
         }
         for (Entity entity : location.getChunk().getEntities()) {
-            if (entity instanceof Villager && entity.getCustomName() != null
-                    && entity.getCustomName().contains(MINION_TAG)) {
-                double dist = entity.getLocation().distance(location);
-                if (dist < 1.5) {
-                    entity.remove();
+            if (entity instanceof Villager) {
+                Villager v = (Villager) entity;
+                if (v.getCustomName() != null && v.getCustomName().contains(MINION_TAG)) {
+                    double dx = v.getLocation().getX() - location.getX();
+                    double dy = v.getLocation().getY() - location.getY();
+                    double dz = v.getLocation().getZ() - location.getZ();
+                    if (dx * dx + dy * dy + dz * dz < 2.25) {
+                        v.remove();
+                    }
                 }
             }
         }

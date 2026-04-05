@@ -210,7 +210,7 @@ public class SlayerManager {
             boss.getEquipment().setChestplate(new ItemStack(Material.DIAMOND_CHESTPLATE));
             boss.getEquipment().setLeggings(new ItemStack(Material.DIAMOND_LEGGINGS));
             boss.getEquipment().setBoots(new ItemStack(Material.DIAMOND_BOOTS));
-            boss.getEquipment().setItemInMainHand(new ItemStack(Material.DIAMOND_SWORD));
+            boss.getEquipment().setItemInHand(new ItemStack(Material.DIAMOND_SWORD));
         } else if (tier >= 2 && boss.getEquipment() != null) {
             boss.getEquipment().setHelmet(new ItemStack(Material.IRON_HELMET));
             boss.getEquipment().setChestplate(new ItemStack(Material.IRON_CHESTPLATE));
