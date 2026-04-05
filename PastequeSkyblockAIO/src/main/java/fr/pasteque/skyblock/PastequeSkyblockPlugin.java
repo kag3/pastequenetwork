@@ -27,6 +27,10 @@ import fr.pasteque.skyblock.listener.arena.ArenaProtectionListener;
 import fr.pasteque.skyblock.listener.arena.ArenaSessionListener;
 import fr.pasteque.skyblock.listener.arena.ArenaGlobalChatListener;
 import fr.pasteque.skyblock.listener.arena.ArenaLifecycleListener;
+import fr.pasteque.skyblock.island.IslandUpgradeManager;
+import fr.pasteque.skyblock.island.IslandWarpManager;
+import fr.pasteque.skyblock.island.IslandPresetGui;
+import fr.pasteque.skyblock.island.IslandUpgradeListener;
 import fr.pasteque.skyblock.gui.ScoreboardManager;
 import fr.pasteque.skyblock.gui.TabListManager;
 import fr.pasteque.skyblock.gui.ScoreboardListener;
@@ -89,6 +93,12 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
 
     /* ── PastequeSkills ── */
     private SkillManager skillManager;
+
+    /* ── Island upgrades, warps, presets ── */
+    private IslandUpgradeManager islandUpgradeManager;
+    private IslandWarpManager islandWarpManager;
+    private IslandPresetGui islandPresetGui;
+    private IslandUpgradeListener islandUpgradeListener;
 
     /* ── GUI managers ── */
     private ScoreboardManager scoreboardManager;
@@ -158,6 +168,12 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         this.skillManager = new SkillManager(this);
         this.skillManager.load();
 
+        /* ── Island upgrades, warps, presets init ── */
+        this.islandUpgradeManager = new IslandUpgradeManager(this);
+        this.islandWarpManager = new IslandWarpManager(this);
+        this.islandPresetGui = new IslandPresetGui(this);
+        this.islandUpgradeListener = new IslandUpgradeListener(this, islandUpgradeManager, islandWarpManager);
+
         /* ── GUI managers init ── */
         this.scoreboardManager = new ScoreboardManager(this);
         this.tabListManager = new TabListManager(this);
@@ -170,6 +186,7 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         registerSkillCommands();
         registerCombatPassCommands();
         registerMenuCommands();
+        registerIslandUpgradeCommands();
 
         /* ── Listeners ── */
         registerSkyblockListeners();
@@ -179,6 +196,7 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         registerSkillListeners();
         registerCombatPassListeners();
         registerMenuListeners();
+        registerIslandUpgradeListeners();
 
         /* ── Scoreboard update task (every 3 seconds) ── */
         Bukkit.getScheduler().runTaskTimer(this, new Runnable() {
@@ -283,6 +301,11 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
 
     private void registerMenuCommands() {
         bind("menu", new MenuCommand(this));
+    }
+
+    private void registerIslandUpgradeCommands() {
+        bind("isupgrade", new IslandUpgradeCommand(this, islandUpgradeManager));
+        bind("iswarp", new IslandWarpCommand(this, islandWarpManager));
     }
 
     private void registerSkillCommands() {

@@ -1,10 +1,6 @@
 package fr.pasteque.skyblock.arena;
 
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -13,6 +9,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -59,13 +56,8 @@ public class DuelService {
 
         challenger.sendMessage(PastequeSkyblockPlugin.color(plugin.getPrefix() + "&fDemande de duel envoyee a &d" + target.getName() + "&f."));
 
-        TextComponent message = new TextComponent(PastequeSkyblockPlugin.color(plugin.getPrefix() + "&d" + challenger.getName() + " &fvous defie en duel ! "));
-        TextComponent accept = new TextComponent(PastequeSkyblockPlugin.color("&a&l[ACCEPTER]"));
-        accept.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/duel accept"));
-        accept.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                new ComponentBuilder(PastequeSkyblockPlugin.color("&fCliquer pour accepter le duel")).create()));
-        message.addExtra(accept);
-        target.spigot().sendMessage(message);
+        target.sendMessage(PastequeSkyblockPlugin.color(plugin.getPrefix() + "&d" + challenger.getName() + " &fvous defie en duel !"));
+        target.sendMessage(PastequeSkyblockPlugin.color(plugin.getPrefix() + "&fTapez &a/duel accept &fpour accepter."));
 
         // Expire after 30 seconds
         final UUID challengerId = challenger.getUniqueId();
@@ -93,7 +85,7 @@ public class DuelService {
 
         // Find who invited this target
         UUID challengerId = null;
-        for (HashMap.Entry<UUID, UUID> entry : pendingInvites.entrySet()) {
+        for (Map.Entry<UUID, UUID> entry : pendingInvites.entrySet()) {
             if (entry.getValue().equals(targetId)) {
                 challengerId = entry.getKey();
                 break;
