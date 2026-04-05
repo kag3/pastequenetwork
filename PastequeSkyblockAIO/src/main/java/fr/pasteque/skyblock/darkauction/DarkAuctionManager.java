@@ -217,7 +217,7 @@ public class DarkAuctionManager {
             bidButton.setItemMeta(bidMeta);
             inv.setItem(22, bidButton);
         } else {
-            ItemStack noAuction = createItem(Material.BARRIER, (short) 0, "&c&lAucune enchere en cours");
+            ItemStack noAuction = createItem(Material.STAINED_GLASS_PANE, (short) 14, "&c&lAucune enchere en cours");
             inv.setItem(13, noAuction);
         }
 
