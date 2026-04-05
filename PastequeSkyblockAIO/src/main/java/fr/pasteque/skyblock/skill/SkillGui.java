@@ -1,6 +1,7 @@
 package fr.pasteque.skyblock.skill;
 
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
+import fr.pasteque.skyblock.gui.GuiHelper;
 import fr.pasteque.skyblock.skill.model.PlayerSkills;
 import fr.pasteque.skyblock.skill.model.SkillType;
 import org.bukkit.Bukkit;
@@ -14,25 +15,20 @@ import java.util.List;
 
 public final class SkillGui {
 
-    public static final String TITLE = PastequeSkyblockPlugin.color("&2&lCompetences");
+    public static final String TITLE = PastequeSkyblockPlugin.color("&2&lPasteque &5&lCompetences");
 
-    private static final int[] SLOTS = {10, 11, 12, 13, 14};
+    private static final int[] SLOTS = {11, 12, 13, 14, 15};
 
     private SkillGui() {
     }
 
     public static Inventory create(PastequeSkyblockPlugin plugin, PlayerSkills skills) {
-        Inventory inv = Bukkit.createInventory(null, 27, TITLE);
+        Inventory inv = Bukkit.createInventory(null, 36, TITLE);
 
-        // Fill border with gray stained glass panes (durability 7 = gray)
-        ItemStack filler = new ItemStack(Material.STAINED_GLASS_PANE, 1, (short) 7);
-        ItemMeta fillerMeta = filler.getItemMeta();
-        fillerMeta.setDisplayName(" ");
-        filler.setItemMeta(fillerMeta);
-        for (int i = 0; i < 27; i++) {
-            inv.setItem(i, filler.clone());
-        }
+        // Row 0: decorative border
+        GuiHelper.addTopBorder(inv);
 
+        // Row 1: skill items
         SkillType[] types = SkillType.values();
         for (int i = 0; i < types.length && i < SLOTS.length; i++) {
             SkillType type = types[i];
@@ -49,19 +45,30 @@ public final class SkillGui {
             ItemMeta meta = item.getItemMeta();
 
             meta.setDisplayName(PastequeSkyblockPlugin.color(
-                    type.getColor() + type.getDisplayName() + " &7Niv. " + level
+                    type.getColor() + "&l" + type.getDisplayName() + " &fNiv. " + level
             ));
 
             List<String> lore = new ArrayList<String>();
-            lore.add(PastequeSkyblockPlugin.color("&7XP: &f" + xp + "/" + required));
-            lore.add(PastequeSkyblockPlugin.color("&7Bonus: &a+" + bonus + "%"));
             lore.add("");
+            lore.add(PastequeSkyblockPlugin.color("&8\u258E &7Progression"));
+            lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7XP: &f" + xp + "&8/&f" + required));
             lore.add(buildProgressBar(xp, required));
+            lore.add("");
+            lore.add(PastequeSkyblockPlugin.color("&8\u258E &7Bonus actif"));
+            lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &a+" + bonus + "% &7de rendement"));
+            lore.add("");
+            lore.add(PastequeSkyblockPlugin.color("&e\u25B6 Competence passive!"));
             meta.setLore(lore);
 
             item.setItemMeta(meta);
             inv.setItem(SLOTS[i], item);
         }
+
+        // Row 3: back button
+        inv.setItem(27, GuiHelper.backButton());
+
+        // Fill empty with black glass
+        GuiHelper.fillEmpty(inv);
 
         return inv;
     }

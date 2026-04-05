@@ -2,12 +2,12 @@ package fr.pasteque.skyblock.island.model;
 
 public enum IslandPreset {
 
-    CLASSIC("Classique", "&a", "GRASS", "Ile standard avec arbre et coffre"),
+    CLASSIC("Classique", "&a", "GRASS", "Ile verdoyante avec arbre et coffre"),
     DESERT("Desert", "&e", "SAND", "Ile de sable avec cactus"),
-    JUNGLE("Jungle", "&2", "LOG:3", "Ile jungle avec lianes"),
-    NETHER("Nether", "&c", "NETHERRACK", "Ile infernale avec lave"),
-    ICE("Glaciale", "&b", "ICE", "Ile de glace et neige"),
-    MUSHROOM("Champignon", "&d", "HUGE_MUSHROOM_1", "Ile champignon rare");
+    JUNGLE("Jungle", "&2", "LOG:3", "Ile jungle luxuriante avec lianes"),
+    NETHER("Nether", "&c", "NETHERRACK", "Ile infernale de l'enfer"),
+    ICE("Glaciale", "&b", "PACKED_ICE", "Ile de glace et de neige"),
+    MUSHROOM("Champignon", "&d", "HUGE_MUSHROOM_1", "Ile champignon mysterieuse");
 
     private final String displayName;
     private final String color;

@@ -14,7 +14,7 @@ import java.util.List;
 
 public class IslandPresetGui {
 
-    public static final String GUI_TITLE = PastequeSkyblockPlugin.color("&2&lChoisir un Type d'Ile");
+    public static final String GUI_TITLE = PastequeSkyblockPlugin.color("&2&lPasteque &5&lChoix d'Ile");
 
     private final PastequeSkyblockPlugin plugin;
 
@@ -25,7 +25,7 @@ public class IslandPresetGui {
     public void open(Player player) {
         Inventory gui = Bukkit.createInventory(null, 27, GUI_TITLE);
 
-        // Fill with black glass
+        // Fill all slots with black stained glass
         ItemStack filler = new ItemStack(Material.STAINED_GLASS_PANE, 1, (short) 15);
         ItemMeta fillerMeta = filler.getItemMeta();
         fillerMeta.setDisplayName(" ");
@@ -34,6 +34,17 @@ public class IslandPresetGui {
             gui.setItem(s, filler);
         }
 
+        // Top border: alternating green (13) and purple (10) glass
+        for (int s = 0; s < 9; s++) {
+            short borderColor = (s % 2 == 0) ? (short) 13 : (short) 10;
+            ItemStack border = new ItemStack(Material.STAINED_GLASS_PANE, 1, borderColor);
+            ItemMeta borderMeta = border.getItemMeta();
+            borderMeta.setDisplayName(" ");
+            border.setItemMeta(borderMeta);
+            gui.setItem(s, border);
+        }
+
+        // Place preset items in middle row
         IslandPreset[] presets = IslandPreset.values();
         int[] slots = {10, 11, 12, 13, 14, 15};
 
@@ -47,7 +58,7 @@ public class IslandPresetGui {
             lore.add("");
             lore.add(PastequeSkyblockPlugin.color("&7" + preset.getDescription()));
             lore.add("");
-            lore.add(PastequeSkyblockPlugin.color("&e> Cliquez pour choisir"));
+            lore.add(PastequeSkyblockPlugin.color("&2> &aCliquez pour choisir"));
             meta.setLore(lore);
             item.setItemMeta(meta);
 

@@ -26,10 +26,10 @@ public class TabListManager {
         }
 
         String header = PastequeSkyblockPlugin.color(
-            "&2&lPasteque &a&lSkyblock\n&7Bienvenue " + player.getName() + " !"
+            "\n&2&lPASTEQUE &5&lSKYBLOCK\n&7Bienvenue &f" + player.getName() + " &7!\n"
         );
         String footer = PastequeSkyblockPlugin.color(
-            "\n&eSaison 1 &8| &dNiveau " + level + " &8| &a" + moneyStr + "$\n&7pastequenetwork.fr"
+            "\n&8\u258E &5Saison 1 &8\u258E &7Niveau &b" + level + " &8\u258E &a" + moneyStr + "$\n&2play&8.&5pasteque&8.&2world\n"
         );
 
         try {

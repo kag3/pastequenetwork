@@ -24,66 +24,72 @@ public class MenuListener implements Listener {
         int slot = event.getRawSlot();
 
         switch (slot) {
-            case 10:
+            // Row 1
+            case 10: // Mon Ile
                 player.closeInventory();
                 player.performCommand("is");
                 break;
-            case 11:
-                player.closeInventory();
-                player.performCommand("skills");
-                break;
-            case 12:
-                player.closeInventory();
-                player.performCommand("hdv");
-                break;
-            case 13:
-                player.closeInventory();
-                player.performCommand("myshop");
-                break;
-            case 14:
-                player.closeInventory();
-                player.performCommand("collection");
-                break;
-            case 15:
-                player.closeInventory();
-                player.performCommand("pet");
-                break;
-            case 16:
-                // Minions - no command yet, placeholder
-                break;
-            case 20:
+            case 12: // Arene PvP
                 player.closeInventory();
                 player.performCommand("arena");
                 break;
-            case 21:
+            case 14: // Hotel des Ventes
+                player.closeInventory();
+                player.performCommand("hdv");
+                break;
+            case 16: // Boutique
+                player.closeInventory();
+                player.performCommand("myshop");
+                break;
+
+            // Row 2
+            case 19: // Competences
+                player.closeInventory();
+                player.performCommand("skills");
+                break;
+            case 21: // Collections
+                player.closeInventory();
+                player.performCommand("collection");
+                break;
+            case 23: // Animaux
+                player.closeInventory();
+                player.performCommand("pet");
+                break;
+            case 25: // Minions
+                player.closeInventory();
+                player.performCommand("minion");
+                break;
+
+            // Row 3
+            case 20: // Duels
                 player.closeInventory();
                 player.performCommand("duel");
                 break;
-            case 22:
+            case 22: // Passe de Combat
                 player.closeInventory();
                 player.performCommand("combatpass");
                 break;
-            case 23:
-                player.closeInventory();
-                player.performCommand("bounty list");
-                break;
-            case 24:
-                player.closeInventory();
-                player.performCommand("elo");
-                break;
-            case 29:
-                player.closeInventory();
-                player.performCommand("darkauction");
-                break;
-            case 30:
+            case 24: // Slayers
                 player.closeInventory();
                 player.performCommand("slayer");
                 break;
-            case 31:
+
+            // Row 4
+            case 29: // Bounties
+                player.closeInventory();
+                player.performCommand("bounty list");
+                break;
+            case 31: // Vente Sombre
+                player.closeInventory();
+                player.performCommand("darkauction");
+                break;
+            case 33: // Social
                 player.closeInventory();
                 player.performCommand("friends");
                 break;
-            case 40:
+
+            // Close button
+            case 49:
                 player.closeInventory();
                 break;
             default:
