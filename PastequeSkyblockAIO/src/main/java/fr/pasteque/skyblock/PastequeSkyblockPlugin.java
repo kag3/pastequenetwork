@@ -3,8 +3,14 @@ package fr.pasteque.skyblock;
 import fr.pasteque.skyblock.combatpass.CombatPassManager;
 import fr.pasteque.skyblock.combatpass.CombatPassListener;
 import fr.pasteque.skyblock.command.*;
+import fr.pasteque.skyblock.darkauction.DarkAuctionManager;
+import fr.pasteque.skyblock.darkauction.DarkAuctionListener;
 import fr.pasteque.skyblock.listener.*;
 import fr.pasteque.skyblock.manager.*;
+import fr.pasteque.skyblock.slayer.SlayerManager;
+import fr.pasteque.skyblock.slayer.SlayerListener;
+import fr.pasteque.skyblock.staff.StaffModeManager;
+import fr.pasteque.skyblock.staff.StaffListener;
 import fr.pasteque.skyblock.skill.SkillManager;
 import fr.pasteque.skyblock.skill.SkillListener;
 import fr.pasteque.skyblock.collection.CollectionManager;
@@ -115,6 +121,11 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     private ScoreboardManager scoreboardManager;
     private TabListManager tabListManager;
 
+    /* ── Dark Auction, Slayer, Staff ── */
+    private DarkAuctionManager darkAuctionManager;
+    private SlayerManager slayerManager;
+    private StaffModeManager staffModeManager;
+
     /* ── Island chat toggles (persisted) ── */
     private final Map<UUID, Boolean> islandChatToggles = new HashMap<UUID, Boolean>();
 
@@ -197,6 +208,11 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         this.scoreboardManager = new ScoreboardManager(this);
         this.tabListManager = new TabListManager(this);
 
+        /* ── Dark Auction, Slayer, Staff init ── */
+        this.darkAuctionManager = new DarkAuctionManager(this);
+        this.slayerManager = new SlayerManager(this);
+        this.staffModeManager = new StaffModeManager(this);
+
         /* ── Commands ── */
         registerSkyblockCommands();
         registerGuardCommands();
@@ -208,6 +224,9 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         registerIslandUpgradeCommands();
         registerCollectionCommands();
         registerPetCommands();
+        registerDarkAuctionCommands();
+        registerSlayerCommands();
+        registerStaffCommands();
 
         /* ── Listeners ── */
         registerSkyblockListeners();
@@ -221,6 +240,9 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         registerCollectionListeners();
         registerMinionListeners();
         registerPetListeners();
+        registerDarkAuctionListeners();
+        registerSlayerListeners();
+        registerStaffListeners();
 
         /* ── Scoreboard update task (every 3 seconds) ── */
         Bukkit.getScheduler().runTaskTimer(this, new Runnable() {
@@ -244,6 +266,9 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
 
         /* ── Minion ticker (every second) ── */
         minionManager.startTicking();
+
+        /* ── Dark Auction scheduler ── */
+        darkAuctionManager.schedule();
     }
 
     @Override
@@ -288,6 +313,11 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         }
         if (petManager != null) {
             petManager.save();
+        }
+
+        /* Slayer save */
+        if (slayerManager != null) {
+            slayerManager.save();
         }
 
         /* PastequeMyLittleShop save */

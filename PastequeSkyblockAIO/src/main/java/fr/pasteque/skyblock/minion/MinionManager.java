@@ -8,13 +8,16 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Villager;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
@@ -158,7 +161,6 @@ public class MinionManager {
                     && mLoc.getBlockZ() == location.getBlockZ()
                     && mLoc.getWorld().getName().equals(location.getWorld().getName())) {
                 it.remove();
-                // Remove armor stand
                 removeMinionEntity(mLoc);
                 return m.getType();
             }
@@ -197,50 +199,44 @@ public class MinionManager {
         }.runTaskTimer(plugin, 20L, 20L);
     }
 
-    // ── Entity management ────────────────────────────────────────────────
+    // ── Entity management (using Villager as minion entity) ──────────────
 
     public void spawnMinionEntity(PlacedMinion minion) {
         Location loc = minion.getLocation();
         if (loc == null || loc.getWorld() == null) {
             return;
         }
-        // Check if armor stand already exists at location
-        for (Entity entity : loc.getWorld().getNearbyEntities(loc, 0.5, 0.5, 0.5)) {
-            if (entity instanceof ArmorStand) {
-                ArmorStand as = (ArmorStand) entity;
-                if (as.getCustomName() != null && as.getCustomName().contains(MINION_TAG)) {
+        // Check if entity already exists at location
+        for (Entity entity : loc.getChunk().getEntities()) {
+            if (entity instanceof Villager && entity.getCustomName() != null
+                    && entity.getCustomName().contains(MINION_TAG)) {
+                double dist = entity.getLocation().distance(loc);
+                if (dist < 1.5) {
                     return; // Already exists
                 }
             }
         }
 
-        ArmorStand stand = (ArmorStand) loc.getWorld().spawnEntity(loc, EntityType.ARMOR_STAND);
-        stand.setVisible(true);
-        stand.setSmall(true);
-        stand.setGravity(false);
-        stand.setCustomNameVisible(true);
-        stand.setCustomName(PastequeSkyblockPlugin.color(
+        Villager villager = (Villager) loc.getWorld().spawnEntity(loc, EntityType.VILLAGER);
+        villager.setCustomNameVisible(true);
+        villager.setCustomName(PastequeSkyblockPlugin.color(
                 "&6" + minion.getType().getDisplayName() + " &7[Niv." + minion.getLevel() + "]"
         ) + MINION_TAG);
-        stand.setBasePlate(false);
-        stand.setArms(true);
-
-        // Set item in hand to icon
-        Material iconMat = Material.matchMaterial(minion.getType().getIconMaterial());
-        if (iconMat != null) {
-            stand.setItemInHand(new ItemStack(iconMat));
-        }
+        villager.setAI(false);
+        villager.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, Integer.MAX_VALUE, 255, false, false));
+        villager.setInvulnerable(true);
     }
 
     public void removeMinionEntity(Location location) {
         if (location == null || location.getWorld() == null) {
             return;
         }
-        for (Entity entity : location.getWorld().getNearbyEntities(location, 1.0, 1.0, 1.0)) {
-            if (entity instanceof ArmorStand) {
-                ArmorStand as = (ArmorStand) entity;
-                if (as.getCustomName() != null && as.getCustomName().contains(MINION_TAG)) {
-                    as.remove();
+        for (Entity entity : location.getChunk().getEntities()) {
+            if (entity instanceof Villager && entity.getCustomName() != null
+                    && entity.getCustomName().contains(MINION_TAG)) {
+                double dist = entity.getLocation().distance(location);
+                if (dist < 1.5) {
+                    entity.remove();
                 }
             }
         }
@@ -279,7 +275,7 @@ public class MinionManager {
         // Info item (slot 4)
         Material iconMat = Material.matchMaterial(minion.getType().getIconMaterial());
         if (iconMat == null) {
-            iconMat = Material.BARRIER;
+            iconMat = Material.BEDROCK;
         }
         ItemStack info = new ItemStack(iconMat);
         ItemMeta infoMeta = info.getItemMeta();
@@ -326,7 +322,7 @@ public class MinionManager {
 
         // Upgrade button (slot 15)
         if (minion.getLevel() < 5) {
-            ItemStack upgrade = new ItemStack(Material.EXPERIENCE_BOTTLE);
+            ItemStack upgrade = new ItemStack(Material.GLASS_BOTTLE);
             ItemMeta upgradeMeta = upgrade.getItemMeta();
             int nextLevel = minion.getLevel() + 1;
             double cost = getMinionPrice(minion.getType(), nextLevel);

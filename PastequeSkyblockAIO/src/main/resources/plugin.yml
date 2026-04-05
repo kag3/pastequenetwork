@@ -66,6 +66,24 @@ commands:
   pet:
     description: Animaux de compagnie
     aliases: [pets]
+  darkauction:
+    description: Enchere sombre
+    aliases: [da]
+  slayer:
+    description: Slayers
+    aliases: [slayers]
+  staff:
+    description: Mode staff
+    aliases: [staffmode]
+  duel:
+    description: Defier un joueur en duel
+    aliases: [duels]
+  bounty:
+    description: Primes sur joueurs
+    aliases: [prime]
+  elo:
+    description: Classement ELO
+    aliases: [rank, classement]
 
 permissions:
   pastequeskyblock.admin:
@@ -85,4 +103,7 @@ permissions:
     default: op
   pastequearena.bypass:
     description: Bypass les protections arene
+    default: op
+  pasteque.staff:
+    description: Acces au mode staff
     default: op
