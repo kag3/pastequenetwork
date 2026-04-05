@@ -36,6 +36,24 @@ auction:
   expiration-days: 7
   page-size: 45
 
+# --- PvP 1.8 Style (comme LabyRoyale) ---
+old-pvp:
+  enabled: true
+  # Knockback horizontal de base
+  base-knockback: 0.4
+  # Knockback supplementaire en sprint
+  sprint-knockback: 0.45
+  # Knockback vertical (hauteur)
+  vertical-knockback: 0.36
+  # Multiplicateur par niveau d'enchantement Knockback
+  knockback-enchant-multiplier: 0.5
+  # Desactiver l'offhand (pas de bouclier, pas de dual-wield)
+  disable-offhand: true
+  # Desactiver le sweep attack (attaque balayage 1.9+)
+  disable-sweep: true
+  # Desactiver les boucliers (craft + utilisation)
+  disable-shields: true
+
 # --- Combat ---
 combat:
   tag-seconds: 30

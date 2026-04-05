@@ -51,6 +51,8 @@ import fr.pasteque.skyblock.gui.ScoreboardManager;
 import fr.pasteque.skyblock.gui.TabListManager;
 import fr.pasteque.skyblock.gui.ScoreboardListener;
 import fr.pasteque.skyblock.gui.MenuListener;
+import fr.pasteque.skyblock.pvp.OldPvPListener;
+import fr.pasteque.skyblock.pvp.OffhandBlocker;
 import fr.pasteque.skyblock.util.MessageUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -135,6 +137,9 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     private DarkAuctionManager darkAuctionManager;
     private SlayerManager slayerManager;
     private StaffModeManager staffModeManager;
+
+    /* ── Old PvP 1.8 ── */
+    private OldPvPListener oldPvPListener;
 
     /* ── Island chat toggles (persisted) ── */
     private final Map<UUID, Boolean> islandChatToggles = new HashMap<UUID, Boolean>();
@@ -262,6 +267,14 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         registerDarkAuctionListeners();
         registerSlayerListeners();
         registerStaffListeners();
+
+        /* ── Old PvP 1.8 style (no cooldown, no offhand, custom KB) ── */
+        if (getConfig().getBoolean("old-pvp.enabled", true)) {
+            this.oldPvPListener = new OldPvPListener(this);
+            registerEvents(oldPvPListener);
+            OffhandBlocker.register(this);
+            getLogger().info("[PvP] Mode PvP 1.8 active (pas de cooldown, pas d'offhand, KB custom)");
+        }
 
         /* ── Scoreboard update task (every 3 seconds) ── */
         Bukkit.getScheduler().runTaskTimer(this, new Runnable() {
