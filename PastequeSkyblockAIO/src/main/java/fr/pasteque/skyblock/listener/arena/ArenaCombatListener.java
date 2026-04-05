@@ -4,6 +4,7 @@ import fr.pasteque.skyblock.PastequeSkyblockPlugin;
 import fr.pasteque.skyblock.arena.ArenaLevelService;
 import fr.pasteque.skyblock.arena.ArenaWorldService;
 import fr.pasteque.skyblock.arena.CombatTagService;
+import fr.pasteque.skyblock.arena.DuelService;
 import fr.pasteque.skyblock.arena.PlayerDataService;
 import fr.pasteque.skyblock.arena.SafeZoneService;
 import fr.pasteque.skyblock.arena.model.ArenaPlayerData;
@@ -26,14 +27,16 @@ public class ArenaCombatListener implements Listener {
     private final CombatTagService combatTagService;
     private final ArenaLevelService arenaLevelService;
     private final PlayerDataService playerDataService;
+    private final DuelService duelService;
 
-    public ArenaCombatListener(PastequeSkyblockPlugin plugin, ArenaWorldService arenaWorldService, SafeZoneService safeZoneService, CombatTagService combatTagService, ArenaLevelService arenaLevelService, PlayerDataService playerDataService) {
+    public ArenaCombatListener(PastequeSkyblockPlugin plugin, ArenaWorldService arenaWorldService, SafeZoneService safeZoneService, CombatTagService combatTagService, ArenaLevelService arenaLevelService, PlayerDataService playerDataService, DuelService duelService) {
         this.plugin = plugin;
         this.arenaWorldService = arenaWorldService;
         this.safeZoneService = safeZoneService;
         this.combatTagService = combatTagService;
         this.arenaLevelService = arenaLevelService;
         this.playerDataService = playerDataService;
+        this.duelService = duelService;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -63,10 +66,52 @@ public class ArenaCombatListener implements Listener {
         if (!arenaWorldService.isArenaWorld(victim.getWorld())) {
             return;
         }
-        Player killer = victim.getKiller();
+
+        // Check if the dead player is in an active duel
+        if (duelService.isDueling(victim.getUniqueId())) {
+            Player killer = victim.getKiller();
+            if (killer != null) {
+                // Cancel normal death processing for duel participants
+                event.setDeathMessage(null);
+                event.getDrops().clear();
+                event.setDroppedExp(0);
+                event.setKeepInventory(true);
+                event.setKeepLevel(true);
+
+                // End the duel with winner and loser
+                duelService.endDuel(killer, victim);
+                return;
+            }
+            // If killed by environment in duel, find opponent as winner
+            java.util.UUID opponentId = duelService.getOpponent(victim.getUniqueId());
+            if (opponentId != null) {
+                Player opponent = org.bukkit.Bukkit.getPlayer(opponentId);
+                if (opponent != null && opponent.isOnline()) {
+                    event.setDeathMessage(null);
+                    event.getDrops().clear();
+                    event.setDroppedExp(0);
+                    event.setKeepInventory(true);
+                    event.setKeepLevel(true);
+
+                    duelService.endDuel(opponent, victim);
+                    return;
+                }
+            }
+            // Fallback: cancel the duel
+            duelService.cancelDuel(victim.getUniqueId());
+            event.setDeathMessage(null);
+            event.getDrops().clear();
+            event.setDroppedExp(0);
+            event.setKeepInventory(true);
+            event.setKeepLevel(true);
+            return;
+        }
+
+        // Normal arena death processing (non-duel)
         ArenaPlayerData victimData = playerDataService.get(victim);
         victimData.addDeath();
         event.setDeathMessage(null);
+        Player killer = victim.getKiller();
         if (killer != null) {
             ArenaPlayerData killerData = playerDataService.get(killer);
             killerData.addKill();

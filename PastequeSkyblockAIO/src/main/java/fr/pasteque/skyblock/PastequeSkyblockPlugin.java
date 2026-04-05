@@ -562,7 +562,7 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
 
     private void registerArenaListeners() {
         registerEvents(new ArenaProtectionListener(this, arenaWorldService, safeZoneService));
-        registerEvents(new ArenaCombatListener(this, arenaWorldService, safeZoneService, combatTagService, arenaLevelService, playerDataService));
+        registerEvents(new ArenaCombatListener(this, arenaWorldService, safeZoneService, combatTagService, arenaLevelService, playerDataService, duelService));
         registerEvents(new ArenaLifecycleListener(this, arenaWorldService, combatTagService, playerDataService));
         registerEvents(new ArenaKitListener(this, arenaKitService));
         registerEvents(new ArenaSessionListener(this, arenaWorldService, arenaLevelService, playerDataService));
