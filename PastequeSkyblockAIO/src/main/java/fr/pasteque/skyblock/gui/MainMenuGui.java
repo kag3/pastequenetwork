@@ -15,10 +15,15 @@ public class MainMenuGui {
     public static Inventory create(Player player) {
         Inventory inv = Bukkit.createInventory(null, 54, TITLE);
 
-        // Row 0: decorative border (alternating green/purple glass)
+        // Layout parfaitement symetrique aere — 14 items repartis en 4+4+4+2
+        // Row 1 (9-17)  : 10, 12, 14, 16
+        // Row 2 (18-26) : 19, 21, 23, 25
+        // Row 3 (27-35) : 28, 30, 32, 34
+        // Row 4 (36-44) : 39, 41 (symetriques autour de 40)
+        // Close button  : 49 (row 5 center)
         GuiHelper.addTopBorder(inv);
 
-        // ── Row 1 ────────────────────────────────────────────────────────
+        // ── Row 1 : Ile / Arene / HDV / Boutique ────────────────────────
         inv.setItem(10, GuiHelper.createItem(Material.GRASS,
                 "&a&lMon Ile",
                 "&7Gere ton ile skyblock",
@@ -46,7 +51,7 @@ public class MainMenuGui {
                 "",
                 "&e\u25B6 Clic pour ouvrir!"));
 
-        // ── Row 2 ────────────────────────────────────────────────────────
+        // ── Row 2 : Competences / Collections / Animaux / Minions ───────
         inv.setItem(19, GuiHelper.createItem(Material.BOOK_AND_QUILL,
                 "&d&lCompetences",
                 "&7Tes 5 arbres de competences",
@@ -75,53 +80,52 @@ public class MainMenuGui {
                 "",
                 "&e\u25B6 Clic pour ouvrir!"));
 
-        // ── Row 3 ────────────────────────────────────────────────────────
-        inv.setItem(20, GuiHelper.createItem(Material.IRON_SWORD,
+        // ── Row 3 : Duels / Pass / Slayers / Bounties ───────────────────
+        inv.setItem(28, GuiHelper.createItem(Material.IRON_SWORD,
                 "&5&lDuels",
                 "&7Defie un joueur en 1v1",
                 "&8\u25B8 Arenes privees, ELO",
                 "",
                 "&e\u25B6 Clic pour ouvrir!"));
 
-        inv.setItem(22, GuiHelper.createItem(Material.PAPER,
+        inv.setItem(30, GuiHelper.createItem(Material.PAPER,
                 "&d&lPasse de Combat",
                 "&7Saison 1 - Recompenses",
                 "&8\u25B8 30 paliers a debloquer",
                 "",
                 "&e\u25B6 Clic pour ouvrir!"));
 
-        inv.setItem(24, GuiHelper.createItem(Material.BLAZE_ROD,
+        inv.setItem(32, GuiHelper.createItem(Material.BLAZE_ROD,
                 "&6&lSlayers",
                 "&7Invoque et terrasse des boss",
                 "&8\u25B8 5 types, niveaux 1-5",
                 "",
                 "&e\u25B6 Clic pour ouvrir!"));
 
-        // ── Row 4 ────────────────────────────────────────────────────────
-        inv.setItem(29, GuiHelper.createItem(Material.GOLDEN_APPLE,
+        inv.setItem(34, GuiHelper.createItem(Material.GOLDEN_APPLE,
                 "&e&lBounties",
                 "&7Primes sur les joueurs",
                 "",
                 "&e\u25B6 Clic pour ouvrir!"));
 
-        inv.setItem(31, GuiHelper.createItem(Material.NETHER_STAR,
+        // ── Row 4 : Vente Sombre / Social (symetriques autour de 40) ────
+        inv.setItem(39, GuiHelper.createItem(Material.NETHER_STAR,
                 "&5&lVente Sombre",
                 "&7Encheres sur items legendaires",
                 "&8\u25B8 Toutes les 2 heures",
                 "",
                 "&e\u25B6 Clic pour ouvrir!"));
 
-        inv.setItem(33, GuiHelper.createItem(Material.BOOK_AND_QUILL,
+        inv.setItem(41, GuiHelper.createItem(Material.BOOK_AND_QUILL,
                 "&a&lSocial",
                 "&7Amis, ennemis, alliances",
                 "",
                 "&e\u25B6 Clic pour ouvrir!"));
 
-        // ── Row 5: decorative border + close button ──────────────────────
+        // ── Row 5 : bottom border + close ───────────────────────────────
         GuiHelper.addBottomBorder(inv);
         inv.setItem(49, GuiHelper.closeButton());
 
-        // Fill remaining empty slots with black glass
         GuiHelper.fillEmpty(inv);
 
         return inv;

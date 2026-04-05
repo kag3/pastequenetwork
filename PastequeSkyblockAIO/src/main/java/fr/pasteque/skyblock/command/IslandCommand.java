@@ -547,46 +547,50 @@ public class IslandCommand implements CommandExecutor {
         GuiHelper.addTopBorder(inventory);
         GuiHelper.addBottomBorder(inventory);
 
-        // Row 2: main actions (slots 20-24, symmetric around 22)
+        // Layout parfaitement symetrique aere — 15 items repartis en 4+4+4+3
+        // Row 1 (9-17)  : 10, 12, 14, 16  — actions principales
+        // Row 2 (18-26) : 19, 21, 23, 25  — management
+        // Row 3 (27-35) : 28, 30, 32, 34  — unlocks / stats
+        // Row 4 (36-44) : 38, 40, 42      — homes / profil (symetriques autour de 40)
+        // Close         : 49
         if (island == null) {
-            inventory.setItem(20, GuiHelper.createItem(Material.SAPLING,
+            inventory.setItem(10, GuiHelper.createItem(Material.SAPLING,
                     "&2&lCreer mon ile", "&8&m                    ", "&7Commande : &f/is create", "&8&m                    "));
         } else {
-            inventory.setItem(20, GuiHelper.createItem(Material.GRASS,
+            inventory.setItem(10, GuiHelper.createItem(Material.GRASS,
                     "&2&lRetour sur mon ile", "&8&m                    ", "&7Teleportation vers ton ile principale", "&8&m                    "));
         }
-        inventory.setItem(21, GuiHelper.createItem(Material.BED,
+        inventory.setItem(12, GuiHelper.createItem(Material.BED,
                 "&5&lDefinir le home", "&8&m                    ", "&7Commande : &f/is sethome", "&8&m                    "));
-        inventory.setItem(22, GuiHelper.createItem(Material.BOOK,
+        inventory.setItem(14, GuiHelper.createItem(Material.BOOK,
                 "&2&lDefis Skyblock", "&8&m                    ", "&7Voir et valider tes defis", "&8&m                    "));
-        inventory.setItem(23, GuiHelper.createItem(Material.PAPER,
-                "&5&lNiveau d'ile", "&8&m                    ", "&7Niveau actuel: &e" + level, "&8&m                    "));
-        inventory.setItem(24, GuiHelper.createItem(Material.DIAMOND_SWORD,
+        inventory.setItem(16, GuiHelper.createItem(Material.DIAMOND_SWORD,
                 "&2&lPvP d'ile", "&8&m                    ", "&7Etat: " + pvpState, "&7Commande : &f/is pvp", "&8&m                    "));
 
-        // Row 3: management (slots 29-34, symmetric around 31-32)
-        inventory.setItem(29, GuiHelper.createItem(Material.SKULL_ITEM,
+        inventory.setItem(19, GuiHelper.createItem(Material.SKULL_ITEM,
                 "&5&lMembres", "&8&m                    ", "&7Gerer les membres et permissions", "&8&m                    "));
-        inventory.setItem(30, GuiHelper.createItem(Material.CARROT_ITEM,
-                "&2&lFarming", "&8&m                    ", "&7Etat: " + farmState, "&7Prix unlock: &e" + farmPrice, "&7Commande : &f/is unlock farming", "&8&m                    "));
-        inventory.setItem(31, GuiHelper.createItem(Material.IRON_PICKAXE,
-                "&7&lMinage", "&8&m                    ", "&7Etat: " + mineState, "&7Prix unlock: &e" + minePrice, "&7Commande : &f/is unlock mining", "&8&m                    "));
-        inventory.setItem(32, GuiHelper.createItem(Material.NAME_TAG,
+        inventory.setItem(21, GuiHelper.createItem(Material.NAME_TAG,
                 "&5&lRenommer l'ile", "&8&m                    ", "&7Commande : &f/is rename <nom>", "&8&m                    "));
-        inventory.setItem(33, GuiHelper.createItem(Material.CHEST,
+        inventory.setItem(23, GuiHelper.createItem(Material.CHEST,
                 "&2&lBanque d'ile", "&8&m                    ", "&7Solde: &e" + bank + " " + plugin.getEconomyManager().getCurrencyName(), "&7Commande : &f/is bank", "&8&m                    "));
+        inventory.setItem(25, GuiHelper.createItem(Material.PAPER,
+                "&5&lNiveau d'ile", "&8&m                    ", "&7Niveau actuel: &e" + level, "&8&m                    "));
+
+        inventory.setItem(28, GuiHelper.createItem(Material.CARROT_ITEM,
+                "&2&lFarming", "&8&m                    ", "&7Etat: " + farmState, "&7Prix unlock: &e" + farmPrice, "&7Commande : &f/is unlock farming", "&8&m                    "));
+        inventory.setItem(30, GuiHelper.createItem(Material.IRON_PICKAXE,
+                "&7&lMinage", "&8&m                    ", "&7Etat: " + mineState, "&7Prix unlock: &e" + minePrice, "&7Commande : &f/is unlock mining", "&8&m                    "));
+        inventory.setItem(32, GuiHelper.createItem(Material.SIGN,
+                "&7&lIles publiques / privees", "&8&m                    ", "&7Commandes : &f/is public &7ou &f/is private", "&8&m                    "));
         inventory.setItem(34, GuiHelper.createItem(Material.GOLD_INGOT,
                 "&5&lTop mondial iles", "&8&m                    ", "&7Commande : &f/is top", "&8&m                    "));
 
-        // Row 4: secondary actions (slots 39-42, symmetric around 40-41)
-        inventory.setItem(39, GuiHelper.createItem(Material.COMPASS,
+        inventory.setItem(38, GuiHelper.createItem(Material.COMPASS,
                 "&2&lHome Farming", "&8&m                    ", "&7Commande : &f/is farm", "&8&m                    "));
-        inventory.setItem(40, GuiHelper.createItem(Material.SIGN,
-                "&7&lIles publiques / privees", "&8&m                    ", "&7Commandes : &f/is public &7ou &f/is private", "&8&m                    "));
-        inventory.setItem(41, GuiHelper.createItem(Material.DIAMOND_PICKAXE,
-                "&5&lHome Minage", "&8&m                    ", "&7Commande : &f/is mine", "&8&m                    "));
-        inventory.setItem(42, GuiHelper.createItem(Material.BOOK_AND_QUILL,
+        inventory.setItem(40, GuiHelper.createItem(Material.BOOK_AND_QUILL,
                 "&2&lProfil ile", "&8&m                    ", "&7Commande : &f/is stats", "&8&m                    "));
+        inventory.setItem(42, GuiHelper.createItem(Material.DIAMOND_PICKAXE,
+                "&5&lHome Minage", "&8&m                    ", "&7Commande : &f/is mine", "&8&m                    "));
 
         // Close button at bottom center
         inventory.setItem(49, GuiHelper.closeButton());

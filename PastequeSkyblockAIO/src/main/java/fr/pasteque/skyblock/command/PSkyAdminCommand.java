@@ -160,34 +160,37 @@ public class PSkyAdminCommand implements CommandExecutor {
         GuiHelper.addTopBorder(inv);
         GuiHelper.addBottomBorder(inv);
 
-        // Content items - symmetric placement in rows 2-4
+        // Layout symetrique aere: 3+3+1 items
+        // Row 2 : 20, 22, 24 (iles / hdv / pvp)
+        // Row 3 : 29, 31, 33 (warp / invasion / eco)
+        // Row 4 : 40 centre   (reload)
         inv.setItem(20, GuiHelper.createItem(Material.COMPASS,
                 "&2Liste des iles",
                 "", "&7Voir toutes les iles connues.", "", "&8Clic pour afficher."));
-
-        inv.setItem(21, GuiHelper.createItem(Material.NETHER_STAR,
-                "&5Warp PvP Hardcore",
-                "", "&7Definir le warp PvP hardcore.", "", "&8/psky setpvpwarp"));
 
         inv.setItem(22, GuiHelper.createItem(Material.CHEST,
                 "&2Moderation HDV",
                 "", "&7Voir / supprimer les annonces", "&7du marche aux encheres.", "", "&8/psky hdv list"));
 
-        inv.setItem(23, GuiHelper.createItem(Material.MONSTER_EGG,
-                "&5Invasion Hub",
-                "", "&7Lancer une invasion de", "&7monstres sur le hub.", "", "&8Clic pour lancer."));
-
         inv.setItem(24, GuiHelper.createItem(Material.IRON_SWORD,
                 "&2Zones PvP",
                 "", "&7Creer / supprimer les zones", "&7PvP du monde world.", "", "&8/psky pvp ..."));
 
-        inv.setItem(30, GuiHelper.createItem(Material.PAPER,
-                "&7Reload",
-                "", "&7Recharger la configuration", "&7complete du plugin.", "", "&8/psky reload"));
+        inv.setItem(29, GuiHelper.createItem(Material.NETHER_STAR,
+                "&5Warp PvP Hardcore",
+                "", "&7Definir le warp PvP hardcore.", "", "&8/psky setpvpwarp"));
 
-        inv.setItem(32, GuiHelper.createItem(Material.GOLD_INGOT,
+        inv.setItem(31, GuiHelper.createItem(Material.MONSTER_EGG,
+                "&5Invasion Hub",
+                "", "&7Lancer une invasion de", "&7monstres sur le hub.", "", "&8Clic pour lancer."));
+
+        inv.setItem(33, GuiHelper.createItem(Material.GOLD_INGOT,
                 "&5Economie",
                 "", "&7Gerer l'economie des joueurs.", "", "&8/psky money <give|take|set>"));
+
+        inv.setItem(40, GuiHelper.createItem(Material.PAPER,
+                "&7Reload",
+                "", "&7Recharger la configuration", "&7complete du plugin.", "", "&8/psky reload"));
 
         // Close button - bottom center
         inv.setItem(49, GuiHelper.closeButton());
