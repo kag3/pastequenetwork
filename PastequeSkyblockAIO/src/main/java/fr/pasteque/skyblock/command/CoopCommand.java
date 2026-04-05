@@ -22,7 +22,7 @@ import java.util.UUID;
 public class CoopCommand implements CommandExecutor {
     private final PastequeSkyblockPlugin plugin;
 
-    public static final String MENU_TITLE = PastequeSkyblockPlugin.color("&2&lPasteque &5&lIle Coop");
+    public static final String MENU_TITLE = PastequeSkyblockPlugin.color("&2&lPasteque &5&lIle Cooperative");
 
     public CoopCommand(PastequeSkyblockPlugin plugin) {
         this.plugin = plugin;
@@ -100,7 +100,7 @@ public class CoopCommand implements CommandExecutor {
             MessageUtil.send(player, plugin.getPrefix(), "&5Tes iles coop :");
             for (CoopIsland island : islands) {
                 String ownerName = Bukkit.getOfflinePlayer(island.getOwner()).getName();
-                player.sendMessage(MessageUtil.color("&8▸ &7" + island.getName() + " &8[" + island.getId() + "] &7Owner: &d" + (ownerName == null ? island.getOwner().toString() : ownerName)));
+                player.sendMessage(MessageUtil.color("&8\u25B8 &7" + island.getName() + " &8[" + island.getId() + "] &7Owner: &d" + (ownerName == null ? island.getOwner().toString() : ownerName)));
             }
             return true;
         }
@@ -193,58 +193,58 @@ public class CoopCommand implements CommandExecutor {
         int minePrice = plugin.getConfig().getInt("island-expansions.coop.mining-price", 50000);
         String mineState = first != null && first.isMiningUnlocked() ? "&aDebloquee" : "&cVerrouillee";
 
-        inv.setItem(20, GuiHelper.createItem(Material.SAPLING, "&a&lCreer une coop",
+        inv.setItem(20, GuiHelper.createItem(Material.SAPLING, "&a&lCreer une Coop",
                 "",
-                "&8▎ &7Creation d'ile coop",
-                "&8▸ &7Commande: &d/iscoop create <joueurs...>",
-                "&8▸ &72 a 6 joueurs, validation de toute l'equipe",
+                "&8\u25CE &7Creation d'ile cooperative",
+                "&8\u25B8 &7Commande: &d/iscoop create <joueurs...>",
+                "&8\u25B8 &72 a 6 joueurs, validation requise",
                 "",
-                "&e▶ Clic pour voir les instructions"));
+                "&e\u25B6 Clic pour voir les instructions"));
 
-        inv.setItem(22, GuiHelper.createItem(Material.COMPASS, "&b&lMes iles coop",
+        inv.setItem(22, GuiHelper.createItem(Material.COMPASS, "&b&lMes Iles Coop",
                 "",
-                "&8▎ &7Informations",
-                "&8▸ &7Nombre actuel: &e" + myIslands.size(),
+                "&8\u25CE &7Informations",
+                "&8\u25B8 &7Nombre actuel: &e" + myIslands.size(),
                 "",
-                "&e▶ Clic pour lister"));
+                "&e\u25B6 Clic pour lister"));
 
-        inv.setItem(24, GuiHelper.createItem(Material.BED, "&d&lHome coop",
+        inv.setItem(24, GuiHelper.createItem(Material.BED, "&d&lHome Coop",
                 "",
-                "&8▸ &7Teleportation vers ton ile coop",
+                "&8\u25B8 &7Teleportation vers ton ile coop",
                 "",
-                "&e▶ Clic pour se teleporter"));
+                "&a\u25B6 Clic pour se teleporter"));
 
-        inv.setItem(30, GuiHelper.createItem(Material.IRON_PICKAXE, "&e&lSecteur minage coop",
+        inv.setItem(30, GuiHelper.createItem(Material.IRON_PICKAXE, "&e&lSecteur Minage Coop",
                 "",
-                "&8▎ &7Minage coop",
-                "&8▸ &7Etat: " + mineState,
-                "&8▸ &7Prix unlock: &e" + minePrice,
+                "&8\u25CE &7Minage cooperatif",
+                "&8\u25B8 &7Etat: " + mineState,
+                "&8\u25B8 &7Prix unlock: &e" + minePrice + " Pasteque",
                 "",
-                "&e▶ Clic pour debloquer"));
+                "&e\u25B6 Clic pour debloquer"));
 
-        inv.setItem(31, GuiHelper.createItem(Material.NAME_TAG, "&7&lRenommer la coop",
+        inv.setItem(31, GuiHelper.createItem(Material.NAME_TAG, "&7&lRenommer la Coop",
                 "",
-                "&8▸ &7Commande: &d/iscoop rename <nom>",
+                "&8\u25B8 &7Commande: &d/iscoop rename <nom>",
                 "",
-                "&e▶ Clic pour voir les instructions"));
+                "&e\u25B6 Clic pour voir les instructions"));
 
-        inv.setItem(32, GuiHelper.createItem(Material.PAPER, "&e&lCreation en attente",
+        inv.setItem(32, GuiHelper.createItem(Material.PAPER, "&e&lCreation en Attente",
                 "",
-                "&8▸ &7" + (pending < 0 ? "Aucune invitation en attente" : (pending + " validation(s) restante(s)")),
+                "&8\u25B8 &7" + (pending < 0 ? "Aucune invitation en attente" : (pending + " validation(s) restante(s)")),
                 "",
-                "&e▶ Clic pour voir le statut"));
+                "&e\u25B6 Clic pour voir le statut"));
 
-        inv.setItem(40, GuiHelper.createItem(Material.BOOK, "&d&lLister mes coops",
+        inv.setItem(40, GuiHelper.createItem(Material.BOOK, "&d&lLister mes Coops",
                 "",
-                "&8▸ &7Commande: &d/iscoop list",
+                "&8\u25B8 &7Commande: &d/iscoop list",
                 "",
-                "&e▶ Clic pour lister"));
+                "&e\u25B6 Clic pour lister"));
 
-        inv.setItem(41, GuiHelper.createItem(Material.DIAMOND_PICKAXE, "&7&lHome minage coop",
+        inv.setItem(41, GuiHelper.createItem(Material.DIAMOND_PICKAXE, "&7&lHome Minage Coop",
                 "",
-                "&8▸ &7Commande: &d/iscoop mine",
+                "&8\u25B8 &7Commande: &d/iscoop mine",
                 "",
-                "&e▶ Clic pour se teleporter"));
+                "&a\u25B6 Clic pour se teleporter"));
 
         inv.setItem(49, GuiHelper.closeButton());
 

@@ -8,7 +8,7 @@ import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemFlag;
+
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
@@ -211,7 +211,7 @@ public class DarkAuctionManager {
             displayLore.add(PastequeSkyblockPlugin.color("&5&lENCHERE SOMBRE"));
             displayMeta.setLore(displayLore);
             displayMeta.addEnchant(Enchantment.DURABILITY, 1, true);
-            displayMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+            // Note: ItemFlag not available in 1.9.4
             display.setItemMeta(displayMeta);
             inv.setItem(13, display);
 

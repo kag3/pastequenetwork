@@ -2,21 +2,23 @@ package fr.pasteque.skyblock.arena;
 
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
 import fr.pasteque.skyblock.arena.model.ArenaPlayerData;
+import fr.pasteque.skyblock.gui.GuiHelper;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("deprecation")
 public class ArenaKitService {
 
-    public static final String GUI_TITLE = ChatColor.DARK_GREEN + "Boutique d'arene";
+    public static final String GUI_TITLE = PastequeSkyblockPlugin.color("&2&lPasteque &5&lKit Arene");
     private final PastequeSkyblockPlugin plugin;
     private final ArenaWorldService arenaWorldService;
 
@@ -26,52 +28,55 @@ public class ArenaKitService {
     }
 
     public void open(Player player) {
-        Inventory inventory = Bukkit.createInventory(null, 27, GUI_TITLE);
-        fillBorders(inventory);
-        inventory.setItem(13, createKitItem());
-        inventory.setItem(22, createInfoItem(player));
-        player.openInventory(inventory);
-    }
+        Inventory inv = Bukkit.createInventory(null, 27, GUI_TITLE);
 
-    private void fillBorders(Inventory inventory) {
-        short[] colors = new short[]{5, 2};
-        for (int i = 0; i < inventory.getSize(); i++) {
-            if (i >= 10 && i <= 16 || i == 22) {
-                continue;
-            }
-            ItemStack pane = new ItemStack(Material.STAINED_GLASS_PANE, 1, colors[i % colors.length]);
-            ItemMeta meta = pane.getItemMeta();
-            meta.setDisplayName(ChatColor.RESET.toString());
-            pane.setItemMeta(meta);
-            inventory.setItem(i, pane);
-        }
+        GuiHelper.addTopBorder(inv);
+        GuiHelper.addBottomBorder(inv);
+
+        // Kit item at center
+        inv.setItem(13, createKitItem());
+
+        // Player balance info
+        inv.setItem(22, createInfoItem(player));
+
+        // Close button
+        inv.setItem(18, GuiHelper.closeButton());
+
+        GuiHelper.fillEmpty(inv);
+
+        player.openInventory(inv);
     }
 
     private ItemStack createKitItem() {
         ItemStack item = new ItemStack(Material.IRON_CHESTPLATE);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(plugin.color("&2&lKit d'arene"));
+        meta.setDisplayName(PastequeSkyblockPlugin.color("&a&lKit d'Arene"));
         List<String> lore = new ArrayList<String>();
-        for (String line : plugin.getConfig().getStringList("kit.description")) {
-            lore.add(plugin.color(line.replace("%price%", String.valueOf((int) plugin.getConfig().getDouble("kit.price", 250.0D)))));
-        }
-        lore.add(plugin.color("&fClic pour acheter et recevoir votre equipement."));
+        lore.add(PastequeSkyblockPlugin.color(""));
+        lore.add(PastequeSkyblockPlugin.color("&8\u25CE &7Contenu du Kit"));
+        lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Armure Protection I"));
+        lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Epee Tranchant I"));
+        lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Arc + 64 fleches"));
+        lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &716 Pommes dorees"));
+        lore.add(PastequeSkyblockPlugin.color(""));
+        lore.add(PastequeSkyblockPlugin.color("&8\u25CE &7Prix"));
+        lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &e" + (int) plugin.getConfig().getDouble("kit.price", 250.0D) + " Pasteque"));
+        lore.add(PastequeSkyblockPlugin.color(""));
+        lore.add(PastequeSkyblockPlugin.color("&a\u25B6 Clic pour acheter!"));
         meta.setLore(lore);
+        meta.addEnchant(Enchantment.PROTECTION_ENVIRONMENTAL, 1, true);
+        // Note: ItemFlag not available in 1.9.4
         item.setItemMeta(meta);
-        item.addUnsafeEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 1);
         return item;
     }
 
     private ItemStack createInfoItem(Player player) {
-        ItemStack item = new ItemStack(Material.MELON);
-        ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(plugin.color("&d&lVos " + plugin.getEconomyManager().getCurrencyName()));
-        List<String> lore = new ArrayList<String>();
-        lore.add(plugin.color("&fSolde actuel : &d" + plugin.getEconomyManager().format(plugin.getEconomyManager().getBalance(player.getUniqueId()))));
-        lore.add(plugin.color("&fMonde : &5" + player.getWorld().getName()));
-        meta.setLore(lore);
-        item.setItemMeta(meta);
-        return item;
+        double balance = plugin.getEconomyManager().getBalance(player.getUniqueId());
+        return GuiHelper.createItem(Material.MELON, "&d&lVotre Solde",
+                "",
+                "&8\u25CE &7Informations",
+                "&8\u25B8 &7Solde: &e" + plugin.getEconomyManager().format(balance) + " Pasteque",
+                "&8\u25B8 &7Monde: &d" + player.getWorld().getName());
     }
 
     public boolean tryPurchase(Player player) {

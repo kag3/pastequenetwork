@@ -55,7 +55,7 @@ public final class GuiHelper {
      * Create a close button (BARRIER) with standard styling.
      */
     public static ItemStack closeButton() {
-        return createItem(Material.BARRIER, "&c&lFermer", "", "&7Cliquez pour fermer ce menu.");
+        return createItem(Material.REDSTONE_BLOCK, "&c&lFermer", "", "&7Cliquez pour fermer ce menu.");
     }
 
     /**

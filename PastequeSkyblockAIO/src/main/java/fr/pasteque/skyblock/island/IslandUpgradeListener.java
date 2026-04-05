@@ -190,7 +190,7 @@ public class IslandUpgradeListener implements Listener {
             MessageUtil.send(player, plugin.getPrefix(), "&aGeneration de ton ile en cours...");
 
             // Create the island structure (grid allocation + data)
-            final Island island = plugin.getIslandManager().createIsland(player, preset);
+            final Island island = plugin.getIslandManager().createIsland(player);
             if (island == null) {
                 generatingPlayers.remove(player.getUniqueId());
                 MessageUtil.send(player, plugin.getPrefix(), "&cErreur lors de la creation de l'ile.");

@@ -8,8 +8,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -251,6 +253,7 @@ public class PetManager {
             PetType type = types[i];
             boolean owned = hasPet(uuid, type);
             PlayerPet pet = getPlayerPet(uuid, type);
+            boolean isActive = pet != null && pet.isActive();
 
             Material iconMat = Material.matchMaterial(type.getIconMaterial());
             if (iconMat == null) {
@@ -265,17 +268,20 @@ public class PetManager {
             }
 
             ItemMeta meta = item.getItemMeta();
-            boolean isActive = pet != null && pet.isActive();
 
             if (owned) {
                 meta.setDisplayName(PastequeSkyblockPlugin.color(
-                        type.getColor() + "&l" + type.getDisplayName()
+                        "&a&l" + type.getDisplayName()
                                 + " &fNiv." + pet.getLevel()
                                 + (isActive ? " &a&l[ACTIF]" : "")
                 ));
+                // Active pet: enchant glow effect
+                if (isActive) {
+                    meta.addEnchant(Enchantment.DURABILITY, 1, true);
+                }
             } else {
                 meta.setDisplayName(PastequeSkyblockPlugin.color(
-                        "&8&l" + type.getDisplayName() + " &7(Non possede)"
+                        "&c&l" + type.getDisplayName()
                 ));
             }
 
@@ -294,14 +300,24 @@ public class PetManager {
                     lore.add(PastequeSkyblockPlugin.color("&e\u25B6 Clic pour equiper!"));
                 }
             } else {
+                lore.add(PastequeSkyblockPlugin.color("&c\u2716 Non possede"));
+                lore.add("");
                 lore.add(PastequeSkyblockPlugin.color("&8\u258E &7Information"));
                 lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Affinite: &e" + type.getSkillAffinity()));
                 lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Prix: &e" + plugin.getEconomyManager().format(getPetPrice(type))));
                 lore.add("");
-                lore.add(PastequeSkyblockPlugin.color("&a\u25B6 Clic pour acheter!"));
+                lore.add(PastequeSkyblockPlugin.color("&e\u25B6 Clic pour acheter!"));
             }
             meta.setLore(lore);
             item.setItemMeta(meta);
+
+            // Background glass: green (5) for owned, red (14) for unowned
+            int bgSlot = slots[i];
+            if (owned) {
+                inv.setItem(bgSlot, item);
+            } else {
+                inv.setItem(bgSlot, item);
+            }
             inv.setItem(slots[i], item);
         }
 

@@ -268,13 +268,16 @@ public class MinionManager {
     // -- GUI ------------------------------------------------------------------
 
     public void openMinionGui(Player player, PlacedMinion minion) {
-        String title = GUI_TITLE_PREFIX + PastequeSkyblockPlugin.color(" &8- &e" + minion.getType().getDisplayName());
-        Inventory inv = Bukkit.createInventory(null, 36, title);
+        String title = GUI_TITLE_PREFIX + PastequeSkyblockPlugin.color("&e" + minion.getType().getDisplayName());
+        Inventory inv = Bukkit.createInventory(null, 27, title);
 
         // Row 0: decorative border
         GuiHelper.addTopBorder(inv);
 
-        // Info item (slot 13 - center of row 1)
+        // Row 2: decorative border
+        GuiHelper.addBottomBorder(inv);
+
+        // Center (slot 13): minion info item
         Material iconMat = Material.matchMaterial(minion.getType().getIconMaterial());
         if (iconMat == null) {
             iconMat = Material.BEDROCK;
@@ -294,16 +297,7 @@ public class MinionManager {
         info.setItemMeta(infoMeta);
         inv.setItem(13, info);
 
-        // Collect button (slot 11)
-        inv.setItem(11, GuiHelper.createItem(Material.HOPPER,
-                "&a&lRecolter",
-                "",
-                "&7Cliquez pour recuperer",
-                "&7tous les objets stockes.",
-                "",
-                "&a\u25B6 Clic pour recolter!"));
-
-        // Storage display (slot 12)
+        // Storage display (slot 11)
         ItemStack storageItem = new ItemStack(Material.CHEST);
         ItemMeta storageMeta = storageItem.getItemMeta();
         storageMeta.setDisplayName(PastequeSkyblockPlugin.color("&e&lStockage"));
@@ -319,14 +313,23 @@ public class MinionManager {
         }
         storageMeta.setLore(storageLore);
         storageItem.setItemMeta(storageMeta);
-        inv.setItem(12, storageItem);
+        inv.setItem(11, storageItem);
 
-        // Upgrade button (slot 14-15 symmetric)
+        // Collect all button (slot 12): HOPPER
+        inv.setItem(12, GuiHelper.createItem(Material.HOPPER,
+                "&a&lCollecter Tout",
+                "",
+                "&8\u25B8 &7Cliquez pour recuperer",
+                "&8\u25B8 &7tous les objets stockes.",
+                "",
+                "&e\u25B6 Clic pour collecter!"));
+
+        // Upgrade button (slot 14): ANVIL
         if (minion.getLevel() < 5) {
             int nextLevel = minion.getLevel() + 1;
             double cost = getMinionPrice(minion.getType(), nextLevel);
-            inv.setItem(15, GuiHelper.createItem(Material.GLASS_BOTTLE,
-                    "&b&lAmeliorer",
+            inv.setItem(14, GuiHelper.createItem(Material.ANVIL,
+                    "&e&lAmeliorer",
                     "",
                     "&8\u258E &7Amelioration",
                     "&8\u25B8 &7Niveau suivant: &e" + nextLevel,
@@ -334,14 +337,17 @@ public class MinionManager {
                     "",
                     "&e\u25B6 Clic pour ameliorer!"));
         } else {
-            inv.setItem(15, GuiHelper.createItem(Material.NETHER_STAR,
-                    "&b&lNiveau Maximum !",
+            inv.setItem(14, GuiHelper.createItem(Material.NETHER_STAR,
+                    "&a&lNiveau Maximum !",
                     "",
                     "&a\u2714 Ce minion est au max !"));
         }
 
-        // Row 3: back button
-        inv.setItem(27, GuiHelper.backButton());
+        // Back button at bottom-left
+        inv.setItem(18, GuiHelper.backButton());
+
+        // Close button at bottom-right
+        inv.setItem(26, GuiHelper.closeButton());
 
         // Fill remaining with black glass
         GuiHelper.fillEmpty(inv);

@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+@SuppressWarnings("deprecation")
 public class StaffModeManager {
 
     private final PastequeSkyblockPlugin plugin;
@@ -54,18 +55,47 @@ public class StaffModeManager {
         player.setGameMode(GameMode.CREATIVE);
 
         // Give staff items
-        player.getInventory().setItem(0, createStaffItem(Material.COMPASS, "&cTeleportation",
-                "&7Clic droit pour vous teleporter", "&7au joueur que vous regardez"));
-        player.getInventory().setItem(1, createSkullItem("&eInspection",
-                "&7Clic droit sur un joueur", "&7pour voir son inventaire"));
-        player.getInventory().setItem(2, createStaffItem(Material.ICE, "&bFreeze",
-                "&7Clic droit sur un joueur", "&7pour le geler/degeler"));
-        player.getInventory().setItem(3, createStaffItem(Material.BOOK, "&aRapports",
-                "&7Clic droit pour ouvrir", "&7le panneau de rapports"));
-        player.getInventory().setItem(4, createStaffItem(Material.BLAZE_ROD, "&6Vanish On/Off",
-                "&7Clic droit pour basculer", "&7le mode invisible"));
-        player.getInventory().setItem(8, createStaffItem(Material.REDSTONE, "&cQuitter Staff Mode",
-                "&7Clic droit pour quitter", "&7le mode staff"));
+        player.getInventory().setItem(0, createStaffItem(Material.COMPASS,
+                "&c&lTeleportation",
+                "&7Clic droit pour vous teleporter",
+                "&7au joueur que vous regardez",
+                "",
+                "&8\u25B8 &5Staff Pasteque"));
+
+        player.getInventory().setItem(1, createSkullItem(
+                "&e&lInspection",
+                "&7Clic droit sur un joueur",
+                "&7pour voir son inventaire",
+                "",
+                "&8\u25B8 &5Staff Pasteque"));
+
+        player.getInventory().setItem(2, createStaffItem(Material.ICE,
+                "&b&lFreeze",
+                "&7Clic droit sur un joueur",
+                "&7pour le geler/degeler",
+                "",
+                "&8\u25B8 &5Staff Pasteque"));
+
+        player.getInventory().setItem(3, createStaffItem(Material.BOOK,
+                "&a&lRapports",
+                "&7Clic droit pour ouvrir",
+                "&7le panneau de rapports",
+                "",
+                "&8\u25B8 &5Staff Pasteque"));
+
+        player.getInventory().setItem(4, createStaffItem(Material.BLAZE_ROD,
+                "&6&lVanish",
+                "&7Clic droit pour basculer",
+                "&7le mode invisible",
+                "",
+                "&8\u25B8 &5Staff Pasteque"));
+
+        player.getInventory().setItem(8, createStaffItem(Material.REDSTONE,
+                "&c&lQuitter Staff",
+                "&7Clic droit pour quitter",
+                "&7le mode staff",
+                "",
+                "&8\u25B8 &5Staff Pasteque"));
 
         // Vanish
         setVanished(player, true);
@@ -103,7 +133,6 @@ public class StaffModeManager {
     //  Vanish
     // ------------------------------------------------------------------
 
-    @SuppressWarnings("deprecation")
     public void setVanished(Player player, boolean vanish) {
         for (Player online : Bukkit.getOnlinePlayers()) {
             if (online.equals(player)) {
@@ -123,7 +152,6 @@ public class StaffModeManager {
     }
 
     public boolean isVanished(Player player) {
-        // Check if at least one non-staff player cannot see this player
         for (Player online : Bukkit.getOnlinePlayers()) {
             if (online.equals(player) || inStaffMode.contains(online.getUniqueId())) {
                 continue;
@@ -196,7 +224,6 @@ public class StaffModeManager {
         return item;
     }
 
-    @SuppressWarnings("deprecation")
     private ItemStack createSkullItem(String name, String... loreLines) {
         ItemStack item = new ItemStack(Material.SKULL_ITEM, 1, (short) 3);
         ItemMeta meta = item.getItemMeta();

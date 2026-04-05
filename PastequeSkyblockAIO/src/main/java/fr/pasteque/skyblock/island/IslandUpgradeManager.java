@@ -118,14 +118,17 @@ public class IslandUpgradeManager {
     }
 
     public void openUpgradeGui(Player player) {
-        Inventory gui = Bukkit.createInventory(null, 36, GUI_TITLE);
+        Inventory gui = Bukkit.createInventory(null, 27, GUI_TITLE);
         UUID owner = player.getUniqueId();
 
         // Row 0: decorative border
         GuiHelper.addTopBorder(gui);
 
+        // Row 2: decorative border
+        GuiHelper.addBottomBorder(gui);
+
         IslandUpgrade[] upgrades = IslandUpgrade.values();
-        int[] slots = {11, 12, 13, 14, 15};
+        int[] slots = {10, 11, 12, 13, 14};
         Material[] icons = {Material.GRASS, Material.SKULL_ITEM, Material.DIAMOND_PICKAXE, Material.MOB_SPAWNER, Material.IRON_FENCE};
 
         for (int i = 0; i < upgrades.length && i < slots.length; i++) {
@@ -151,11 +154,12 @@ public class IslandUpgradeManager {
                 int nextLevel = level + 1;
                 lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Prochaine valeur: &f" + upgrade.getTierValue(nextLevel)));
                 lore.add("");
-                lore.add(PastequeSkyblockPlugin.color("&8\u258E &7Cout: &e" + plugin.getEconomyManager().format(upgrade.getCost(nextLevel))));
+                lore.add(PastequeSkyblockPlugin.color("&8\u258E &7Cout"));
+                lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &e" + plugin.getEconomyManager().format(upgrade.getCost(nextLevel))));
                 double bal = plugin.getEconomyManager().getBalance(owner);
                 lore.add("");
                 if (bal >= upgrade.getCost(nextLevel)) {
-                    lore.add(PastequeSkyblockPlugin.color("&a\u25B6 Clic pour ameliorer!"));
+                    lore.add(PastequeSkyblockPlugin.color("&e\u25B6 Clic pour ameliorer!"));
                 } else {
                     lore.add(PastequeSkyblockPlugin.color("&c\u2716 Pas assez d'argent"));
                 }
@@ -166,8 +170,11 @@ public class IslandUpgradeManager {
             gui.setItem(slots[i], item);
         }
 
-        // Row 3: back button
-        gui.setItem(27, GuiHelper.backButton());
+        // Back button at bottom-left
+        gui.setItem(18, GuiHelper.backButton());
+
+        // Close button at bottom-right
+        gui.setItem(26, GuiHelper.closeButton());
 
         // Fill remaining slots with black glass
         GuiHelper.fillEmpty(gui);
