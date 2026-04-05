@@ -33,6 +33,10 @@ import fr.pasteque.skyblock.arena.ArenaLevelService;
 import fr.pasteque.skyblock.arena.CombatTagService;
 import fr.pasteque.skyblock.arena.SafeZoneService;
 import fr.pasteque.skyblock.arena.SelectionService;
+import fr.pasteque.skyblock.arena.EloService;
+import fr.pasteque.skyblock.arena.DuelService;
+import fr.pasteque.skyblock.arena.BountyService;
+import fr.pasteque.skyblock.arena.KillStreakService;
 import fr.pasteque.skyblock.listener.arena.ArenaCombatListener;
 import fr.pasteque.skyblock.listener.arena.ArenaKitListener;
 import fr.pasteque.skyblock.listener.arena.ArenaProtectionListener;
@@ -121,6 +125,12 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     private ScoreboardManager scoreboardManager;
     private TabListManager tabListManager;
 
+    /* ── Arena PvP extensions ── */
+    private EloService eloService;
+    private DuelService duelService;
+    private BountyService bountyService;
+    private KillStreakService killStreakService;
+
     /* ── Dark Auction, Slayer, Staff ── */
     private DarkAuctionManager darkAuctionManager;
     private SlayerManager slayerManager;
@@ -208,6 +218,14 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         this.scoreboardManager = new ScoreboardManager(this);
         this.tabListManager = new TabListManager(this);
 
+        /* ── Arena PvP extensions init ── */
+        this.eloService = new EloService(this);
+        this.eloService.load();
+        this.bountyService = new BountyService(this);
+        this.bountyService.load();
+        this.duelService = new DuelService(this, arenaWorldService, eloService);
+        this.killStreakService = new KillStreakService(this);
+
         /* ── Dark Auction, Slayer, Staff init ── */
         this.darkAuctionManager = new DarkAuctionManager(this);
         this.slayerManager = new SlayerManager(this);
@@ -224,6 +242,7 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         registerIslandUpgradeCommands();
         registerCollectionCommands();
         registerPetCommands();
+        registerArenaExtCommands();
         registerDarkAuctionCommands();
         registerSlayerCommands();
         registerStaffCommands();
@@ -315,6 +334,14 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
             petManager.save();
         }
 
+        /* ELO & Bounty save */
+        if (eloService != null) {
+            eloService.save();
+        }
+        if (bountyService != null) {
+            bountyService.save();
+        }
+
         /* Slayer save */
         if (slayerManager != null) {
             slayerManager.save();
@@ -394,6 +421,12 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
 
     private void registerPetCommands() {
         bind("pet", new PetCommand(petManager));
+    }
+
+    private void registerArenaExtCommands() {
+        bind("duel", new DuelCommand(this, duelService));
+        bind("bounty", new BountyCommand(this, bountyService));
+        bind("elo", new EloCommand(this, eloService));
     }
 
     private void registerDarkAuctionCommands() {
@@ -663,6 +696,10 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     //  Dark Auction, Slayer, Staff getters
     // =========================================================================
 
+    public EloService getEloService() { return eloService; }
+    public DuelService getDuelService() { return duelService; }
+    public BountyService getBountyService() { return bountyService; }
+    public KillStreakService getKillStreakService() { return killStreakService; }
     public DarkAuctionManager getDarkAuctionManager() { return darkAuctionManager; }
     public SlayerManager getSlayerManager() { return slayerManager; }
     public StaffModeManager getStaffModeManager() { return staffModeManager; }
