@@ -1,8 +1,12 @@
 package fr.pasteque.skyblock;
 
+import fr.pasteque.skyblock.combatpass.CombatPassManager;
+import fr.pasteque.skyblock.combatpass.CombatPassListener;
 import fr.pasteque.skyblock.command.*;
 import fr.pasteque.skyblock.listener.*;
 import fr.pasteque.skyblock.manager.*;
+import fr.pasteque.skyblock.skill.SkillManager;
+import fr.pasteque.skyblock.skill.SkillListener;
 import fr.pasteque.skyblock.guard.SanctionService;
 import fr.pasteque.skyblock.guard.ReportService;
 import fr.pasteque.skyblock.guard.FilterService;
@@ -76,6 +80,12 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     private SafeZoneService safeZoneService;
     private SelectionService selectionService;
 
+    /* ── CombatPass ── */
+    private CombatPassManager combatPassManager;
+
+    /* ── PastequeSkills ── */
+    private SkillManager skillManager;
+
     /* ── Island chat toggles (persisted) ── */
     private final Map<UUID, Boolean> islandChatToggles = new HashMap<UUID, Boolean>();
 
@@ -133,17 +143,28 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         safeZoneService.load();
         playerDataService.load();
 
+        /* ── CombatPass init ── */
+        this.combatPassManager = new CombatPassManager(this);
+
+        /* ── PastequeSkills init ── */
+        this.skillManager = new SkillManager(this);
+        this.skillManager.load();
+
         /* ── Commands ── */
         registerSkyblockCommands();
         registerGuardCommands();
         registerShopCommands();
         registerArenaCommands();
+        registerSkillCommands();
+        registerCombatPassCommands();
 
         /* ── Listeners ── */
         registerSkyblockListeners();
         registerGuardListeners();
         registerShopListeners();
         registerArenaListeners();
+        registerSkillListeners();
+        registerCombatPassListeners();
 
         /* ── Scheduled tasks ── */
         coopManager.start();
@@ -173,6 +194,16 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
 
         /* Persist island chat toggles */
         saveIslandChatToggles();
+
+        /* CombatPass save */
+        if (combatPassManager != null) {
+            combatPassManager.save();
+        }
+
+        /* PastequeSkills save */
+        if (skillManager != null) {
+            skillManager.save();
+        }
 
         /* PastequeMyLittleShop save */
         if (playerShopManager != null) {
@@ -224,6 +255,15 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         bind("myshopadmin", adminCommand);
     }
 
+    private void registerCombatPassCommands() {
+        CombatPassCommand passCommand = new CombatPassCommand(this, combatPassManager);
+        bind("combatpass", passCommand);
+    }
+
+    private void registerSkillCommands() {
+        bind("skills", new SkillsCommand(skillManager));
+    }
+
     private void registerArenaCommands() {
         ArenaCommand arenaCommand = new ArenaCommand(this, arenaWorldService);
         ArenaLevelCommand levelCommand = new ArenaLevelCommand(this, playerDataService, arenaLevelService);
@@ -273,6 +313,14 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
 
     private void registerShopListeners() {
         registerEvents(new PlayerShopListener(this, playerShopManager));
+    }
+
+    private void registerCombatPassListeners() {
+        registerEvents(new CombatPassListener(this, combatPassManager));
+    }
+
+    private void registerSkillListeners() {
+        registerEvents(new SkillListener(skillManager));
     }
 
     private void registerArenaListeners() {
@@ -397,4 +445,16 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     public CombatTagService getCombatTagService() { return combatTagService; }
     public SafeZoneService getSafeZoneService() { return safeZoneService; }
     public SelectionService getSelectionService() { return selectionService; }
+
+    // =========================================================================
+    //  PastequeSkills getters
+    // =========================================================================
+
+    public SkillManager getSkillManager() { return skillManager; }
+
+    // =========================================================================
+    //  CombatPass getters
+    // =========================================================================
+
+    public CombatPassManager getCombatPassManager() { return combatPassManager; }
 }

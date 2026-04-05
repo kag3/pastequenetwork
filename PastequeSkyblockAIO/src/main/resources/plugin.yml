@@ -46,6 +46,12 @@ commands:
     description: Voir votre niveau d'arene
   arenaadmin:
     description: Administration de l'arene
+  skills:
+    description: Voir vos competences
+    aliases: [competences, skill]
+  combatpass:
+    description: Passe de Combat
+    aliases: [pass, bp]
 
 permissions:
   pastequeskyblock.admin:
