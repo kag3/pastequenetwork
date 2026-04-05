@@ -24,9 +24,9 @@ import java.util.*;
 
 public class PlayerShopManager {
 
-    public static final String CREATE_GUI_TITLE = "\u00a7dCr\u00e9er un shop";
-    public static final String VIEW_GUI_TITLE = "\u00a7dVoir le shop";
-    public static final String OWNER_GUI_TITLE = "\u00a7dG\u00e9rer le shop";
+    public static final String CREATE_GUI_TITLE = "\u00a72Shop \u00a78- \u00a7fCreer";
+    public static final String VIEW_GUI_TITLE = "\u00a72Shop \u00a78- \u00a7fVoir";
+    public static final String OWNER_GUI_TITLE = "\u00a72Shop \u00a78- \u00a7fGerer";
 
     private final PastequeSkyblockPlugin plugin;
     private final Map<UUID, PendingShopCreation> pendingCreations = new HashMap<UUID, PendingShopCreation>();
@@ -95,7 +95,7 @@ public class PlayerShopManager {
         Inventory inventory = Bukkit.createInventory(player, 54, CREATE_GUI_TITLE + " \u00a77- \u00a7f" + trim(shopName));
         ItemStack validate = new ItemStack(Material.EMERALD_BLOCK);
         org.bukkit.inventory.meta.ItemMeta meta = validate.getItemMeta();
-        meta.setDisplayName(PastequeSkyblockPlugin.color("&dValider le d\u00e9p\u00f4t des stocks"));
+        meta.setDisplayName(PastequeSkyblockPlugin.color("&aValider le depot des stocks"));
         validate.setItemMeta(meta);
         inventory.setItem(49, validate);
         PendingShopCreation pending = new PendingShopCreation(shopName, inventory, placement.getLocation(), placement.getMaterial(), placement.getWallFacing());
@@ -179,10 +179,10 @@ public class PlayerShopManager {
             block.getState().update(true, false);
         }
         Sign sign = (Sign) block.getState();
-        sign.setLine(0, PastequeSkyblockPlugin.color(plugin.getConfig().getString("shops.sign-title-color", "&d") + "[MyShop]"));
-        sign.setLine(1, trim(pending.getShopName()));
-        sign.setLine(2, PastequeSkyblockPlugin.color("&fStock: &d" + pending.getStock()));
-        sign.setLine(3, PastequeSkyblockPlugin.color("&5" + economy.format(price)));
+        sign.setLine(0, PastequeSkyblockPlugin.color("&2&l[SHOP]"));
+        sign.setLine(1, PastequeSkyblockPlugin.color("&f" + trim(pending.getShopName())));
+        sign.setLine(2, PastequeSkyblockPlugin.color("&7Stock: &a" + pending.getStock()));
+        sign.setLine(3, PastequeSkyblockPlugin.color("&e" + economy.format(price)));
         sign.update(true);
     }
 
@@ -209,11 +209,11 @@ public class PlayerShopManager {
         EconomyManager economy = plugin.getEconomyManager();
         ownerViewSessions.remove(player.getUniqueId());
         Inventory inventory = Bukkit.createInventory(player, 27, VIEW_GUI_TITLE + " \u00a77- \u00a7f" + trim(shop.getName()));
-        inventory.setItem(13, withName(shop.getTemplate(), "&d" + shop.getName(), Arrays.asList(
-                PastequeSkyblockPlugin.color("&fObjet : &d" + readable(shop.getTemplate())),
-                PastequeSkyblockPlugin.color("&fStock : &5" + shop.getStock()),
-                PastequeSkyblockPlugin.color("&fPrix : &5" + economy.format(shop.getPrice())),
-                PastequeSkyblockPlugin.color(plugin.getConfig().getString("messages.buy-right-click"))
+        inventory.setItem(13, withName(shop.getTemplate(), "&a" + shop.getName(), Arrays.asList(
+                PastequeSkyblockPlugin.color("&7Objet : &f" + readable(shop.getTemplate())),
+                PastequeSkyblockPlugin.color("&7Stock : &a" + shop.getStock()),
+                PastequeSkyblockPlugin.color("&7Prix : &e" + economy.format(shop.getPrice())),
+                PastequeSkyblockPlugin.color("&8Clic droit pour acheter")
         )));
         player.openInventory(inventory);
     }
@@ -222,15 +222,15 @@ public class PlayerShopManager {
         EconomyManager economy = plugin.getEconomyManager();
         ownerViewSessions.put(player.getUniqueId(), shop);
         Inventory inventory = Bukkit.createInventory(player, 54, OWNER_GUI_TITLE + " \u00a77- \u00a7f" + trim(shop.getName()));
-        inventory.setItem(13, withName(shop.getTemplate(), "&d" + shop.getName(), Arrays.asList(
-                PastequeSkyblockPlugin.color("&fObjet : &d" + readable(shop.getTemplate())),
-                PastequeSkyblockPlugin.color("&fStock actuel : &5" + shop.getStock()),
-                PastequeSkyblockPlugin.color("&fPrix : &5" + economy.format(shop.getPrice())),
-                PastequeSkyblockPlugin.color(plugin.getConfig().getString("messages.owner-manage"))
+        inventory.setItem(13, withName(shop.getTemplate(), "&a" + shop.getName(), Arrays.asList(
+                PastequeSkyblockPlugin.color("&7Objet : &f" + readable(shop.getTemplate())),
+                PastequeSkyblockPlugin.color("&7Stock actuel : &a" + shop.getStock()),
+                PastequeSkyblockPlugin.color("&7Prix : &e" + economy.format(shop.getPrice())),
+                PastequeSkyblockPlugin.color("&8Deposez des items en bas pour ajouter du stock")
         )));
-        inventory.setItem(49, button(Material.EMERALD_BLOCK, "&dValider l'ajout de stock"));
-        inventory.setItem(50, button(Material.CHEST, "&dRetirer 1 stack"));
-        inventory.setItem(51, button(Material.HOPPER, "&dRetirer tout le stock"));
+        inventory.setItem(49, button(Material.EMERALD_BLOCK, "&aValider l'ajout de stock"));
+        inventory.setItem(50, button(Material.CHEST, "&eRetirer 1 stack"));
+        inventory.setItem(51, button(Material.HOPPER, "&cRetirer tout le stock"));
         player.openInventory(inventory);
     }
 
@@ -382,10 +382,10 @@ public class PlayerShopManager {
         Block block = shop.getSignLocation().getBlock();
         if (block.getState() instanceof Sign) {
             Sign sign = (Sign) block.getState();
-            sign.setLine(0, PastequeSkyblockPlugin.color(plugin.getConfig().getString("shops.sign-title-color", "&d") + "[MyShop]"));
-            sign.setLine(1, trim(shop.getName()));
-            sign.setLine(2, PastequeSkyblockPlugin.color("&fStock: &d" + shop.getStock()));
-            sign.setLine(3, PastequeSkyblockPlugin.color("&5" + economy.format(shop.getPrice())));
+            sign.setLine(0, PastequeSkyblockPlugin.color("&2&l[SHOP]"));
+            sign.setLine(1, PastequeSkyblockPlugin.color("&f" + trim(shop.getName())));
+            sign.setLine(2, PastequeSkyblockPlugin.color("&7Stock: &a" + shop.getStock()));
+            sign.setLine(3, PastequeSkyblockPlugin.color("&e" + economy.format(shop.getPrice())));
             sign.update(true);
         }
     }
@@ -442,7 +442,7 @@ public class PlayerShopManager {
     }
 
     public String prefix() {
-        return PastequeSkyblockPlugin.color(plugin.getConfig().getString("messages.prefix", "&2Pasteque &dMyLittleShop &7\u00bb "));
+        return PastequeSkyblockPlugin.color("&2Pasteque &5Shop &8\u00bb ");
     }
 
     public String message(String path) {

@@ -4,6 +4,7 @@ import fr.pasteque.skyblock.PastequeSkyblockPlugin;
 import fr.pasteque.skyblock.collection.model.CollectionCategory;
 import fr.pasteque.skyblock.collection.model.CollectionEntry;
 import fr.pasteque.skyblock.collection.model.PlayerCollections;
+import fr.pasteque.skyblock.gui.GuiHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -21,10 +22,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@SuppressWarnings("deprecation")
 public class CollectionManager {
 
-    public static final String MAIN_TITLE = PastequeSkyblockPlugin.color("&2&lCollections");
-    public static final String CATEGORY_TITLE_PREFIX = PastequeSkyblockPlugin.color("&2&lCollections - ");
+    public static final String MAIN_TITLE = PastequeSkyblockPlugin.color("&2&lPasteque &5&lCollections");
+    public static final String CATEGORY_TITLE_PREFIX = PastequeSkyblockPlugin.color("&2&lPasteque &5&l");
 
     private final PastequeSkyblockPlugin plugin;
     private final File file;
@@ -37,7 +39,7 @@ public class CollectionManager {
         this.entries = CollectionEntry.createDefaults();
     }
 
-    // ── Persistence ──────────────────────────────────────────────────────
+    // -- Persistence ----------------------------------------------------------
 
     public void load() {
         cache.clear();
@@ -99,7 +101,7 @@ public class CollectionManager {
         }
     }
 
-    // ── Data access ──────────────────────────────────────────────────────
+    // -- Data access ----------------------------------------------------------
 
     public PlayerCollections getPlayerCollections(UUID uuid) {
         PlayerCollections pc = cache.get(uuid);
@@ -132,7 +134,7 @@ public class CollectionManager {
         return null;
     }
 
-    // ── Collection tracking ──────────────────────────────────────────────
+    // -- Collection tracking --------------------------------------------------
 
     public void addCollection(Player player, String material, int amount) {
         PlayerCollections pc = getPlayerCollections(player.getUniqueId());
@@ -140,7 +142,6 @@ public class CollectionManager {
         pc.addCount(material, amount);
         int newCount = pc.getCount(material);
 
-        // Check all entries that use this material
         for (CollectionEntry entry : entries) {
             if (!entry.getMaterial().equals(material)) {
                 continue;
@@ -160,7 +161,7 @@ public class CollectionManager {
         }
     }
 
-    // ── Tier rewards ─────────────────────────────────────────────────────
+    // -- Tier rewards ---------------------------------------------------------
 
     public double getTierReward(CollectionEntry entry, int tier) {
         switch (tier) {
@@ -173,23 +174,17 @@ public class CollectionManager {
         }
     }
 
-    // ── GUIs ─────────────────────────────────────────────────────────────
+    // -- GUIs -----------------------------------------------------------------
 
     public void openCollectionGui(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 27, MAIN_TITLE);
+        Inventory inv = Bukkit.createInventory(null, 36, MAIN_TITLE);
 
-        // Fill with gray glass panes
-        ItemStack filler = new ItemStack(Material.STAINED_GLASS_PANE, 1, (short) 7);
-        ItemMeta fillerMeta = filler.getItemMeta();
-        fillerMeta.setDisplayName(" ");
-        filler.setItemMeta(fillerMeta);
-        for (int i = 0; i < 27; i++) {
-            inv.setItem(i, filler.clone());
-        }
+        // Row 0: decorative border
+        GuiHelper.addTopBorder(inv);
 
-        // Place category icons
+        // Row 1: category icons (centered)
         CollectionCategory[] categories = CollectionCategory.values();
-        int[] slots = {10, 11, 12, 13, 14};
+        int[] slots = {11, 12, 13, 14, 15};
         for (int i = 0; i < categories.length && i < slots.length; i++) {
             CollectionCategory cat = categories[i];
             Material iconMat = Material.matchMaterial(cat.getIcon());
@@ -213,13 +208,20 @@ public class CollectionManager {
                     }
                 }
             }
-            lore.add(PastequeSkyblockPlugin.color("&7Decouvertes: &a" + unlocked + "/" + total));
+            lore.add(PastequeSkyblockPlugin.color("&8\u258E &7Progression"));
+            lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Decouvertes: &a" + unlocked + "&8/&f" + total));
             lore.add("");
-            lore.add(PastequeSkyblockPlugin.color("&eCliquez pour voir !"));
+            lore.add(PastequeSkyblockPlugin.color("&e\u25B6 Clic pour ouvrir!"));
             meta.setLore(lore);
             item.setItemMeta(meta);
             inv.setItem(slots[i], item);
         }
+
+        // Row 3: back button
+        inv.setItem(27, GuiHelper.backButton());
+
+        // Fill remaining with black glass
+        GuiHelper.fillEmpty(inv);
 
         player.openInventory(inv);
     }
@@ -232,38 +234,40 @@ public class CollectionManager {
             }
         }
 
-        int size = Math.max(27, (int) Math.ceil(catEntries.size() / 9.0) * 9 + 18);
+        int size = Math.max(36, (int) Math.ceil((catEntries.size() + 9) / 9.0) * 9 + 18);
         if (size > 54) {
             size = 54;
         }
         String title = CATEGORY_TITLE_PREFIX + PastequeSkyblockPlugin.color(category.getColor() + category.getDisplayName());
         Inventory inv = Bukkit.createInventory(null, size, title);
 
-        // Fill with gray glass panes
-        ItemStack filler = new ItemStack(Material.STAINED_GLASS_PANE, 1, (short) 7);
-        ItemMeta fillerMeta = filler.getItemMeta();
-        fillerMeta.setDisplayName(" ");
-        filler.setItemMeta(fillerMeta);
-        for (int i = 0; i < 9; i++) {
-            inv.setItem(i, filler.clone());
-        }
-        for (int i = size - 9; i < size; i++) {
-            inv.setItem(i, filler.clone());
-        }
+        // Row 0: decorative border
+        GuiHelper.addTopBorder(inv);
 
-        // Back button
-        ItemStack back = new ItemStack(Material.ARROW);
-        ItemMeta backMeta = back.getItemMeta();
-        backMeta.setDisplayName(PastequeSkyblockPlugin.color("&c&lRetour"));
-        back.setItemMeta(backMeta);
-        inv.setItem(size - 5, back);
+        // Bottom border
+        GuiHelper.addBottomBorder(inv);
+
+        // Back button at bottom-left, close button at bottom-right
+        inv.setItem(size - 9, GuiHelper.backButton());
+        inv.setItem(size - 1, GuiHelper.closeButton());
 
         PlayerCollections pc = getPlayerCollections(player.getUniqueId());
-        int slot = 9;
+        int slot = 10;
+        int rowEnd = 16;
         for (CollectionEntry entry : catEntries) {
             if (slot >= size - 9) {
                 break;
             }
+            // Skip border columns for symmetry
+            if (slot % 9 == 0 || slot % 9 == 8) {
+                slot++;
+                if (slot > rowEnd) {
+                    slot = ((slot / 9) + 1) * 9 + 1;
+                    rowEnd = slot + 6;
+                }
+                continue;
+            }
+
             Material iconMat = Material.matchMaterial(entry.getMaterial());
             if (iconMat == null) {
                 iconMat = Material.BEDROCK;
@@ -282,11 +286,12 @@ public class CollectionManager {
             int nextTier = currentTier < tiers.length ? tiers[currentTier] : tiers[tiers.length - 1];
 
             meta.setDisplayName(PastequeSkyblockPlugin.color(
-                    category.getColor() + entry.getDisplayName() + " &7(" + count + ")"
+                    category.getColor() + "&l" + entry.getDisplayName() + " &7(" + count + ")"
             ));
 
             List<String> lore = new ArrayList<String>();
             lore.add("");
+            lore.add(PastequeSkyblockPlugin.color("&8\u258E &7Paliers"));
             for (int i = 0; i < tiers.length; i++) {
                 int claimed = pc.getClaimedTier(entry.getId());
                 String prefix;
@@ -298,8 +303,8 @@ public class CollectionManager {
                     prefix = "&c\u2716 ";
                 }
                 lore.add(PastequeSkyblockPlugin.color(
-                        prefix + "&7Palier " + (i + 1) + ": &f" + tiers[i]
-                                + " &7- " + entry.getTierRewards()[i]
+                        "&8\u25B8 " + prefix + "&7Palier " + (i + 1) + ": &f" + tiers[i]
+                                + " &8- &7" + entry.getTierRewards()[i]
                 ));
             }
             lore.add("");
@@ -311,14 +316,21 @@ public class CollectionManager {
             int claimed = pc.getClaimedTier(entry.getId());
             if (currentTier > claimed) {
                 lore.add("");
-                lore.add(PastequeSkyblockPlugin.color("&eCliquez pour recuperer la recompense !"));
+                lore.add(PastequeSkyblockPlugin.color("&a\u25B6 Clic pour recuperer!"));
             }
 
             meta.setLore(lore);
             item.setItemMeta(meta);
             inv.setItem(slot, item);
             slot++;
+            if (slot > rowEnd) {
+                slot = ((slot / 9) + 1) * 9 + 1;
+                rowEnd = slot + 6;
+            }
         }
+
+        // Fill remaining with black glass
+        GuiHelper.fillEmpty(inv);
 
         player.openInventory(inv);
     }
@@ -341,7 +353,7 @@ public class CollectionManager {
         return PastequeSkyblockPlugin.color(bar.toString());
     }
 
-    // ── Getter ───────────────────────────────────────────────────────────
+    // -- Getter ---------------------------------------------------------------
 
     public PastequeSkyblockPlugin getPlugin() {
         return plugin;

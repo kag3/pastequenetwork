@@ -1,6 +1,7 @@
 package fr.pasteque.skyblock.minion;
 
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
+import fr.pasteque.skyblock.gui.GuiHelper;
 import fr.pasteque.skyblock.minion.model.MinionType;
 import fr.pasteque.skyblock.minion.model.PlacedMinion;
 import org.bukkit.Bukkit;
@@ -29,9 +30,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@SuppressWarnings("deprecation")
 public class MinionManager {
 
-    public static final String GUI_TITLE_PREFIX = PastequeSkyblockPlugin.color("&6&lMinion - ");
+    public static final String GUI_TITLE_PREFIX = PastequeSkyblockPlugin.color("&2&lPasteque &5&lMinion");
     public static final String MINION_TAG = "\u00A7r\u00A70\u00A7minion";
 
     private final PastequeSkyblockPlugin plugin;
@@ -43,7 +45,7 @@ public class MinionManager {
         this.file = new File(plugin.getDataFolder(), "minions.yml");
     }
 
-    // ── Persistence ──────────────────────────────────────────────────────
+    // -- Persistence ----------------------------------------------------------
 
     public void load() {
         playerMinions.clear();
@@ -130,7 +132,7 @@ public class MinionManager {
         }
     }
 
-    // ── Minion placement ─────────────────────────────────────────────────
+    // -- Minion placement -----------------------------------------------------
 
     public boolean placeMinion(Player player, MinionType type, Location location) {
         List<PlacedMinion> minions = getMinions(player.getUniqueId());
@@ -168,7 +170,7 @@ public class MinionManager {
         return null;
     }
 
-    // ── Tick ──────────────────────────────────────────────────────────────
+    // -- Tick -----------------------------------------------------------------
 
     public void tick() {
         long now = System.currentTimeMillis();
@@ -199,14 +201,13 @@ public class MinionManager {
         }.runTaskTimer(plugin, 20L, 20L);
     }
 
-    // ── Entity management (using Villager as minion entity) ──────────────
+    // -- Entity management ----------------------------------------------------
 
     public void spawnMinionEntity(PlacedMinion minion) {
         Location loc = minion.getLocation();
         if (loc == null || loc.getWorld() == null) {
             return;
         }
-        // Check if entity already exists at location
         for (Entity entity : loc.getChunk().getEntities()) {
             if (entity instanceof Villager) {
                 Villager v = (Villager) entity;
@@ -215,7 +216,7 @@ public class MinionManager {
                     double dy = v.getLocation().getY() - loc.getY();
                     double dz = v.getLocation().getZ() - loc.getZ();
                     if (dx * dx + dy * dy + dz * dz < 2.25) {
-                        return; // Already exists
+                        return;
                     }
                 }
             }
@@ -264,22 +265,16 @@ public class MinionManager {
         }
     }
 
-    // ── GUI ──────────────────────────────────────────────────────────────
+    // -- GUI ------------------------------------------------------------------
 
     public void openMinionGui(Player player, PlacedMinion minion) {
-        String title = GUI_TITLE_PREFIX + PastequeSkyblockPlugin.color("&e" + minion.getType().getDisplayName());
-        Inventory inv = Bukkit.createInventory(null, 27, title);
+        String title = GUI_TITLE_PREFIX + PastequeSkyblockPlugin.color(" &8- &e" + minion.getType().getDisplayName());
+        Inventory inv = Bukkit.createInventory(null, 36, title);
 
-        // Fill with gray glass panes
-        ItemStack filler = new ItemStack(Material.STAINED_GLASS_PANE, 1, (short) 7);
-        ItemMeta fillerMeta = filler.getItemMeta();
-        fillerMeta.setDisplayName(" ");
-        filler.setItemMeta(fillerMeta);
-        for (int i = 0; i < 27; i++) {
-            inv.setItem(i, filler.clone());
-        }
+        // Row 0: decorative border
+        GuiHelper.addTopBorder(inv);
 
-        // Info item (slot 4)
+        // Info item (slot 13 - center of row 1)
         Material iconMat = Material.matchMaterial(minion.getType().getIconMaterial());
         if (iconMat == null) {
             iconMat = Material.BEDROCK;
@@ -291,68 +286,70 @@ public class MinionManager {
         ));
         List<String> infoLore = new ArrayList<String>();
         infoLore.add("");
-        infoLore.add(PastequeSkyblockPlugin.color("&7Stockage: &e" + minion.getStorageCount() + "/" + minion.getMaxStorage()));
-        infoLore.add(PastequeSkyblockPlugin.color("&7Intervalle: &e" + minion.getInterval() + "s"));
-        infoLore.add(PastequeSkyblockPlugin.color("&7Produit: &e" + minion.getType().getProduceMaterial()));
+        infoLore.add(PastequeSkyblockPlugin.color("&8\u258E &7Statistiques"));
+        infoLore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Stockage: &e" + minion.getStorageCount() + "&8/&f" + minion.getMaxStorage()));
+        infoLore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Intervalle: &e" + minion.getInterval() + "s"));
+        infoLore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Produit: &e" + minion.getType().getProduceMaterial()));
         infoMeta.setLore(infoLore);
         info.setItemMeta(infoMeta);
-        inv.setItem(4, info);
+        inv.setItem(13, info);
 
-        // Storage display (slot 13)
+        // Collect button (slot 11)
+        inv.setItem(11, GuiHelper.createItem(Material.HOPPER,
+                "&a&lRecolter",
+                "",
+                "&7Cliquez pour recuperer",
+                "&7tous les objets stockes.",
+                "",
+                "&a\u25B6 Clic pour recolter!"));
+
+        // Storage display (slot 12)
         ItemStack storageItem = new ItemStack(Material.CHEST);
         ItemMeta storageMeta = storageItem.getItemMeta();
         storageMeta.setDisplayName(PastequeSkyblockPlugin.color("&e&lStockage"));
         List<String> storageLore = new ArrayList<String>();
         storageLore.add("");
         if (minion.getStorage().isEmpty()) {
-            storageLore.add(PastequeSkyblockPlugin.color("&7Vide"));
+            storageLore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Vide"));
         } else {
+            storageLore.add(PastequeSkyblockPlugin.color("&8\u258E &7Contenu"));
             for (Map.Entry<String, Integer> entry : minion.getStorage().entrySet()) {
-                storageLore.add(PastequeSkyblockPlugin.color("&7" + entry.getKey() + ": &f" + entry.getValue()));
+                storageLore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7" + entry.getKey() + ": &f" + entry.getValue()));
             }
         }
         storageMeta.setLore(storageLore);
         storageItem.setItemMeta(storageMeta);
-        inv.setItem(13, storageItem);
+        inv.setItem(12, storageItem);
 
-        // Collect button (slot 11)
-        ItemStack collect = new ItemStack(Material.HOPPER);
-        ItemMeta collectMeta = collect.getItemMeta();
-        collectMeta.setDisplayName(PastequeSkyblockPlugin.color("&a&lRecolter"));
-        List<String> collectLore = new ArrayList<String>();
-        collectLore.add("");
-        collectLore.add(PastequeSkyblockPlugin.color("&7Cliquez pour recuperer"));
-        collectLore.add(PastequeSkyblockPlugin.color("&7tous les objets stockes."));
-        collectMeta.setLore(collectLore);
-        collect.setItemMeta(collectMeta);
-        inv.setItem(11, collect);
-
-        // Upgrade button (slot 15)
+        // Upgrade button (slot 14-15 symmetric)
         if (minion.getLevel() < 5) {
-            ItemStack upgrade = new ItemStack(Material.GLASS_BOTTLE);
-            ItemMeta upgradeMeta = upgrade.getItemMeta();
             int nextLevel = minion.getLevel() + 1;
             double cost = getMinionPrice(minion.getType(), nextLevel);
-            upgradeMeta.setDisplayName(PastequeSkyblockPlugin.color("&b&lAmeliorer"));
-            List<String> upgradeLore = new ArrayList<String>();
-            upgradeLore.add("");
-            upgradeLore.add(PastequeSkyblockPlugin.color("&7Niveau suivant: &e" + nextLevel));
-            upgradeLore.add(PastequeSkyblockPlugin.color("&7Cout: &e" + plugin.getEconomyManager().format(cost)));
-            upgradeMeta.setLore(upgradeLore);
-            upgrade.setItemMeta(upgradeMeta);
-            inv.setItem(15, upgrade);
+            inv.setItem(15, GuiHelper.createItem(Material.GLASS_BOTTLE,
+                    "&b&lAmeliorer",
+                    "",
+                    "&8\u258E &7Amelioration",
+                    "&8\u25B8 &7Niveau suivant: &e" + nextLevel,
+                    "&8\u25B8 &7Cout: &e" + plugin.getEconomyManager().format(cost),
+                    "",
+                    "&e\u25B6 Clic pour ameliorer!"));
         } else {
-            ItemStack maxed = new ItemStack(Material.NETHER_STAR);
-            ItemMeta maxedMeta = maxed.getItemMeta();
-            maxedMeta.setDisplayName(PastequeSkyblockPlugin.color("&b&lNiveau Maximum !"));
-            maxed.setItemMeta(maxedMeta);
-            inv.setItem(15, maxed);
+            inv.setItem(15, GuiHelper.createItem(Material.NETHER_STAR,
+                    "&b&lNiveau Maximum !",
+                    "",
+                    "&a\u2714 Ce minion est au max !"));
         }
+
+        // Row 3: back button
+        inv.setItem(27, GuiHelper.backButton());
+
+        // Fill remaining with black glass
+        GuiHelper.fillEmpty(inv);
 
         player.openInventory(inv);
     }
 
-    // ── Utilities ────────────────────────────────────────────────────────
+    // -- Utilities ------------------------------------------------------------
 
     public List<PlacedMinion> getMinions(UUID uuid) {
         List<PlacedMinion> minions = playerMinions.get(uuid);
@@ -379,7 +376,6 @@ public class MinionManager {
     }
 
     public int getMaxMinions(Player player) {
-        // Base 5 + island_level / 10, max 20
         int islandLevel = 0;
         if (plugin.getIslandManager() != null) {
             try {

@@ -1,6 +1,7 @@
 package fr.pasteque.skyblock.island;
 
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
+import fr.pasteque.skyblock.gui.GuiHelper;
 import fr.pasteque.skyblock.island.model.IslandWarp;
 import fr.pasteque.skyblock.manager.DataFile;
 import fr.pasteque.skyblock.util.MessageUtil;
@@ -21,10 +22,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@SuppressWarnings("deprecation")
 public class IslandWarpManager {
 
-    public static final String WARP_GUI_TITLE = PastequeSkyblockPlugin.color("&2&lWarps d'Ile");
-    public static final String PUBLIC_WARP_GUI_TITLE = PastequeSkyblockPlugin.color("&2&lWarps Publics");
+    public static final String WARP_GUI_TITLE = PastequeSkyblockPlugin.color("&2&lPasteque &5&lWarps");
+    public static final String PUBLIC_WARP_GUI_TITLE = PastequeSkyblockPlugin.color("&2&lPasteque &5&lWarps Publics");
 
     private final PastequeSkyblockPlugin plugin;
     private final DataFile dataFile;
@@ -105,7 +107,6 @@ public class IslandWarpManager {
             return;
         }
 
-        // Check duplicate name
         for (IslandWarp existing : ownerWarps) {
             if (existing.getName().equalsIgnoreCase(name)) {
                 MessageUtil.send(player, plugin.getPrefix(), "&cUn warp avec ce nom existe deja !");
@@ -212,36 +213,45 @@ public class IslandWarpManager {
     }
 
     public void openWarpGui(Player player, UUID islandOwner) {
-        Inventory gui = Bukkit.createInventory(null, 27, WARP_GUI_TITLE);
+        Inventory gui = Bukkit.createInventory(null, 36, WARP_GUI_TITLE);
         List<IslandWarp> ownerWarps = getWarps(islandOwner);
 
-        // Fill with black glass
-        ItemStack filler = new ItemStack(Material.STAINED_GLASS_PANE, 1, (short) 15);
-        ItemMeta fillerMeta = filler.getItemMeta();
-        fillerMeta.setDisplayName(" ");
-        filler.setItemMeta(fillerMeta);
-        for (int s = 0; s < 27; s++) {
-            gui.setItem(s, filler);
-        }
+        // Row 0: decorative border
+        GuiHelper.addTopBorder(gui);
 
+        // Row 1: warp items
         int slot = 10;
         for (IslandWarp warp : ownerWarps) {
             if (slot > 16) break;
-            ItemStack item = new ItemStack(Material.ENDER_PEARL, 1);
-            ItemMeta meta = item.getItemMeta();
-            meta.setDisplayName(PastequeSkyblockPlugin.color("&a" + warp.getName()));
 
             List<String> lore = new ArrayList<String>();
-            lore.add(PastequeSkyblockPlugin.color("&7Monde: &f" + warp.getWorldName()));
-            lore.add(PastequeSkyblockPlugin.color("&7Position: &f" + (int) warp.getX() + ", " + (int) warp.getY() + ", " + (int) warp.getZ()));
-            lore.add(PastequeSkyblockPlugin.color(warp.isPublic() ? "&aPublic" : "&cPrive"));
             lore.add("");
-            lore.add(PastequeSkyblockPlugin.color("&e> Cliquez pour vous teleporter"));
-            meta.setLore(lore);
+            lore.add(PastequeSkyblockPlugin.color("&8\u258E &7Details"));
+            lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Monde: &f" + warp.getWorldName()));
+            lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Position: &f" + (int) warp.getX() + ", " + (int) warp.getY() + ", " + (int) warp.getZ()));
+            lore.add(PastequeSkyblockPlugin.color(warp.isPublic() ? "&8\u25B8 &aPublic" : "&8\u25B8 &cPrive"));
+            lore.add("");
+            lore.add(PastequeSkyblockPlugin.color("&e\u25B6 Clic pour teleporter!"));
+
+            ItemStack item = GuiHelper.createItem(Material.ENDER_PEARL,
+                    "&a&l" + warp.getName());
+            ItemMeta meta = item.getItemMeta();
+            List<String> coloredLore = new ArrayList<String>();
+            for (String line : lore) {
+                coloredLore.add(line);
+            }
+            meta.setLore(coloredLore);
             item.setItemMeta(meta);
+
             gui.setItem(slot, item);
             slot++;
         }
+
+        // Row 3: back button
+        gui.setItem(27, GuiHelper.backButton());
+
+        // Fill remaining with black glass
+        GuiHelper.fillEmpty(gui);
 
         player.openInventory(gui);
     }
@@ -249,20 +259,24 @@ public class IslandWarpManager {
     public void openPublicWarpsGui(Player player, int page) {
         Inventory gui = Bukkit.createInventory(null, 54, PUBLIC_WARP_GUI_TITLE);
 
-        // Fill with black glass
-        ItemStack filler = new ItemStack(Material.STAINED_GLASS_PANE, 1, (short) 15);
-        ItemMeta fillerMeta = filler.getItemMeta();
-        fillerMeta.setDisplayName(" ");
-        filler.setItemMeta(fillerMeta);
-        for (int s = 0; s < 54; s++) {
-            gui.setItem(s, filler);
-        }
+        // Row 0: decorative border
+        GuiHelper.addTopBorder(gui);
+
+        // Row 5: decorative border
+        GuiHelper.addBottomBorder(gui);
 
         List<Map.Entry<UUID, IslandWarp>> publicWarps = getPublicWarps();
-        int itemsPerPage = 45;
+        int itemsPerPage = 28; // slots 10-16, 19-25, 28-34, 37-43
         int startIndex = page * itemsPerPage;
 
-        for (int i = startIndex; i < publicWarps.size() && (i - startIndex) < itemsPerPage; i++) {
+        int[] contentSlots = new int[]{
+            10, 11, 12, 13, 14, 15, 16,
+            19, 20, 21, 22, 23, 24, 25,
+            28, 29, 30, 31, 32, 33, 34,
+            37, 38, 39, 40, 41, 42, 43
+        };
+
+        for (int i = startIndex; i < publicWarps.size() && (i - startIndex) < contentSlots.length; i++) {
             Map.Entry<UUID, IslandWarp> entry = publicWarps.get(i);
             UUID owner = entry.getKey();
             IslandWarp warp = entry.getValue();
@@ -270,36 +284,35 @@ public class IslandWarpManager {
             OfflinePlayer ownerPlayer = Bukkit.getOfflinePlayer(owner);
             String ownerName = ownerPlayer.getName() != null ? ownerPlayer.getName() : owner.toString().substring(0, 8);
 
-            ItemStack item = new ItemStack(Material.ENDER_PEARL, 1);
-            ItemMeta meta = item.getItemMeta();
-            meta.setDisplayName(PastequeSkyblockPlugin.color("&a" + warp.getName()));
+            ItemStack item = GuiHelper.createItem(Material.ENDER_PEARL,
+                    "&a&l" + warp.getName(),
+                    "",
+                    "&8\u258E &7Details",
+                    "&8\u25B8 &7Proprietaire: &f" + ownerName,
+                    "&8\u25B8 &7Position: &f" + (int) warp.getX() + ", " + (int) warp.getY() + ", " + (int) warp.getZ(),
+                    "",
+                    "&e\u25B6 Clic pour teleporter!");
 
-            List<String> lore = new ArrayList<String>();
-            lore.add(PastequeSkyblockPlugin.color("&7Proprietaire: &f" + ownerName));
-            lore.add(PastequeSkyblockPlugin.color("&7Position: &f" + (int) warp.getX() + ", " + (int) warp.getY() + ", " + (int) warp.getZ()));
-            lore.add("");
-            lore.add(PastequeSkyblockPlugin.color("&e> Cliquez pour vous teleporter"));
-            meta.setLore(lore);
-            item.setItemMeta(meta);
-
-            gui.setItem(i - startIndex, item);
+            gui.setItem(contentSlots[i - startIndex], item);
         }
 
         // Navigation arrows
         if (page > 0) {
-            ItemStack prev = new ItemStack(Material.ARROW, 1);
-            ItemMeta prevMeta = prev.getItemMeta();
-            prevMeta.setDisplayName(PastequeSkyblockPlugin.color("&e<< Page precedente"));
-            prev.setItemMeta(prevMeta);
-            gui.setItem(45, prev);
+            gui.setItem(45, GuiHelper.createItem(Material.ARROW,
+                    "&e&l\u2190 Page precedente",
+                    "&7Page " + page));
         }
         if ((page + 1) * itemsPerPage < publicWarps.size()) {
-            ItemStack next = new ItemStack(Material.ARROW, 1);
-            ItemMeta nextMeta = next.getItemMeta();
-            nextMeta.setDisplayName(PastequeSkyblockPlugin.color("&ePage suivante >>"));
-            next.setItemMeta(nextMeta);
-            gui.setItem(53, next);
+            gui.setItem(53, GuiHelper.createItem(Material.ARROW,
+                    "&e&lPage suivante \u2192",
+                    "&7Page " + (page + 2)));
         }
+
+        // Close button
+        gui.setItem(49, GuiHelper.closeButton());
+
+        // Fill remaining with black glass
+        GuiHelper.fillEmpty(gui);
 
         player.openInventory(gui);
     }

@@ -67,7 +67,6 @@ public class ConnectionListener implements Listener {
         String path = "players." + player.getUniqueId().toString() + ".day";
         long stored = dailyRewards.getConfig().getLong(path, -1L);
         if (stored == today) {
-            MessageUtil.send(player, plugin.getPrefix(), "&7Bienvenue sur le Skyblock Premium. &f/is stats &7pour voir ta progression.");
             return;
         }
         double reward = plugin.getConfig().getDouble("economy.daily-login-reward", 150.0D);
@@ -75,7 +74,7 @@ public class ConnectionListener implements Listener {
         plugin.getEconomyManager().save();
         dailyRewards.getConfig().set(path, today);
         dailyRewards.save();
-        MessageUtil.send(player, plugin.getPrefix(), "&aBonus quotidien : &e" + reward + " " + plugin.getEconomyManager().getCurrencyName() + "&a !");
-        MessageUtil.send(player, plugin.getPrefix(), "&7Tip premium: &f/is top&7, &f/is farm&7, &f/is mine&7.");
+        String currencyName = plugin.getEconomyManager().getCurrencyName();
+        MessageUtil.send(player, plugin.getPrefix(), "&6\u2726 &eBonus quotidien : &a+" + reward + " " + currencyName + " &6\u2726");
     }
 }

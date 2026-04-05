@@ -1,5 +1,7 @@
 package fr.pasteque.skyblock;
 
+import fr.pasteque.skyblock.announce.AnnouncementManager;
+import fr.pasteque.skyblock.announce.AnnouncementListener;
 import fr.pasteque.skyblock.combatpass.CombatPassManager;
 import fr.pasteque.skyblock.combatpass.CombatPassListener;
 import fr.pasteque.skyblock.command.*;
@@ -138,6 +140,9 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     private SlayerManager slayerManager;
     private StaffModeManager staffModeManager;
 
+    /* ── Announcements ── */
+    private AnnouncementManager announcementManager;
+
     /* ── Old PvP 1.8 ── */
     private OldPvPListener oldPvPListener;
 
@@ -151,8 +156,8 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        this.prefix = getConfig().getString("prefix", "&2&lPasteque &a&lSkyblock &7» ");
-        this.guardPrefix = getConfig().getString("guard-prefix", "&2&lPasteque&b&lGuard &f» ");
+        this.prefix = getConfig().getString("prefix", "&2Pasteque &5Skyblock &8\u00bb ");
+        this.guardPrefix = getConfig().getString("guard.prefix", "&2Pasteque &5Guard &8\u00bb ");
 
         /* ── DataFile (shared persistence) ── */
         this.dataFile = new DataFile(this, "data.yml");
@@ -236,6 +241,9 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         this.slayerManager = new SlayerManager(this);
         this.staffModeManager = new StaffModeManager(this);
 
+        /* ── Announcements init ── */
+        this.announcementManager = new AnnouncementManager(this);
+
         /* ── Commands ── */
         registerSkyblockCommands();
         registerGuardCommands();
@@ -267,6 +275,9 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         registerDarkAuctionListeners();
         registerSlayerListeners();
         registerStaffListeners();
+
+        /* ── Announcement listener ── */
+        registerEvents(new AnnouncementListener(announcementManager));
 
         /* ── Old PvP 1.8 style (no cooldown, no offhand, custom KB) ── */
         if (getConfig().getBoolean("old-pvp.enabled", true)) {
@@ -301,6 +312,9 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
 
         /* ── Dark Auction scheduler ── */
         darkAuctionManager.schedule();
+
+        /* ── Auto announcements (every 5 minutes) ── */
+        announcementManager.startAutoAnnouncements();
     }
 
     @Override
@@ -716,4 +730,10 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     public DarkAuctionManager getDarkAuctionManager() { return darkAuctionManager; }
     public SlayerManager getSlayerManager() { return slayerManager; }
     public StaffModeManager getStaffModeManager() { return staffModeManager; }
+
+    // =========================================================================
+    //  Announcements getter
+    // =========================================================================
+
+    public AnnouncementManager getAnnouncementManager() { return announcementManager; }
 }

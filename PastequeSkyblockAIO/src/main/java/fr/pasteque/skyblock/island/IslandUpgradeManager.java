@@ -1,6 +1,7 @@
 package fr.pasteque.skyblock.island;
 
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
+import fr.pasteque.skyblock.gui.GuiHelper;
 import fr.pasteque.skyblock.island.model.IslandUpgrade;
 import fr.pasteque.skyblock.manager.DataFile;
 import fr.pasteque.skyblock.util.MessageUtil;
@@ -18,9 +19,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@SuppressWarnings("deprecation")
 public class IslandUpgradeManager {
 
-    public static final String GUI_TITLE = PastequeSkyblockPlugin.color("&2&lAmeliorations d'Ile");
+    public static final String GUI_TITLE = PastequeSkyblockPlugin.color("&2&lPasteque &5&lAmeliorations");
 
     private final PastequeSkyblockPlugin plugin;
     private final DataFile dataFile;
@@ -116,11 +118,14 @@ public class IslandUpgradeManager {
     }
 
     public void openUpgradeGui(Player player) {
-        Inventory gui = Bukkit.createInventory(null, 27, GUI_TITLE);
+        Inventory gui = Bukkit.createInventory(null, 36, GUI_TITLE);
         UUID owner = player.getUniqueId();
 
+        // Row 0: decorative border
+        GuiHelper.addTopBorder(gui);
+
         IslandUpgrade[] upgrades = IslandUpgrade.values();
-        int[] slots = {10, 11, 12, 13, 14};
+        int[] slots = {11, 12, 13, 14, 15};
         Material[] icons = {Material.GRASS, Material.SKULL_ITEM, Material.DIAMOND_PICKAXE, Material.MOB_SPAWNER, Material.IRON_FENCE};
 
         for (int i = 0; i < upgrades.length && i < slots.length; i++) {
@@ -131,53 +136,41 @@ public class IslandUpgradeManager {
             ItemStack item = new ItemStack(icons[i], 1);
             ItemMeta meta = item.getItemMeta();
 
-            meta.setDisplayName(PastequeSkyblockPlugin.color("&e" + upgrade.getDisplayName()
-                    + " &7- Niveau &f" + (level + 1)));
+            meta.setDisplayName(PastequeSkyblockPlugin.color("&e&l" + upgrade.getDisplayName()
+                    + " &7Niv. &f" + (level + 1)));
 
             List<String> lore = new ArrayList<String>();
-            lore.add(PastequeSkyblockPlugin.color("&7Valeur actuelle: &f" + upgrade.getTierValue(level)));
+            lore.add("");
+            lore.add(PastequeSkyblockPlugin.color("&8\u258E &7Statistiques"));
+            lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Valeur actuelle: &f" + upgrade.getTierValue(level)));
 
             if (maxed) {
+                lore.add("");
                 lore.add(PastequeSkyblockPlugin.color("&a&lNIVEAU MAXIMUM"));
             } else {
                 int nextLevel = level + 1;
-                lore.add(PastequeSkyblockPlugin.color("&7Prochaine valeur: &f" + upgrade.getTierValue(nextLevel)));
-                lore.add(PastequeSkyblockPlugin.color("&7Cout: &e" + plugin.getEconomyManager().format(upgrade.getCost(nextLevel))));
+                lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Prochaine valeur: &f" + upgrade.getTierValue(nextLevel)));
+                lore.add("");
+                lore.add(PastequeSkyblockPlugin.color("&8\u258E &7Cout: &e" + plugin.getEconomyManager().format(upgrade.getCost(nextLevel))));
                 double bal = plugin.getEconomyManager().getBalance(owner);
+                lore.add("");
                 if (bal >= upgrade.getCost(nextLevel)) {
-                    lore.add(PastequeSkyblockPlugin.color("&a> Cliquez pour ameliorer"));
+                    lore.add(PastequeSkyblockPlugin.color("&a\u25B6 Clic pour ameliorer!"));
                 } else {
-                    lore.add(PastequeSkyblockPlugin.color("&c> Pas assez d'argent"));
+                    lore.add(PastequeSkyblockPlugin.color("&c\u2716 Pas assez d'argent"));
                 }
             }
 
             meta.setLore(lore);
             item.setItemMeta(meta);
-
-            // Glass pane background indicator
-            short glassColor;
-            if (maxed) {
-                glassColor = 5; // green
-            } else if (plugin.getEconomyManager().getBalance(owner) >= upgrade.getCost(level + 1)) {
-                glassColor = 4; // yellow
-            } else {
-                glassColor = 14; // red
-            }
-            gui.setItem(slots[i] - 9, new ItemStack(Material.STAINED_GLASS_PANE, 1, glassColor));
             gui.setItem(slots[i], item);
-            gui.setItem(slots[i] + 9, new ItemStack(Material.STAINED_GLASS_PANE, 1, glassColor));
         }
 
-        // Fill remaining slots with black glass panes
-        ItemStack filler = new ItemStack(Material.STAINED_GLASS_PANE, 1, (short) 15);
-        ItemMeta fillerMeta = filler.getItemMeta();
-        fillerMeta.setDisplayName(" ");
-        filler.setItemMeta(fillerMeta);
-        for (int s = 0; s < 27; s++) {
-            if (gui.getItem(s) == null) {
-                gui.setItem(s, filler);
-            }
-        }
+        // Row 3: back button
+        gui.setItem(27, GuiHelper.backButton());
+
+        // Fill remaining slots with black glass
+        GuiHelper.fillEmpty(gui);
 
         player.openInventory(gui);
     }

@@ -1,6 +1,7 @@
 package fr.pasteque.skyblock.pet;
 
 import fr.pasteque.skyblock.PastequeSkyblockPlugin;
+import fr.pasteque.skyblock.gui.GuiHelper;
 import fr.pasteque.skyblock.pet.model.PetType;
 import fr.pasteque.skyblock.pet.model.PlayerPet;
 import org.bukkit.Bukkit;
@@ -20,9 +21,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@SuppressWarnings("deprecation")
 public class PetManager {
 
-    public static final String GUI_TITLE = PastequeSkyblockPlugin.color("&d&lAnimaux de Compagnie");
+    public static final String GUI_TITLE = PastequeSkyblockPlugin.color("&2&lPasteque &5&lAnimaux");
 
     private final PastequeSkyblockPlugin plugin;
     private final File file;
@@ -34,7 +36,7 @@ public class PetManager {
         this.file = new File(plugin.getDataFolder(), "pets.yml");
     }
 
-    // ── Persistence ──────────────────────────────────────────────────────
+    // -- Persistence ----------------------------------------------------------
 
     public void load() {
         playerPets.clear();
@@ -110,7 +112,7 @@ public class PetManager {
         }
     }
 
-    // ── Pet access ───────────────────────────────────────────────────────
+    // -- Pet access -----------------------------------------------------------
 
     public PlayerPet getActivePet(UUID uuid) {
         PetType type = activePet.get(uuid);
@@ -130,14 +132,12 @@ public class PetManager {
     }
 
     public void setActivePet(UUID uuid, PetType type) {
-        // Deactivate current pet
         List<PlayerPet> pets = getPets(uuid);
         for (PlayerPet pet : pets) {
             pet.setActive(false);
         }
         activePet.remove(uuid);
 
-        // Activate new pet
         for (PlayerPet pet : pets) {
             if (pet.getType() == type) {
                 pet.setActive(true);
@@ -157,7 +157,6 @@ public class PetManager {
 
     public void addPet(UUID uuid, PetType type) {
         List<PlayerPet> pets = getPets(uuid);
-        // Check if already owned
         for (PlayerPet pet : pets) {
             if (pet.getType() == type) {
                 return;
@@ -201,11 +200,8 @@ public class PetManager {
         return null;
     }
 
-    // ── Bonus ────────────────────────────────────────────────────────────
+    // -- Bonus ----------------------------------------------------------------
 
-    /**
-     * Returns the bonus percentage if the player's active pet has the given skill affinity.
-     */
     public double getBonus(UUID uuid, String skillType) {
         PlayerPet pet = getActivePet(uuid);
         if (pet == null) {
@@ -217,7 +213,7 @@ public class PetManager {
         return 0.0;
     }
 
-    // ── Pet price ────────────────────────────────────────────────────────
+    // -- Pet price -------------------------------------------------------------
 
     public double getPetPrice(PetType type) {
         switch (type) {
@@ -225,35 +221,32 @@ public class PetManager {
             case BEE:
             case RABBIT:
             case SHEEP:
-                return 5000; // Common
+                return 5000;
             case OCELOT:
             case GOLEM:
-                return 15000; // Uncommon
+                return 15000;
             case ENDERMAN:
             case BLAZE:
-                return 50000; // Rare
+                return 50000;
             default:
                 return 5000;
         }
     }
 
-    // ── GUI ──────────────────────────────────────────────────────────────
+    // -- GUI ------------------------------------------------------------------
 
     public void openPetGui(Player player) {
         Inventory inv = Bukkit.createInventory(null, 54, GUI_TITLE);
 
-        // Fill with gray glass panes
-        ItemStack filler = new ItemStack(Material.STAINED_GLASS_PANE, 1, (short) 7);
-        ItemMeta fillerMeta = filler.getItemMeta();
-        fillerMeta.setDisplayName(" ");
-        filler.setItemMeta(fillerMeta);
-        for (int i = 0; i < 54; i++) {
-            inv.setItem(i, filler.clone());
-        }
+        // Row 0: decorative border
+        GuiHelper.addTopBorder(inv);
+
+        // Row 5: decorative border
+        GuiHelper.addBottomBorder(inv);
 
         UUID uuid = player.getUniqueId();
         PetType[] types = PetType.values();
-        int[] slots = {10, 11, 12, 13, 14, 15, 16, 19};
+        int[] slots = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25};
         for (int i = 0; i < types.length && i < slots.length; i++) {
             PetType type = types[i];
             boolean owned = hasPet(uuid, type);
@@ -268,7 +261,6 @@ public class PetManager {
             if (owned) {
                 item = new ItemStack(iconMat);
             } else {
-                // Gray dye for unowned (INK_SACK:8 = gray dye in 1.9)
                 item = new ItemStack(Material.INK_SACK, 1, (short) 8);
             }
 
@@ -277,44 +269,53 @@ public class PetManager {
 
             if (owned) {
                 meta.setDisplayName(PastequeSkyblockPlugin.color(
-                        type.getColor() + (isActive ? "&l" : "") + type.getDisplayName()
-                                + " &7Niv." + pet.getLevel()
+                        type.getColor() + "&l" + type.getDisplayName()
+                                + " &fNiv." + pet.getLevel()
                                 + (isActive ? " &a&l[ACTIF]" : "")
                 ));
             } else {
                 meta.setDisplayName(PastequeSkyblockPlugin.color(
-                        "&8" + type.getDisplayName() + " &7(Non possede)"
+                        "&8&l" + type.getDisplayName() + " &7(Non possede)"
                 ));
             }
 
             List<String> lore = new ArrayList<String>();
             lore.add("");
             if (owned) {
-                lore.add(PastequeSkyblockPlugin.color("&7Niveau: &e" + pet.getLevel()));
-                lore.add(PastequeSkyblockPlugin.color("&7XP: &e" + pet.getXp() + "/" + pet.getXpRequired()));
-                lore.add(PastequeSkyblockPlugin.color("&7Bonus: &a+" + String.format("%.1f", pet.getBonus()) + "%"));
-                lore.add(PastequeSkyblockPlugin.color("&7Affinite: &e" + type.getSkillAffinity()));
+                lore.add(PastequeSkyblockPlugin.color("&8\u258E &7Statistiques"));
+                lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Niveau: &e" + pet.getLevel()));
+                lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7XP: &e" + pet.getXp() + "&8/&f" + pet.getXpRequired()));
+                lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Bonus: &a+" + String.format("%.1f", pet.getBonus()) + "%"));
+                lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Affinite: &e" + type.getSkillAffinity()));
                 lore.add("");
                 if (isActive) {
-                    lore.add(PastequeSkyblockPlugin.color("&cCliquez pour desequiper"));
+                    lore.add(PastequeSkyblockPlugin.color("&c\u25B6 Clic pour desequiper"));
                 } else {
-                    lore.add(PastequeSkyblockPlugin.color("&eCliquez pour equiper"));
+                    lore.add(PastequeSkyblockPlugin.color("&e\u25B6 Clic pour equiper!"));
                 }
             } else {
-                lore.add(PastequeSkyblockPlugin.color("&7Affinite: &e" + type.getSkillAffinity()));
-                lore.add(PastequeSkyblockPlugin.color("&7Prix: &e" + plugin.getEconomyManager().format(getPetPrice(type))));
+                lore.add(PastequeSkyblockPlugin.color("&8\u258E &7Information"));
+                lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Affinite: &e" + type.getSkillAffinity()));
+                lore.add(PastequeSkyblockPlugin.color("&8\u25B8 &7Prix: &e" + plugin.getEconomyManager().format(getPetPrice(type))));
                 lore.add("");
-                lore.add(PastequeSkyblockPlugin.color("&eCliquez pour acheter"));
+                lore.add(PastequeSkyblockPlugin.color("&a\u25B6 Clic pour acheter!"));
             }
             meta.setLore(lore);
             item.setItemMeta(meta);
             inv.setItem(slots[i], item);
         }
 
+        // Back button at bottom-left, close button at bottom-right
+        inv.setItem(45, GuiHelper.backButton());
+        inv.setItem(53, GuiHelper.closeButton());
+
+        // Fill remaining with black glass
+        GuiHelper.fillEmpty(inv);
+
         player.openInventory(inv);
     }
 
-    // ── Getter ───────────────────────────────────────────────────────────
+    // -- Getter ---------------------------------------------------------------
 
     public PastequeSkyblockPlugin getPlugin() {
         return plugin;
