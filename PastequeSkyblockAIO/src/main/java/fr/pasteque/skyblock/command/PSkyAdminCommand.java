@@ -45,7 +45,7 @@ public class PSkyAdminCommand implements CommandExecutor {
         }
         if (sub.equals("createfor") && args.length >= 2) {
             OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
-            Island island = plugin.getIslandManager().createIslandFor(target.getUniqueId(), target.getName());
+            Island island = plugin.getIslandManager().createIslandFor(target.getUniqueId());
             if (island == null) MessageUtil.send(player, plugin.getPrefix(), "&fCe joueur possède déjà une île.");
             else MessageUtil.send(player, plugin.getPrefix(), "&aÎle créée pour &f" + target.getName());
             return true;

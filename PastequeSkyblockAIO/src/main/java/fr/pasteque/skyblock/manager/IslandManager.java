@@ -123,10 +123,12 @@ public class IslandManager {
         return null;
     }
 
-    public Island createIsland(Player player) { return createIslandFor(player.getUniqueId(), player.getName()); }
-    public Island createIslandFor(UUID owner) { return createIslandFor(owner, Bukkit.getOfflinePlayer(owner).getName()); }
+    public Island createIsland(Player player) { return createIslandFor(player.getUniqueId(), player.getName(), IslandPreset.CLASSIC); }
+    public Island createIsland(Player player, IslandPreset preset) { return createIslandFor(player.getUniqueId(), player.getName(), preset); }
+    public Island createIslandFor(UUID owner) { return createIslandFor(owner, Bukkit.getOfflinePlayer(owner).getName(), IslandPreset.CLASSIC); }
+    public Island createIslandFor(UUID owner, IslandPreset preset) { return createIslandFor(owner, Bukkit.getOfflinePlayer(owner).getName(), preset); }
 
-    public Island createIslandFor(UUID owner, String ownerName) {
+    public Island createIslandFor(UUID owner, String ownerName, IslandPreset preset) {
         if (hasIsland(owner)) return null;
         World world = plugin.getWorldManager().getOrCreateIslandWorld();
         int gap = plugin.getConfig().getInt("islands.gap", 340);
@@ -143,7 +145,7 @@ public class IslandManager {
         island.setInviteUnlocks(0);
         island.setHome(new Location(world, centerX + 0.5D, plugin.getConfig().getInt("worlds.island-y", 100) + 2, centerZ + 0.5D));
         ownedIslands.put(owner, island);
-        generateStarterIsland(island);
+        generateIsland(island, preset);
         save();
         return island;
     }
@@ -177,7 +179,7 @@ public class IslandManager {
             int manhattan = Math.abs(lx - x) + Math.abs(lz - z) + Math.abs(ly - (y + 3));
             if (manhattan <= 4) world.getBlockAt(lx, ly, lz).setType(Material.LEAVES);
         }
-        world.getBlockAt(x, y + 5, z).setType(Material.LEAVES);
+        // Top of canopy (connected to trunk top)
     }
 
     private double terrainNoise(int x, int z, long seed) {
@@ -220,6 +222,285 @@ public class IslandManager {
         return Material.COAL_ORE;
     }
 
+    @SuppressWarnings("deprecation")
+    public void generateIsland(final Island island, final IslandPreset preset) {
+        final World world = plugin.getWorldManager().getOrCreateIslandWorld();
+        final int y = plugin.getConfig().getInt("worlds.island-y", 100);
+        final int cx = island.getCenterX();
+        final int cz = island.getCenterZ();
+        final long seed = (cx * 31L) ^ (cz * 17L) ^ 1409L;
+
+        new org.bukkit.scheduler.BukkitRunnable() {
+            @Override
+            public void run() {
+                switch (preset) {
+                    case DESERT:
+                        generateDesertIsland(world, cx, y, cz, seed, island);
+                        break;
+                    case JUNGLE:
+                        generateJungleIsland(world, cx, y, cz, seed, island);
+                        break;
+                    case NETHER:
+                        generateNetherIsland(world, cx, y, cz, seed, island);
+                        break;
+                    case ICE:
+                        generateIceIsland(world, cx, y, cz, seed, island);
+                        break;
+                    case MUSHROOM:
+                        generateMushroomIsland(world, cx, y, cz, seed, island);
+                        break;
+                    default:
+                        generateStarterIsland(island);
+                        break;
+                }
+            }
+        }.runTask(plugin);
+    }
+
+    // ── Enclosed cobble gen builder (theme-aware) ───────────────────────────
+    @SuppressWarnings("deprecation")
+    private void buildCobbleGen(World world, int x, int y, int z, Material wallMat) {
+        // 5 long, 3 wide channel with walls
+        // Layout (top view): W=wall, A=water, C=cobble spawn, L=lava, .=air
+        // W W W W W
+        // W A . C . L W  (y+1 level = liquids)
+        // W W W W W W W
+        // Base floor
+        for (int dx = -1; dx <= 5; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                world.getBlockAt(x + dx, y, z + dz).setType(wallMat);
+            }
+        }
+        // Walls (2 blocks high)
+        for (int h = 1; h <= 2; h++) {
+            for (int dx = -1; dx <= 5; dx++) {
+                world.getBlockAt(x + dx, y + h, z - 1).setType(wallMat);
+                world.getBlockAt(x + dx, y + h, z + 1).setType(wallMat);
+            }
+            world.getBlockAt(x - 1, y + h, z).setType(wallMat);
+            world.getBlockAt(x + 5, y + h, z).setType(wallMat);
+        }
+        // Interior: air channel
+        for (int dx = 0; dx <= 4; dx++) {
+            world.getBlockAt(x + dx, y + 1, z).setType(Material.AIR);
+            world.getBlockAt(x + dx, y + 2, z).setType(Material.AIR);
+        }
+        // Place liquids and sign
+        world.getBlockAt(x, y + 1, z).setType(Material.STATIONARY_WATER);
+        world.getBlockAt(x + 4, y + 1, z).setType(Material.STATIONARY_LAVA);
+        // Cobble forms at x+2
+    }
+
+    // ── DESERT preset ───────────────────────────────────────────────────────
+    @SuppressWarnings("deprecation")
+    private void generateDesertIsland(World world, int cx, int y, int cz, long seed, Island island) {
+        sculptFloatingIsland(world, cx, y + 1, cz, 16, 14, 2, Material.SAND, Material.SANDSTONE, seed);
+        int topY = getTopY(world, cx, cz, y, y + 12) + 1;
+        // Sandstone platform center
+        for (int x = cx - 3; x <= cx + 3; x++)
+            for (int z = cz - 3; z <= cz + 3; z++)
+                world.getBlockAt(x, topY, z).setType(Material.SMOOTH_BRICK);
+        // Cactus farm
+        for (int i = 0; i < 4; i++) {
+            int fx = cx - 6 + i * 3;
+            world.getBlockAt(fx, topY, cz + 5).setType(Material.SAND);
+            world.getBlockAt(fx, topY + 1, cz + 5).setType(Material.CACTUS);
+        }
+        // Dead bushes
+        Random rng = new Random(seed);
+        for (int i = 0; i < 5; i++) {
+            int bx = cx - 8 + rng.nextInt(17);
+            int bz = cz - 8 + rng.nextInt(17);
+            int by = getTopY(world, bx, bz, y, y + 12);
+            if (by > 0 && world.getBlockAt(bx, by, bz).getType() == Material.SAND)
+                world.getBlockAt(bx, by + 1, bz).setType(Material.DEAD_BUSH);
+        }
+        // Cobble gen enclosed in sandstone
+        buildCobbleGen(world, cx + 6, topY, cz - 3, Material.SANDSTONE);
+        // Chest
+        world.getBlockAt(cx + 2, topY + 1, cz).setType(Material.CHEST);
+        Chest chest = (Chest) world.getBlockAt(cx + 2, topY + 1, cz).getState();
+        chest.getBlockInventory().clear();
+        chest.getBlockInventory().addItem(new ItemStack(Material.ICE, 1));
+        chest.getBlockInventory().addItem(new ItemStack(Material.WATER_BUCKET, 1));
+        chest.getBlockInventory().addItem(new ItemStack(Material.LAVA_BUCKET, 1));
+        chest.getBlockInventory().addItem(new ItemStack(Material.SAPLING, 4, (short) 4)); // acacia
+        chest.getBlockInventory().addItem(new ItemStack(Material.SEEDS, 16));
+        chest.getBlockInventory().addItem(new ItemStack(Material.BREAD, 6));
+        chest.update(true);
+        island.setHome(new Location(world, cx + 0.5D, topY + 1.0D, cz + 0.5D));
+    }
+
+    // ── JUNGLE preset ───────────────────────────────────────────────────────
+    @SuppressWarnings("deprecation")
+    private void generateJungleIsland(World world, int cx, int y, int cz, long seed, Island island) {
+        sculptFloatingIsland(world, cx, y + 1, cz, 17, 15, 3, Material.GRASS, Material.DIRT, seed);
+        int topY = getTopY(world, cx, cz, y, y + 14) + 1;
+        // Jungle wood platform
+        for (int x = cx - 2; x <= cx + 2; x++)
+            for (int z = cz - 2; z <= cz + 2; z++)
+                world.getBlockAt(x, topY, z).setType(Material.WOOD);
+        // Big jungle tree (LOG_2 data 3 = jungle)
+        for (int i = 0; i < 8; i++) world.getBlockAt(cx - 4, topY + i, cz - 4).setType(Material.LOG);
+        for (int lx = cx - 7; lx <= cx - 1; lx++)
+            for (int lz = cz - 7; lz <= cz - 1; lz++)
+                for (int ly = topY + 5; ly <= topY + 8; ly++) {
+                    int dist = Math.abs(lx - (cx - 4)) + Math.abs(lz - (cz - 4));
+                    if (dist <= 4) world.getBlockAt(lx, ly, lz).setType(Material.LEAVES);
+                }
+        // Vines on trunk
+        world.getBlockAt(cx - 3, topY + 2, cz - 4).setType(Material.VINE);
+        world.getBlockAt(cx - 4, topY + 3, cz - 3).setType(Material.VINE);
+        // Tall grass
+        Random rng = new Random(seed);
+        for (int i = 0; i < 15; i++) {
+            int gx = cx - 10 + rng.nextInt(21);
+            int gz = cz - 10 + rng.nextInt(21);
+            int gy = getTopY(world, gx, gz, y, y + 14);
+            if (gy > 0 && world.getBlockAt(gx, gy, gz).getType() == Material.GRASS)
+                world.getBlockAt(gx, gy + 1, gz).setType(Material.LONG_GRASS);
+        }
+        // Cobble gen in mossy cobble
+        buildCobbleGen(world, cx + 5, topY, cz + 3, Material.MOSSY_COBBLESTONE);
+        // Chest
+        world.getBlockAt(cx, topY + 1, cz).setType(Material.CHEST);
+        Chest chest = (Chest) world.getBlockAt(cx, topY + 1, cz).getState();
+        chest.getBlockInventory().clear();
+        chest.getBlockInventory().addItem(new ItemStack(Material.ICE, 1));
+        chest.getBlockInventory().addItem(new ItemStack(Material.WATER_BUCKET, 1));
+        chest.getBlockInventory().addItem(new ItemStack(Material.LAVA_BUCKET, 1));
+        chest.getBlockInventory().addItem(new ItemStack(Material.MELON_SEEDS, 4));
+        chest.getBlockInventory().addItem(new ItemStack(Material.COCOA, 4));
+        chest.getBlockInventory().addItem(new ItemStack(Material.SEEDS, 16));
+        chest.getBlockInventory().addItem(new ItemStack(Material.BREAD, 6));
+        chest.update(true);
+        island.setHome(new Location(world, cx + 0.5D, topY + 1.0D, cz + 0.5D));
+    }
+
+    // ── NETHER preset ───────────────────────────────────────────────────────
+    @SuppressWarnings("deprecation")
+    private void generateNetherIsland(World world, int cx, int y, int cz, long seed, Island island) {
+        sculptFloatingIsland(world, cx, y + 1, cz, 16, 14, 2, Material.NETHERRACK, Material.NETHERRACK, seed);
+        int topY = getTopY(world, cx, cz, y, y + 12) + 1;
+        // Nether brick platform
+        for (int x = cx - 3; x <= cx + 3; x++)
+            for (int z = cz - 3; z <= cz + 3; z++)
+                world.getBlockAt(x, topY, z).setType(Material.NETHER_BRICK);
+        // Soul sand patches
+        Random rng = new Random(seed);
+        for (int i = 0; i < 8; i++) {
+            int sx = cx - 8 + rng.nextInt(17);
+            int sz = cz - 8 + rng.nextInt(17);
+            int sy = getTopY(world, sx, sz, y, y + 12);
+            if (sy > 0) world.getBlockAt(sx, sy, sz).setType(Material.SOUL_SAND);
+        }
+        // Nether wart
+        for (int x = cx - 5; x <= cx - 3; x++)
+            for (int z = cz + 4; z <= cz + 6; z++) {
+                world.getBlockAt(x, topY, z).setType(Material.SOUL_SAND);
+                world.getBlockAt(x, topY + 1, z).setType(Material.NETHER_WARTS);
+            }
+        // Glowstone clusters
+        world.getBlockAt(cx + 3, topY + 3, cz - 3).setType(Material.GLOWSTONE);
+        world.getBlockAt(cx - 4, topY + 2, cz + 2).setType(Material.GLOWSTONE);
+        // Cobble gen in nether brick walls
+        buildCobbleGen(world, cx + 5, topY, cz - 2, Material.NETHER_BRICK);
+        // Chest
+        world.getBlockAt(cx, topY + 1, cz).setType(Material.CHEST);
+        Chest chest = (Chest) world.getBlockAt(cx, topY + 1, cz).getState();
+        chest.getBlockInventory().clear();
+        chest.getBlockInventory().addItem(new ItemStack(Material.ICE, 1));
+        chest.getBlockInventory().addItem(new ItemStack(Material.WATER_BUCKET, 1));
+        chest.getBlockInventory().addItem(new ItemStack(Material.LAVA_BUCKET, 1));
+        chest.getBlockInventory().addItem(new ItemStack(Material.SAPLING, 4));
+        chest.getBlockInventory().addItem(new ItemStack(Material.SEEDS, 16));
+        chest.getBlockInventory().addItem(new ItemStack(Material.BREAD, 6));
+        chest.update(true);
+        island.setHome(new Location(world, cx + 0.5D, topY + 1.0D, cz + 0.5D));
+    }
+
+    // ── ICE preset ──────────────────────────────────────────────────────────
+    @SuppressWarnings("deprecation")
+    private void generateIceIsland(World world, int cx, int y, int cz, long seed, Island island) {
+        sculptFloatingIsland(world, cx, y + 1, cz, 16, 14, 2, Material.SNOW_BLOCK, Material.PACKED_ICE, seed);
+        int topY = getTopY(world, cx, cz, y, y + 12) + 1;
+        // Snow layers on top
+        for (int x = cx - 10; x <= cx + 10; x++)
+            for (int z = cz - 10; z <= cz + 10; z++) {
+                int ty = getTopY(world, x, z, y, y + 12);
+                if (ty > 0 && world.getBlockAt(x, ty + 1, z).getType() == Material.AIR)
+                    world.getBlockAt(x, ty + 1, z).setType(Material.SNOW);
+            }
+        // Spruce tree
+        int treeY = topY;
+        for (int i = 0; i < 6; i++) world.getBlockAt(cx - 4, treeY + i, cz - 3).setType(Material.LOG);
+        for (int ly = treeY + 2; ly <= treeY + 6; ly++) {
+            int radius = (treeY + 6 - ly);
+            for (int lx = cx - 4 - radius; lx <= cx - 4 + radius; lx++)
+                for (int lz = cz - 3 - radius; lz <= cz - 3 + radius; lz++)
+                    if (world.getBlockAt(lx, ly, lz).getType() == Material.AIR)
+                        world.getBlockAt(lx, ly, lz).setType(Material.LEAVES);
+        }
+        // Ice spikes decoration
+        world.getBlockAt(cx + 5, topY, cz + 4).setType(Material.PACKED_ICE);
+        world.getBlockAt(cx + 5, topY + 1, cz + 4).setType(Material.PACKED_ICE);
+        world.getBlockAt(cx + 5, topY + 2, cz + 4).setType(Material.PACKED_ICE);
+        world.getBlockAt(cx - 7, topY, cz - 5).setType(Material.PACKED_ICE);
+        world.getBlockAt(cx - 7, topY + 1, cz - 5).setType(Material.PACKED_ICE);
+        // Cobble gen under snow cover
+        buildCobbleGen(world, cx + 5, topY, cz - 3, Material.PACKED_ICE);
+        // Chest
+        world.getBlockAt(cx, topY + 1, cz).setType(Material.CHEST);
+        Chest chest = (Chest) world.getBlockAt(cx, topY + 1, cz).getState();
+        chest.getBlockInventory().clear();
+        chest.getBlockInventory().addItem(new ItemStack(Material.ICE, 2));
+        chest.getBlockInventory().addItem(new ItemStack(Material.WATER_BUCKET, 1));
+        chest.getBlockInventory().addItem(new ItemStack(Material.LAVA_BUCKET, 1));
+        chest.getBlockInventory().addItem(new ItemStack(Material.SAPLING, 4, (short) 1)); // spruce
+        chest.getBlockInventory().addItem(new ItemStack(Material.SEEDS, 16));
+        chest.getBlockInventory().addItem(new ItemStack(Material.BREAD, 6));
+        chest.update(true);
+        island.setHome(new Location(world, cx + 0.5D, topY + 1.0D, cz + 0.5D));
+    }
+
+    // ── MUSHROOM preset ─────────────────────────────────────────────────────
+    @SuppressWarnings("deprecation")
+    private void generateMushroomIsland(World world, int cx, int y, int cz, long seed, Island island) {
+        sculptFloatingIsland(world, cx, y + 1, cz, 15, 13, 2, Material.MYCEL, Material.DIRT, seed);
+        int topY = getTopY(world, cx, cz, y, y + 12) + 1;
+        // Huge brown mushroom
+        int mX = cx - 4, mZ = cz - 3;
+        for (int i = 0; i < 6; i++) world.getBlockAt(mX, topY + i, mZ).setType(Material.HUGE_MUSHROOM_2); // stem
+        for (int dx = -3; dx <= 3; dx++)
+            for (int dz = -3; dz <= 3; dz++)
+                if (Math.abs(dx) + Math.abs(dz) <= 4)
+                    world.getBlockAt(mX + dx, topY + 6, mZ + dz).setType(Material.HUGE_MUSHROOM_1); // brown cap
+        // Small mushrooms
+        Random rng = new Random(seed);
+        for (int i = 0; i < 6; i++) {
+            int fx = cx - 8 + rng.nextInt(17);
+            int fz = cz - 8 + rng.nextInt(17);
+            int fy = getTopY(world, fx, fz, y, y + 12);
+            if (fy > 0) world.getBlockAt(fx, fy + 1, fz).setType(i % 2 == 0 ? Material.RED_MUSHROOM : Material.BROWN_MUSHROOM);
+        }
+        // Cobble gen in mossy cobble
+        buildCobbleGen(world, cx + 5, topY, cz + 3, Material.MOSSY_COBBLESTONE);
+        // Chest with mooshroom egg
+        world.getBlockAt(cx + 2, topY + 1, cz).setType(Material.CHEST);
+        Chest chest = (Chest) world.getBlockAt(cx + 2, topY + 1, cz).getState();
+        chest.getBlockInventory().clear();
+        chest.getBlockInventory().addItem(new ItemStack(Material.ICE, 1));
+        chest.getBlockInventory().addItem(new ItemStack(Material.WATER_BUCKET, 1));
+        chest.getBlockInventory().addItem(new ItemStack(Material.LAVA_BUCKET, 1));
+        chest.getBlockInventory().addItem(new ItemStack(Material.SAPLING, 4));
+        chest.getBlockInventory().addItem(new ItemStack(Material.SEEDS, 16));
+        chest.getBlockInventory().addItem(new ItemStack(Material.MONSTER_EGG, 1, (short) 96)); // mooshroom
+        chest.getBlockInventory().addItem(new ItemStack(Material.BREAD, 6));
+        chest.update(true);
+        island.setHome(new Location(world, cx + 0.5D, topY + 1.0D, cz + 0.5D));
+    }
+
+    // ── CLASSIC preset (original) ───────────────────────────────────────────
     public void generateStarterIsland(Island island) {
         World world = plugin.getWorldManager().getOrCreateIslandWorld();
         int y = plugin.getConfig().getInt("worlds.island-y", 100);
@@ -249,16 +530,8 @@ public class IslandManager {
             world.getBlockAt(cx - 7, farmY + 1, z).setType(Material.AIR);
         }
 
-        int genY = plazaY + 1;
-        for (int x = cx + 7; x <= cx + 11; x++) {
-            for (int z = cz - 3; z <= cz; z++) {
-                world.getBlockAt(x, genY, z).setType(Material.COBBLESTONE);
-                world.getBlockAt(x, genY - 1, z).setType(Material.STONE);
-            }
-        }
-        world.getBlockAt(cx + 8, genY + 1, cz - 2).setType(Material.STATIONARY_WATER);
-        world.getBlockAt(cx + 10, genY + 1, cz - 2).setType(Material.STATIONARY_LAVA);
-        world.getBlockAt(cx + 9, genY + 1, cz - 2).setType(Material.COBBLESTONE);
+        // Enclosed cobblestone generator
+        buildCobbleGen(world, cx + 7, plazaY, cz - 2, Material.COBBLESTONE);
 
         int chestY = getTopY(world, cx + 6, cz + 7, y, y + 14) + 1;
         world.getBlockAt(cx + 6, chestY, cz + 7).setType(Material.CHEST);
