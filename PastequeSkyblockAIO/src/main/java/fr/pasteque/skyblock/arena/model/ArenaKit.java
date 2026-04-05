@@ -3,14 +3,13 @@ package fr.pasteque.skyblock.arena.model;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.potion.PotionData;
+import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionType;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("deprecation")
 public class ArenaKit {
 
     private final String name;
@@ -113,15 +112,13 @@ public class ArenaKit {
         armor[1] = enchant(new ItemStack(Material.CHAINMAIL_LEGGINGS), Enchantment.PROTECTION_ENVIRONMENTAL, 1);
         armor[0] = enchant(new ItemStack(Material.CHAINMAIL_BOOTS), Enchantment.PROTECTION_ENVIRONMENTAL, 1);
 
-        ItemStack speedPotion = new ItemStack(Material.POTION);
-        PotionMeta speedMeta = (PotionMeta) speedPotion.getItemMeta();
-        speedMeta.setBasePotionData(new PotionData(PotionType.SPEED, false, true));
-        speedPotion.setItemMeta(speedMeta);
+        Potion speedPotion = new Potion(PotionType.SPEED, 2);
+        ItemStack speedItem = speedPotion.toItemStack(1);
 
         ItemStack[] items = new ItemStack[]{
                 enchant(new ItemStack(Material.DIAMOND_SWORD), Enchantment.DAMAGE_ALL, 1),
                 new ItemStack(Material.GOLDEN_APPLE, 8),
-                speedPotion
+                speedItem
         };
         return new ArenaKit("assassin", "Assassin", "DIAMOND_SWORD", 8, 2000, armor, items);
     }
@@ -135,20 +132,18 @@ public class ArenaKit {
         armor[1] = enchant(new ItemStack(Material.GOLD_LEGGINGS), Enchantment.PROTECTION_ENVIRONMENTAL, 1);
         armor[0] = enchant(new ItemStack(Material.GOLD_BOOTS), Enchantment.PROTECTION_ENVIRONMENTAL, 1);
 
-        ItemStack harmPotion = new ItemStack(Material.SPLASH_POTION, 5);
-        PotionMeta harmMeta = (PotionMeta) harmPotion.getItemMeta();
-        harmMeta.setBasePotionData(new PotionData(PotionType.INSTANT_DAMAGE, false, false));
-        harmPotion.setItemMeta(harmMeta);
+        Potion harmPotion = new Potion(PotionType.INSTANT_DAMAGE);
+        harmPotion.setSplash(true);
+        ItemStack harmItem = harmPotion.toItemStack(5);
 
-        ItemStack healPotion = new ItemStack(Material.SPLASH_POTION, 5);
-        PotionMeta healMeta = (PotionMeta) healPotion.getItemMeta();
-        healMeta.setBasePotionData(new PotionData(PotionType.INSTANT_HEAL, false, false));
-        healPotion.setItemMeta(healMeta);
+        Potion healPotion = new Potion(PotionType.INSTANT_HEAL);
+        healPotion.setSplash(true);
+        ItemStack healItem = healPotion.toItemStack(5);
 
         ItemStack[] items = new ItemStack[]{
                 new ItemStack(Material.WOOD_SWORD),
-                harmPotion,
-                healPotion
+                harmItem,
+                healItem
         };
         return new ArenaKit("mage", "Mage", "POTION", 10, 3000, armor, items);
     }
@@ -178,22 +173,16 @@ public class ArenaKit {
         armor[1] = enchant(new ItemStack(Material.DIAMOND_LEGGINGS), Enchantment.PROTECTION_ENVIRONMENTAL, 2);
         armor[0] = enchant(new ItemStack(Material.DIAMOND_BOOTS), Enchantment.PROTECTION_ENVIRONMENTAL, 2);
 
-        ItemStack healPotion = new ItemStack(Material.SPLASH_POTION, 5);
-        PotionMeta healMeta = (PotionMeta) healPotion.getItemMeta();
-        healMeta.setBasePotionData(new PotionData(PotionType.INSTANT_HEAL, false, true));
-        healPotion.setItemMeta(healMeta);
+        Potion healPotion = new Potion(PotionType.INSTANT_HEAL, 2);
+        healPotion.setSplash(true);
+        ItemStack healItem = healPotion.toItemStack(5);
 
-        // SHIELD was added in 1.9, use it if available, else fallback to IRON_BLOCK
-        ItemStack offhand;
-        try {
-            offhand = new ItemStack(Material.valueOf("SHIELD"));
-        } catch (IllegalArgumentException e) {
-            offhand = new ItemStack(Material.IRON_BLOCK);
-        }
+        // Use IRON_BLOCK as shield placeholder (SHIELD material not in this API version)
+        ItemStack offhand = new ItemStack(Material.IRON_BLOCK);
 
         ItemStack[] items = new ItemStack[]{
                 enchant(new ItemStack(Material.IRON_SWORD), Enchantment.DAMAGE_ALL, 2),
-                healPotion,
+                healItem,
                 offhand
         };
         return new ArenaKit("paladin", "Paladin", "GOLD_CHESTPLATE", 20, 8000, armor, items);

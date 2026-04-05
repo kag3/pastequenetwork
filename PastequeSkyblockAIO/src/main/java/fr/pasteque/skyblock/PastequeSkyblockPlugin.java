@@ -27,6 +27,10 @@ import fr.pasteque.skyblock.listener.arena.ArenaProtectionListener;
 import fr.pasteque.skyblock.listener.arena.ArenaSessionListener;
 import fr.pasteque.skyblock.listener.arena.ArenaGlobalChatListener;
 import fr.pasteque.skyblock.listener.arena.ArenaLifecycleListener;
+import fr.pasteque.skyblock.gui.ScoreboardManager;
+import fr.pasteque.skyblock.gui.TabListManager;
+import fr.pasteque.skyblock.gui.ScoreboardListener;
+import fr.pasteque.skyblock.gui.MenuListener;
 import fr.pasteque.skyblock.util.MessageUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -85,6 +89,10 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
 
     /* ── PastequeSkills ── */
     private SkillManager skillManager;
+
+    /* ── GUI managers ── */
+    private ScoreboardManager scoreboardManager;
+    private TabListManager tabListManager;
 
     /* ── Island chat toggles (persisted) ── */
     private final Map<UUID, Boolean> islandChatToggles = new HashMap<UUID, Boolean>();
@@ -150,6 +158,10 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         this.skillManager = new SkillManager(this);
         this.skillManager.load();
 
+        /* ── GUI managers init ── */
+        this.scoreboardManager = new ScoreboardManager(this);
+        this.tabListManager = new TabListManager(this);
+
         /* ── Commands ── */
         registerSkyblockCommands();
         registerGuardCommands();
@@ -157,6 +169,7 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         registerArenaCommands();
         registerSkillCommands();
         registerCombatPassCommands();
+        registerMenuCommands();
 
         /* ── Listeners ── */
         registerSkyblockListeners();
@@ -165,6 +178,14 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         registerArenaListeners();
         registerSkillListeners();
         registerCombatPassListeners();
+        registerMenuListeners();
+
+        /* ── Scoreboard update task (every 3 seconds) ── */
+        Bukkit.getScheduler().runTaskTimer(this, new Runnable() {
+            @Override public void run() {
+                scoreboardManager.updateAll();
+            }
+        }, 20L * 3L, 20L * 3L);
 
         /* ── Scheduled tasks ── */
         coopManager.start();
@@ -260,6 +281,10 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         bind("combatpass", passCommand);
     }
 
+    private void registerMenuCommands() {
+        bind("menu", new MenuCommand(this));
+    }
+
     private void registerSkillCommands() {
         bind("skills", new SkillsCommand(skillManager));
     }
@@ -317,6 +342,11 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
 
     private void registerCombatPassListeners() {
         registerEvents(new CombatPassListener(this, combatPassManager));
+    }
+
+    private void registerMenuListeners() {
+        registerEvents(new MenuListener());
+        registerEvents(new ScoreboardListener(this, scoreboardManager, tabListManager));
     }
 
     private void registerSkillListeners() {

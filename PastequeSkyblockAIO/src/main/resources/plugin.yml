@@ -52,6 +52,9 @@ commands:
   combatpass:
     description: Passe de Combat
     aliases: [pass, bp]
+  menu:
+    description: Ouvrir le menu principal
+    aliases: [mainmenu]
 
 permissions:
   pastequeskyblock.admin:
