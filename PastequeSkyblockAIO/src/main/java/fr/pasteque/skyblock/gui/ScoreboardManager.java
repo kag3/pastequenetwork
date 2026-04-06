@@ -37,7 +37,6 @@ public class ScoreboardManager {
     private final PastequeSkyblockPlugin plugin;
     private final HashMap<UUID, Scoreboard> playerBoards = new HashMap<UUID, Scoreboard>();
     private final HashMap<UUID, String> lastContext = new HashMap<UUID, String>();
-    private long tickCount = 0;
 
     // 15 unique invisible color code strings (one per scoreboard line)
     private static final String[] ENTRIES = {
@@ -121,30 +120,28 @@ public class ScoreboardManager {
     private void updateLines(Player player, Scoreboard board) {
         String context = detectContext(player);
 
-        // Animated title: cycle colors every 2 ticks (6 seconds at 3s refresh)
         Objective obj = board.getObjective("sidebar");
-        String[] titleFrames;
+        String title;
         switch (context) {
             case "arena":
-                titleFrames = new String[]{"&c&lPasteque &4&lArene", "&4&lPasteque &c&lArene", "&c&l\u2694 &4&lArene PvP &c&l\u2694"};
+                title = "&c&lPasteque &4&lArene";
                 break;
             case "koth":
-                titleFrames = new String[]{"&c&l\u265b &4&lKOTH &c&l\u265b", "&4&l\u265b &c&lKOTH &4&l\u265b", "&e&l\u265b &6&lKOTH &e&l\u265b"};
+                title = "&c&l\u265b &4&lKOTH &c&l\u265b";
                 break;
             case "dungeon":
-                titleFrames = new String[]{"&5&lPasteque &d&lDonjon", "&d&lPasteque &5&lDonjon", "&5&l\u2620 &d&lDonjon &5&l\u2620"};
+                title = "&5&lPasteque &d&lDonjon";
                 break;
             case "island":
             case "island_visit":
-                titleFrames = new String[]{"&a&lPasteque &2&lSkyblock", "&2&lPasteque &a&lSkyblock"};
+                title = "&a&lPasteque &2&lSkyblock";
                 break;
             default:
-                titleFrames = new String[]{"&2&lPasteque &5&lSkyblock", "&5&lPasteque &2&lSkyblock", "&a&lPasteque &d&lSkyblock"};
+                title = "&2&lPasteque &5&lSkyblock";
                 break;
         }
         if (obj != null) {
-            int frame = (int)(tickCount % titleFrames.length);
-            obj.setDisplayName(PastequeSkyblockPlugin.color(titleFrames[frame]));
+            obj.setDisplayName(PastequeSkyblockPlugin.color(title));
         }
 
         switch (context) {
@@ -213,20 +210,11 @@ public class ScoreboardManager {
         setLine(board, 8,  c("&8  \u2726 &7Pet: &e" + petName));
         setLine(board, 7,  "");
         setLine(board, 6,  c("&8\u258E &f&lEvenement"));
-        if (eventInfo.startsWith("&a")) {
-            // Blink the event line between two colors
-            String blinkEvent = (tickCount % 2 == 0) ? eventInfo : eventInfo.replace("&a", "&e");
-            setLine(board, 5, c("&8  \u2694 " + blinkEvent));
-        } else {
-            setLine(board, 5, c("&8  \u2694 " + eventInfo));
-        }
+        setLine(board, 5, c("&8  \u2694 " + eventInfo));
         setLine(board, 4,  "");
         setLine(board, 3,  c("&8\u258E &f&lServeur"));
         setLine(board, 2,  c("&8  \u2605 &7Joueurs: &f" + online));
-        String ip = (tickCount % 3 == 0) ? "&2play&8.&5pasteque&8.&2world"
-                  : (tickCount % 3 == 1) ? "&a play&8.&d pasteque&8.&a world"
-                  : "&2\u2764 &5pasteque&8.&2world &5\u2764";
-        setLine(board, 1,  c(ip));
+        setLine(board, 1,  c("&2play&8.&5pasteque&8.&2world"));
         setLine(board, 0,  "");
     }
 
@@ -277,10 +265,7 @@ public class ScoreboardManager {
         setLine(board, 4,  c("&8\u258E &a&lAstuces"));
         setLine(board, 3,  c("&8  \u25B8 &7/is upgrade &8- Ameliorer"));
         setLine(board, 2,  c("&8  \u25B8 &7/menu &8- Menu principal"));
-        String ip = (tickCount % 3 == 0) ? "&2play&8.&5pasteque&8.&2world"
-                  : (tickCount % 3 == 1) ? "&a play&8.&d pasteque&8.&a world"
-                  : "&2\u2764 &5pasteque&8.&2world &5\u2764";
-        setLine(board, 1,  c(ip));
+        setLine(board, 1,  c("&2play&8.&5pasteque&8.&2world"));
         setLine(board, 0,  "");
     }
 
@@ -329,10 +314,7 @@ public class ScoreboardManager {
         setLine(board, 4,  "");
         setLine(board, 3,  c("&8\u258E &c&lAstuces"));
         setLine(board, 2,  c("&8  \u25B8 &7/arenakit &8- Kits"));
-        String ip = (tickCount % 3 == 0) ? "&2play&8.&5pasteque&8.&2world"
-                  : (tickCount % 3 == 1) ? "&a play&8.&d pasteque&8.&a world"
-                  : "&2\u2764 &5pasteque&8.&2world &5\u2764";
-        setLine(board, 1,  c(ip));
+        setLine(board, 1,  c("&2play&8.&5pasteque&8.&2world"));
         setLine(board, 0,  "");
     }
 
@@ -370,12 +352,7 @@ public class ScoreboardManager {
         setLine(board, 11, c("&8  \u2694 &7Joueurs: &c" + playersInWorld));
         setLine(board, 10, "");
         setLine(board, 9,  c("&8\u258E &4&lVotre statut"));
-        String zoneText;
-        if (playerInZone) {
-            zoneText = (tickCount % 2 == 0) ? "&a&lOUI \u2605" : "&e&lOUI \u2605";
-        } else {
-            zoneText = "&c&lNON";
-        }
+        String zoneText = playerInZone ? "&a&lOUI \u2605" : "&c&lNON";
         setLine(board, 8,  c("&8  \u25B8 &7Dans la zone: " + zoneText));
         setLine(board, 7,  "");
         setLine(board, 6,  c("&8\u258E &4&lRecompenses"));
@@ -383,10 +360,7 @@ public class ScoreboardManager {
         setLine(board, 4,  c("&8  &e2eme &7- 5000 Pasteques"));
         setLine(board, 3,  c("&8  &c3eme &7- 2500 Pasteques"));
         setLine(board, 2,  "");
-        String ip = (tickCount % 3 == 0) ? "&2play&8.&5pasteque&8.&2world"
-                  : (tickCount % 3 == 1) ? "&a play&8.&d pasteque&8.&a world"
-                  : "&2\u2764 &5pasteque&8.&2world &5\u2764";
-        setLine(board, 1,  c(ip));
+        setLine(board, 1,  c("&2play&8.&5pasteque&8.&2world"));
         setLine(board, 0,  "");
     }
 
@@ -430,10 +404,7 @@ public class ScoreboardManager {
         setLine(board, 4,  c("&8\u258E &5&lAstuces"));
         setLine(board, 3,  c("&8  \u25B8 &7Tuez tous les mobs !"));
         setLine(board, 2,  c("&8  \u25B8 &7Le boss est en vague 4"));
-        String ip = (tickCount % 3 == 0) ? "&2play&8.&5pasteque&8.&2world"
-                  : (tickCount % 3 == 1) ? "&a play&8.&d pasteque&8.&a world"
-                  : "&2\u2764 &5pasteque&8.&2world &5\u2764";
-        setLine(board, 1,  c(ip));
+        setLine(board, 1,  c("&2play&8.&5pasteque&8.&2world"));
         setLine(board, 0,  "");
     }
 
@@ -479,7 +450,6 @@ public class ScoreboardManager {
     }
 
     public void updateAll() {
-        tickCount++;
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (playerBoards.containsKey(player.getUniqueId())) {
                 updateScoreboard(player);
