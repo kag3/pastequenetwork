@@ -18,7 +18,7 @@ public class PetListener implements Listener {
         this.petManager = petManager;
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (event.getInventory() == null || !(event.getWhoClicked() instanceof Player)) {
             return;

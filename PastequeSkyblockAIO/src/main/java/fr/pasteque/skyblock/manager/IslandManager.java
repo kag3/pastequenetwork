@@ -354,14 +354,38 @@ public class IslandManager {
         for (int x = cx - 3; x <= cx + 3; x++)
             for (int z = cz - 3; z <= cz + 3; z++)
                 world.getBlockAt(x, topY, z).setType(Material.SMOOTH_BRICK);
-        // Cactus farm
-        for (int i = 0; i < 4; i++) {
-            int fx = cx - 6 + i * 3;
-            world.getBlockAt(fx, topY, cz + 5).setType(Material.SAND);
-            world.getBlockAt(fx, topY + 1, cz + 5).setType(Material.CACTUS);
+        // Scattered cactus clusters (8-12) with random spacing and heights
+        Random rng = new Random(seed);
+        int cactusCount = 8 + rng.nextInt(5);
+        for (int i = 0; i < cactusCount; i++) {
+            int attempts = 0;
+            while (attempts < 10) {
+                attempts++;
+                int bx = cx - 11 + rng.nextInt(23);
+                int bz = cz - 9 + rng.nextInt(19);
+                int by = getTopY(world, bx, bz, y, y + 12);
+                if (by <= 0) continue;
+                Material surface = world.getBlockAt(bx, by, bz).getType();
+                if (surface != Material.SAND && surface != Material.SANDSTONE) continue;
+                // Cactus cannot be adjacent to other solid blocks
+                boolean blocked = false;
+                for (int dx = -1; dx <= 1; dx += 2) {
+                    if (world.getBlockAt(bx + dx, by + 1, bz).getType() != Material.AIR) blocked = true;
+                }
+                for (int dz = -1; dz <= 1; dz += 2) {
+                    if (world.getBlockAt(bx, by + 1, bz + dz).getType() != Material.AIR) blocked = true;
+                }
+                if (blocked) continue;
+                // Place sand base and cactus 1-3 blocks tall
+                world.getBlockAt(bx, by, bz).setType(Material.SAND);
+                int height = 1 + rng.nextInt(3);
+                for (int h = 1; h <= height; h++) {
+                    world.getBlockAt(bx, by + h, bz).setType(Material.CACTUS);
+                }
+                break;
+            }
         }
         // Dead bushes
-        Random rng = new Random(seed);
         for (int i = 0; i < 5; i++) {
             int bx = cx - 8 + rng.nextInt(17);
             int bz = cz - 8 + rng.nextInt(17);
@@ -394,25 +418,107 @@ public class IslandManager {
         for (int x = cx - 2; x <= cx + 2; x++)
             for (int z = cz - 2; z <= cz + 2; z++)
                 world.getBlockAt(x, topY, z).setType(Material.WOOD);
-        // Big jungle tree (LOG_2 data 3 = jungle)
-        for (int i = 0; i < 8; i++) world.getBlockAt(cx - 4, topY + i, cz - 4).setType(Material.LOG);
-        for (int lx = cx - 7; lx <= cx - 1; lx++)
-            for (int lz = cz - 7; lz <= cz - 1; lz++)
-                for (int ly = topY + 5; ly <= topY + 8; ly++) {
-                    int dist = Math.abs(lx - (cx - 4)) + Math.abs(lz - (cz - 4));
-                    if (dist <= 4) world.getBlockAt(lx, ly, lz).setType(Material.LEAVES);
-                }
-        // Vines on trunk
-        world.getBlockAt(cx - 3, topY + 2, cz - 4).setType(Material.VINE);
-        world.getBlockAt(cx - 4, topY + 3, cz - 3).setType(Material.VINE);
-        // Tall grass
         Random rng = new Random(seed);
-        for (int i = 0; i < 15; i++) {
-            int gx = cx - 10 + rng.nextInt(21);
+
+        // --- Big jungle tree 1 (thick trunk, wide canopy, vines) ---
+        int t1x = cx - 5;
+        int t1z = cz - 5;
+        int t1base = getTopY(world, t1x, t1z, y, y + 14) + 1;
+        // 2x2 thick trunk, 9 blocks tall
+        for (int i = 0; i < 9; i++) {
+            for (int tx = 0; tx <= 1; tx++) {
+                for (int tz = 0; tz <= 1; tz++) {
+                    world.getBlockAt(t1x + tx, t1base + i, t1z + tz).setType(Material.LOG);
+                    world.getBlockAt(t1x + tx, t1base + i, t1z + tz).setData((byte) 3);
+                }
+            }
+        }
+        // Wide canopy (radius 4)
+        for (int lx = t1x - 4; lx <= t1x + 5; lx++) {
+            for (int lz = t1z - 4; lz <= t1z + 5; lz++) {
+                for (int ly = t1base + 6; ly <= t1base + 9; ly++) {
+                    double dx = lx - (t1x + 0.5D);
+                    double dz = lz - (t1z + 0.5D);
+                    double dist = Math.sqrt(dx * dx + dz * dz);
+                    int maxR = (ly == t1base + 9) ? 2 : (ly == t1base + 8) ? 3 : 4;
+                    if (dist <= maxR + 0.5D && world.getBlockAt(lx, ly, lz).getType() == Material.AIR) {
+                        world.getBlockAt(lx, ly, lz).setType(Material.LEAVES);
+                        world.getBlockAt(lx, ly, lz).setData((byte) 3);
+                    }
+                }
+            }
+        }
+        // Vines hanging from canopy and trunk
+        for (int vy = t1base + 1; vy <= t1base + 7; vy++) {
+            if (rng.nextInt(3) == 0) world.getBlockAt(t1x - 1, vy, t1z).setType(Material.VINE);
+            if (rng.nextInt(3) == 0) world.getBlockAt(t1x + 2, vy, t1z + 1).setType(Material.VINE);
+            if (rng.nextInt(3) == 0) world.getBlockAt(t1x, vy, t1z - 1).setType(Material.VINE);
+            if (rng.nextInt(3) == 0) world.getBlockAt(t1x + 1, vy, t1z + 2).setType(Material.VINE);
+        }
+        // Cocoa beans on trunk
+        world.getBlockAt(t1x - 1, t1base + 3, t1z).setType(Material.COCOA);
+        world.getBlockAt(t1x + 2, t1base + 4, t1z + 1).setType(Material.COCOA);
+
+        // --- Jungle tree 2 (smaller, single trunk) ---
+        int t2x = cx + 6;
+        int t2z = cz - 3;
+        int t2base = getTopY(world, t2x, t2z, y, y + 14) + 1;
+        for (int i = 0; i < 7; i++) {
+            world.getBlockAt(t2x, t2base + i, t2z).setType(Material.LOG);
+            world.getBlockAt(t2x, t2base + i, t2z).setData((byte) 3);
+        }
+        for (int lx = t2x - 3; lx <= t2x + 3; lx++) {
+            for (int lz = t2z - 3; lz <= t2z + 3; lz++) {
+                for (int ly = t2base + 4; ly <= t2base + 7; ly++) {
+                    int md = Math.abs(lx - t2x) + Math.abs(lz - t2z);
+                    int maxD = (ly >= t2base + 6) ? 2 : 3;
+                    if (md <= maxD && world.getBlockAt(lx, ly, lz).getType() == Material.AIR) {
+                        world.getBlockAt(lx, ly, lz).setType(Material.LEAVES);
+                        world.getBlockAt(lx, ly, lz).setData((byte) 3);
+                    }
+                }
+            }
+        }
+        // Vines hanging down from tree 2 canopy
+        for (int vy = t2base + 1; vy <= t2base + 5; vy++) {
+            if (rng.nextInt(3) == 0) world.getBlockAt(t2x - 1, vy, t2z).setType(Material.VINE);
+            if (rng.nextInt(3) == 0) world.getBlockAt(t2x, vy, t2z + 1).setType(Material.VINE);
+        }
+
+        // --- Jungle tree 3 (medium) ---
+        int t3x = cx - 2;
+        int t3z = cz + 7;
+        int t3base = getTopY(world, t3x, t3z, y, y + 14) + 1;
+        for (int i = 0; i < 6; i++) {
+            world.getBlockAt(t3x, t3base + i, t3z).setType(Material.LOG);
+            world.getBlockAt(t3x, t3base + i, t3z).setData((byte) 3);
+        }
+        for (int lx = t3x - 2; lx <= t3x + 2; lx++) {
+            for (int lz = t3z - 2; lz <= t3z + 2; lz++) {
+                for (int ly = t3base + 3; ly <= t3base + 6; ly++) {
+                    int md = Math.abs(lx - t3x) + Math.abs(lz - t3z);
+                    if (md <= 3 && world.getBlockAt(lx, ly, lz).getType() == Material.AIR) {
+                        world.getBlockAt(lx, ly, lz).setType(Material.LEAVES);
+                        world.getBlockAt(lx, ly, lz).setData((byte) 3);
+                    }
+                }
+            }
+        }
+        for (int vy = t3base + 1; vy <= t3base + 4; vy++) {
+            if (rng.nextInt(3) == 0) world.getBlockAt(t3x + 1, vy, t3z - 1).setType(Material.VINE);
+        }
+        world.getBlockAt(t3x - 1, t3base + 2, t3z).setType(Material.COCOA);
+
+        // Dense tall grass and ferns
+        for (int i = 0; i < 25; i++) {
+            int gx = cx - 12 + rng.nextInt(25);
             int gz = cz - 10 + rng.nextInt(21);
             int gy = getTopY(world, gx, gz, y, y + 14);
-            if (gy > 0 && world.getBlockAt(gx, gy, gz).getType() == Material.GRASS)
+            if (gy > 0 && world.getBlockAt(gx, gy, gz).getType() == Material.GRASS) {
                 world.getBlockAt(gx, gy + 1, gz).setType(Material.LONG_GRASS);
+                // data 1 = tall grass, data 2 = fern
+                world.getBlockAt(gx, gy + 1, gz).setData((byte) (rng.nextInt(3) == 0 ? 2 : 1));
+            }
         }
         // Cobble gen in mossy cobble
         buildCobbleGen(world, cx + 5, topY, cz + 3, Material.MOSSY_COBBLESTONE);
@@ -454,9 +560,39 @@ public class IslandManager {
                 world.getBlockAt(x, topY, z).setType(Material.SOUL_SAND);
                 world.getBlockAt(x, topY + 1, z).setType(Material.NETHER_WARTS);
             }
-        // Glowstone clusters
-        world.getBlockAt(cx + 3, topY + 3, cz - 3).setType(Material.GLOWSTONE);
-        world.getBlockAt(cx - 4, topY + 2, cz + 2).setType(Material.GLOWSTONE);
+        // Embedded glowstone in surface (replace random netherrack with glowstone)
+        for (int i = 0; i < 6; i++) {
+            int gx = cx - 10 + rng.nextInt(21);
+            int gz = cz - 8 + rng.nextInt(17);
+            int gy = getTopY(world, gx, gz, y, y + 12);
+            if (gy > 0 && world.getBlockAt(gx, gy, gz).getType() == Material.NETHERRACK) {
+                world.getBlockAt(gx, gy, gz).setType(Material.GLOWSTONE);
+            }
+        }
+        // Fire blocks on netherrack surface
+        for (int i = 0; i < 4; i++) {
+            int fx = cx - 8 + rng.nextInt(17);
+            int fz = cz - 7 + rng.nextInt(15);
+            int fy = getTopY(world, fx, fz, y, y + 12);
+            if (fy > 0 && world.getBlockAt(fx, fy, fz).getType() == Material.NETHERRACK
+                    && world.getBlockAt(fx, fy + 1, fz).getType() == Material.AIR) {
+                world.getBlockAt(fx, fy + 1, fz).setType(Material.FIRE);
+            }
+        }
+        // Small 2x2 lava pool recessed into surface
+        int lpx = cx + 5;
+        int lpz = cz + 5;
+        int lpy = getTopY(world, lpx, lpz, y, y + 12);
+        if (lpy > y) {
+            for (int dx = 0; dx <= 1; dx++) {
+                for (int dz = 0; dz <= 1; dz++) {
+                    int py = getTopY(world, lpx + dx, lpz + dz, y, y + 12);
+                    if (py > y) {
+                        world.getBlockAt(lpx + dx, py, lpz + dz).setType(Material.STATIONARY_LAVA);
+                    }
+                }
+            }
+        }
         // Cobble gen in nether brick walls
         buildCobbleGen(world, cx + 5, topY, cz - 2, Material.NETHER_BRICK);
         // Chest
@@ -478,29 +614,137 @@ public class IslandManager {
     private void generateIceIsland(World world, int cx, int y, int cz, long seed, Island island) {
         sculptFloatingIsland(world, cx, y + 1, cz, 16, 14, 2, Material.SNOW_BLOCK, Material.PACKED_ICE, seed);
         int topY = getTopY(world, cx, cz, y, y + 12) + 1;
-        // Snow layers on top
-        for (int x = cx - 10; x <= cx + 10; x++)
+        Random rng = new Random(seed);
+
+        // Mix surface: replace some snow blocks with packed ice or ice
+        for (int x = cx - 12; x <= cx + 12; x++) {
             for (int z = cz - 10; z <= cz + 10; z++) {
                 int ty = getTopY(world, x, z, y, y + 12);
-                if (ty > 0 && world.getBlockAt(x, ty + 1, z).getType() == Material.AIR)
-                    world.getBlockAt(x, ty + 1, z).setType(Material.SNOW);
+                if (ty <= 0) continue;
+                Material surface = world.getBlockAt(x, ty, z).getType();
+                if (surface == Material.SNOW_BLOCK || surface == Material.PACKED_ICE) {
+                    int roll = rng.nextInt(10);
+                    if (roll < 3) {
+                        world.getBlockAt(x, ty, z).setType(Material.PACKED_ICE);
+                    } else if (roll < 5) {
+                        world.getBlockAt(x, ty, z).setType(Material.ICE);
+                    }
+                    // else keep snow block
+                }
             }
-        // Spruce tree
-        int treeY = topY;
-        for (int i = 0; i < 6; i++) world.getBlockAt(cx - 4, treeY + i, cz - 3).setType(Material.LOG);
-        for (int ly = treeY + 2; ly <= treeY + 6; ly++) {
-            int radius = (treeY + 6 - ly);
-            for (int lx = cx - 4 - radius; lx <= cx - 4 + radius; lx++)
-                for (int lz = cz - 3 - radius; lz <= cz - 3 + radius; lz++)
-                    if (world.getBlockAt(lx, ly, lz).getType() == Material.AIR)
-                        world.getBlockAt(lx, ly, lz).setType(Material.LEAVES);
         }
-        // Ice spikes decoration
-        world.getBlockAt(cx + 5, topY, cz + 4).setType(Material.PACKED_ICE);
-        world.getBlockAt(cx + 5, topY + 1, cz + 4).setType(Material.PACKED_ICE);
-        world.getBlockAt(cx + 5, topY + 2, cz + 4).setType(Material.PACKED_ICE);
-        world.getBlockAt(cx - 7, topY, cz - 5).setType(Material.PACKED_ICE);
-        world.getBlockAt(cx - 7, topY + 1, cz - 5).setType(Material.PACKED_ICE);
+
+        // Spruce tree 1 (tall, conical)
+        int t1x = cx - 5;
+        int t1z = cz - 4;
+        int t1y = getTopY(world, t1x, t1z, y, y + 12) + 1;
+        for (int i = 0; i < 7; i++) {
+            world.getBlockAt(t1x, t1y + i, t1z).setType(Material.LOG);
+            world.getBlockAt(t1x, t1y + i, t1z).setData((byte) 1);
+        }
+        for (int ly = t1y + 2; ly <= t1y + 7; ly++) {
+            int radius = (t1y + 7 - ly);
+            for (int lx = t1x - radius; lx <= t1x + radius; lx++) {
+                for (int lz = t1z - radius; lz <= t1z + radius; lz++) {
+                    if (world.getBlockAt(lx, ly, lz).getType() == Material.AIR) {
+                        world.getBlockAt(lx, ly, lz).setType(Material.LEAVES);
+                        world.getBlockAt(lx, ly, lz).setData((byte) 1);
+                    }
+                }
+            }
+        }
+        // Snow on top of tree
+        world.getBlockAt(t1x, t1y + 8, t1z).setType(Material.SNOW);
+
+        // Spruce tree 2 (shorter)
+        int t2x = cx + 6;
+        int t2z = cz + 3;
+        int t2y = getTopY(world, t2x, t2z, y, y + 12) + 1;
+        for (int i = 0; i < 5; i++) {
+            world.getBlockAt(t2x, t2y + i, t2z).setType(Material.LOG);
+            world.getBlockAt(t2x, t2y + i, t2z).setData((byte) 1);
+        }
+        for (int ly = t2y + 1; ly <= t2y + 5; ly++) {
+            int radius = (t2y + 5 - ly);
+            for (int lx = t2x - radius; lx <= t2x + radius; lx++) {
+                for (int lz = t2z - radius; lz <= t2z + radius; lz++) {
+                    if (world.getBlockAt(lx, ly, lz).getType() == Material.AIR) {
+                        world.getBlockAt(lx, ly, lz).setType(Material.LEAVES);
+                        world.getBlockAt(lx, ly, lz).setData((byte) 1);
+                    }
+                }
+            }
+        }
+        world.getBlockAt(t2x, t2y + 6, t2z).setType(Material.SNOW);
+
+        // Spruce tree 3 (medium)
+        int t3x = cx - 1;
+        int t3z = cz + 6;
+        int t3y = getTopY(world, t3x, t3z, y, y + 12) + 1;
+        for (int i = 0; i < 6; i++) {
+            world.getBlockAt(t3x, t3y + i, t3z).setType(Material.LOG);
+            world.getBlockAt(t3x, t3y + i, t3z).setData((byte) 1);
+        }
+        for (int ly = t3y + 2; ly <= t3y + 6; ly++) {
+            int radius = (t3y + 6 - ly);
+            for (int lx = t3x - radius; lx <= t3x + radius; lx++) {
+                for (int lz = t3z - radius; lz <= t3z + radius; lz++) {
+                    if (world.getBlockAt(lx, ly, lz).getType() == Material.AIR) {
+                        world.getBlockAt(lx, ly, lz).setType(Material.LEAVES);
+                        world.getBlockAt(lx, ly, lz).setData((byte) 1);
+                    }
+                }
+            }
+        }
+        world.getBlockAt(t3x, t3y + 7, t3z).setType(Material.SNOW);
+
+        // Ice spikes: 3-5 tall columns of packed ice (3-7 blocks tall)
+        int spikeCount = 3 + rng.nextInt(3);
+        for (int i = 0; i < spikeCount; i++) {
+            int sx = cx - 10 + rng.nextInt(21);
+            int sz = cz - 8 + rng.nextInt(17);
+            int sy = getTopY(world, sx, sz, y, y + 12);
+            if (sy <= 0) continue;
+            int spikeHeight = 3 + rng.nextInt(5);
+            for (int h = 0; h <= spikeHeight; h++) {
+                world.getBlockAt(sx, sy + h, sz).setType(Material.PACKED_ICE);
+            }
+            // Taper: add adjacent blocks at base for thickness
+            if (spikeHeight >= 4) {
+                world.getBlockAt(sx + 1, sy, sz).setType(Material.PACKED_ICE);
+                world.getBlockAt(sx, sy, sz + 1).setType(Material.PACKED_ICE);
+                world.getBlockAt(sx + 1, sy + 1, sz).setType(Material.PACKED_ICE);
+            }
+        }
+
+        // Frozen water pool (3x3 ice-covered area recessed into surface)
+        int poolX = cx + 2;
+        int poolZ = cz - 2;
+        int poolY = getTopY(world, poolX, poolZ, y, y + 12);
+        if (poolY > y) {
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    int py = getTopY(world, poolX + dx, poolZ + dz, y, y + 12);
+                    if (py > y) {
+                        world.getBlockAt(poolX + dx, py, poolZ + dz).setType(Material.ICE);
+                    }
+                }
+            }
+        }
+
+        // Snow layers everywhere on top of solid surfaces
+        for (int x = cx - 12; x <= cx + 12; x++) {
+            for (int z = cz - 10; z <= cz + 10; z++) {
+                int ty = getTopY(world, x, z, y, y + 14);
+                if (ty <= 0) continue;
+                Material top = world.getBlockAt(x, ty, z).getType();
+                if ((top == Material.SNOW_BLOCK || top == Material.PACKED_ICE || top == Material.ICE)
+                        && world.getBlockAt(x, ty + 1, z).getType() == Material.AIR) {
+                    world.getBlockAt(x, ty + 1, z).setType(Material.SNOW);
+                }
+            }
+        }
+
         // Cobble gen under snow cover
         buildCobbleGen(world, cx + 5, topY, cz - 3, Material.PACKED_ICE);
         // Chest
@@ -522,23 +766,78 @@ public class IslandManager {
     private void generateMushroomIsland(World world, int cx, int y, int cz, long seed, Island island) {
         sculptFloatingIsland(world, cx, y + 1, cz, 15, 13, 2, Material.MYCEL, Material.DIRT, seed);
         int topY = getTopY(world, cx, cz, y, y + 12) + 1;
-        // Huge brown mushroom
-        int mX = cx - 4, mZ = cz - 3;
-        for (int i = 0; i < 6; i++) world.getBlockAt(mX, topY + i, mZ).setType(Material.HUGE_MUSHROOM_2); // stem
-        for (int dx = -3; dx <= 3; dx++)
-            for (int dz = -3; dz <= 3; dz++)
-                if (Math.abs(dx) + Math.abs(dz) <= 4)
-                    world.getBlockAt(mX + dx, topY + 6, mZ + dz).setType(Material.HUGE_MUSHROOM_1); // brown cap
-        // Small mushrooms
         Random rng = new Random(seed);
+
+        // Big brown mushroom (wider cap, 4-block radius)
+        int mX = cx - 4, mZ = cz - 3;
+        int mBase = getTopY(world, mX, mZ, y, y + 12) + 1;
+        for (int i = 0; i < 7; i++) {
+            world.getBlockAt(mX, mBase + i, mZ).setType(Material.HUGE_MUSHROOM_2); // stem
+        }
+        // Brown cap at top (radius 4)
+        for (int dx = -4; dx <= 4; dx++) {
+            for (int dz = -4; dz <= 4; dz++) {
+                double dist = Math.sqrt(dx * dx + dz * dz);
+                if (dist <= 4.5D) {
+                    world.getBlockAt(mX + dx, mBase + 7, mZ + dz).setType(Material.HUGE_MUSHROOM_1);
+                }
+                // Second layer for depth
+                if (dist <= 3.0D) {
+                    world.getBlockAt(mX + dx, mBase + 8, mZ + dz).setType(Material.HUGE_MUSHROOM_1);
+                }
+            }
+        }
+
+        // Big red mushroom (different position)
+        int rX = cx + 5, rZ = cz + 4;
+        int rBase = getTopY(world, rX, rZ, y, y + 12) + 1;
+        // Stem (HUGE_MUSHROOM_2)
         for (int i = 0; i < 6; i++) {
-            int fx = cx - 8 + rng.nextInt(17);
+            world.getBlockAt(rX, rBase + i, rZ).setType(Material.HUGE_MUSHROOM_2);
+        }
+        // Red mushroom cap (dome shape using HUGE_MUSHROOM_1)
+        for (int dx = -3; dx <= 3; dx++) {
+            for (int dz = -3; dz <= 3; dz++) {
+                double dist = Math.sqrt(dx * dx + dz * dz);
+                // Top dome layer
+                if (dist <= 3.2D) {
+                    world.getBlockAt(rX + dx, rBase + 6, rZ + dz).setType(Material.HUGE_MUSHROOM_1);
+                }
+                // Upper dome (smaller)
+                if (dist <= 2.0D) {
+                    world.getBlockAt(rX + dx, rBase + 7, rZ + dz).setType(Material.HUGE_MUSHROOM_1);
+                }
+                // Sides of cap (skirt)
+                if (dist > 2.0D && dist <= 3.2D) {
+                    world.getBlockAt(rX + dx, rBase + 5, rZ + dz).setType(Material.HUGE_MUSHROOM_1);
+                }
+            }
+        }
+
+        // Scattered small mushrooms (8-12)
+        int smallCount = 8 + rng.nextInt(5);
+        for (int i = 0; i < smallCount; i++) {
+            int fx = cx - 10 + rng.nextInt(21);
             int fz = cz - 8 + rng.nextInt(17);
             int fy = getTopY(world, fx, fz, y, y + 12);
-            if (fy > 0) world.getBlockAt(fx, fy + 1, fz).setType(i % 2 == 0 ? Material.RED_MUSHROOM : Material.BROWN_MUSHROOM);
+            if (fy > 0 && world.getBlockAt(fx, fy + 1, fz).getType() == Material.AIR) {
+                Material shroom = rng.nextInt(3) == 0 ? Material.BROWN_MUSHROOM : Material.RED_MUSHROOM;
+                world.getBlockAt(fx, fy + 1, fz).setType(shroom);
+            }
         }
+
+        // Grass patches between mycelium for variety
+        for (int i = 0; i < 8; i++) {
+            int gx = cx - 9 + rng.nextInt(19);
+            int gz = cz - 7 + rng.nextInt(15);
+            int gy = getTopY(world, gx, gz, y, y + 12);
+            if (gy > 0 && world.getBlockAt(gx, gy, gz).getType() == Material.MYCEL) {
+                world.getBlockAt(gx, gy, gz).setType(Material.GRASS);
+            }
+        }
+
         // Cobble gen in mossy cobble
-        buildCobbleGen(world, cx + 5, topY, cz + 3, Material.MOSSY_COBBLESTONE);
+        buildCobbleGen(world, cx + 5, topY, cz - 4, Material.MOSSY_COBBLESTONE);
         // Chest with mooshroom egg
         world.getBlockAt(cx + 2, topY + 1, cz).setType(Material.CHEST);
         Chest chest = (Chest) world.getBlockAt(cx + 2, topY + 1, cz).getState();
@@ -555,41 +854,105 @@ public class IslandManager {
     }
 
     // ── CLASSIC preset (original) ───────────────────────────────────────────
+    @SuppressWarnings("deprecation")
     public void generateStarterIsland(Island island) {
         World world = plugin.getWorldManager().getOrCreateIslandWorld();
         int y = plugin.getConfig().getInt("worlds.island-y", 100);
         int cx = island.getCenterX();
         int cz = island.getCenterZ();
-        sculptFloatingIsland(world, cx, y + 1, cz, 18, 16, 3, Material.GRASS, Material.DIRT, (cx * 31L) ^ (cz * 17L) ^ 1409L);
+        long seed = (cx * 31L) ^ (cz * 17L) ^ 1409L;
+        // Bigger terrain sculpt for a lush feel
+        sculptFloatingIsland(world, cx, y + 1, cz, 20, 18, 4, Material.GRASS, Material.DIRT, seed);
+        Random deco = new Random((cx * 97L) ^ (cz * 67L) ^ 7127L);
 
-        int plazaY = getTopY(world, cx, cz, y, y + 15) + 1;
-        for (int x = cx - 4; x <= cx + 4; x++) {
-            for (int z = cz - 4; z <= cz + 4; z++) {
-                world.getBlockAt(x, plazaY, z).setType(Material.WOOD);
-                world.getBlockAt(x, plazaY - 1, z).setType(Material.DIRT);
-                clearColumnAbove(world, x, plazaY + 1, plazaY + 6, z);
+        int baseTop = getTopY(world, cx, cz, y, y + 16) + 1;
+
+        // --- Small pond (3x3 water surrounded by grass) ---
+        int pondX = cx - 8;
+        int pondZ = cz - 5;
+        int pondY = getTopY(world, pondX, pondZ, y, y + 16);
+        if (pondY > y) {
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    int py = getTopY(world, pondX + dx, pondZ + dz, y, y + 16);
+                    if (py > y) {
+                        world.getBlockAt(pondX + dx, py, pondZ + dz).setType(Material.STATIONARY_WATER);
+                        // Ensure grass border
+                        world.getBlockAt(pondX + dx, py - 1, pondZ + dz).setType(Material.DIRT);
+                        clearColumnAbove(world, pondX + dx, py + 1, py + 4, pondZ + dz);
+                    }
+                }
+            }
+            // Sugar cane by water
+            int scY = getTopY(world, pondX + 2, pondZ, y, y + 16);
+            if (scY > y && world.getBlockAt(pondX + 2, scY, pondZ).getType() == Material.GRASS) {
+                world.getBlockAt(pondX + 2, scY, pondZ).setType(Material.DIRT);
+                world.getBlockAt(pondX + 2, scY + 1, pondZ).setType(Material.SUGAR_CANE_BLOCK);
+                world.getBlockAt(pondX + 2, scY + 2, pondZ).setType(Material.SUGAR_CANE_BLOCK);
+            }
+            int sc2Y = getTopY(world, pondX - 2, pondZ + 1, y, y + 16);
+            if (sc2Y > y && world.getBlockAt(pondX - 2, sc2Y, pondZ + 1).getType() == Material.GRASS) {
+                world.getBlockAt(pondX - 2, sc2Y, pondZ + 1).setType(Material.DIRT);
+                world.getBlockAt(pondX - 2, sc2Y + 1, pondZ + 1).setType(Material.SUGAR_CANE_BLOCK);
+                world.getBlockAt(pondX - 2, sc2Y + 2, pondZ + 1).setType(Material.SUGAR_CANE_BLOCK);
+                world.getBlockAt(pondX - 2, sc2Y + 3, pondZ + 1).setType(Material.SUGAR_CANE_BLOCK);
+            }
+            // Lily pads on the water
+            world.getBlockAt(pondX, pondY + 1, pondZ).setType(Material.WATER_LILY);
+            world.getBlockAt(pondX - 1, pondY + 1, pondZ + 1).setType(Material.WATER_LILY);
+        }
+
+        // --- Grass path from spawn to farm and cobble gen ---
+        for (int px = cx - 6; px <= cx + 7; px++) {
+            int pathY = getTopY(world, px, cz, y, y + 16);
+            if (pathY > y && world.getBlockAt(px, pathY, cz).getType() == Material.GRASS) {
+                world.getBlockAt(px, pathY, cz).setType(Material.GRASS_PATH);
+            }
+        }
+        // Path branch to farm
+        for (int pz = cz; pz <= cz + 6; pz++) {
+            int pathY = getTopY(world, cx - 5, pz, y, y + 16);
+            if (pathY > y && world.getBlockAt(cx - 5, pathY, pz).getType() == Material.GRASS) {
+                world.getBlockAt(cx - 5, pathY, pz).setType(Material.GRASS_PATH);
             }
         }
 
-        int farmY = plazaY + 1;
-        for (int x = cx - 10; x <= cx - 4; x++) {
-            for (int z = cz + 3; z <= cz + 9; z++) {
-                world.getBlockAt(x, farmY, z).setType(Material.SOIL);
+        // --- Farm area with fences ---
+        int farmX = cx - 10;
+        int farmZ = cz + 4;
+        int farmY = getTopY(world, farmX + 3, farmZ + 2, y, y + 16) + 1;
+        // Prepare soil and crops inside fenced area (5x5 inner)
+        for (int x = farmX; x <= farmX + 6; x++) {
+            for (int z = farmZ; z <= farmZ + 4; z++) {
                 world.getBlockAt(x, farmY - 1, z).setType(Material.DIRT);
+                world.getBlockAt(x, farmY, z).setType(Material.SOIL);
                 world.getBlockAt(x, farmY + 1, z).setType(Material.CROPS);
             }
         }
-        for (int z = cz + 3; z <= cz + 9; z++) {
-            world.getBlockAt(cx - 7, farmY, z).setType(Material.STATIONARY_WATER);
-            world.getBlockAt(cx - 7, farmY + 1, z).setType(Material.AIR);
+        // Water channel through middle
+        for (int x = farmX; x <= farmX + 6; x++) {
+            world.getBlockAt(x, farmY, farmZ + 2).setType(Material.STATIONARY_WATER);
+            world.getBlockAt(x, farmY + 1, farmZ + 2).setType(Material.AIR);
         }
+        // Fence border around farm
+        for (int x = farmX - 1; x <= farmX + 7; x++) {
+            world.getBlockAt(x, farmY, farmZ - 1).setType(Material.FENCE);
+            world.getBlockAt(x, farmY, farmZ + 5).setType(Material.FENCE);
+        }
+        for (int z = farmZ - 1; z <= farmZ + 5; z++) {
+            world.getBlockAt(farmX - 1, farmY, z).setType(Material.FENCE);
+            world.getBlockAt(farmX + 7, farmY, z).setType(Material.FENCE);
+        }
+        // Farm gate entrance
+        world.getBlockAt(farmX + 3, farmY, farmZ - 1).setType(Material.FENCE_GATE);
 
-        // Enclosed cobblestone generator
-        buildCobbleGen(world, cx + 7, plazaY, cz - 2, Material.COBBLESTONE);
+        // --- Enclosed cobblestone generator ---
+        buildCobbleGen(world, cx + 8, baseTop, cz - 2, Material.COBBLESTONE);
 
-        int chestY = getTopY(world, cx + 6, cz + 7, y, y + 14) + 1;
-        world.getBlockAt(cx + 6, chestY, cz + 7).setType(Material.CHEST);
-        Chest chest = (Chest) world.getBlockAt(cx + 6, chestY, cz + 7).getState();
+        // --- Chest ---
+        int chestY = getTopY(world, cx + 7, cz + 7, y, y + 16) + 1;
+        world.getBlockAt(cx + 7, chestY, cz + 7).setType(Material.CHEST);
+        Chest chest = (Chest) world.getBlockAt(cx + 7, chestY, cz + 7).getState();
         chest.getBlockInventory().clear();
         chest.getBlockInventory().addItem(new ItemStack(Material.ICE, 1));
         chest.getBlockInventory().addItem(new ItemStack(Material.WATER_BUCKET, 1));
@@ -602,27 +965,64 @@ public class IslandManager {
         chest.getBlockInventory().addItem(new ItemStack(Material.BREAD, 6));
         chest.update(true);
 
-        Random deco = new Random((cx * 97L) ^ (cz * 67L) ^ 7127L);
-        int treeOneX = cx - 9 + deco.nextInt(4);
-        int treeOneZ = cz - 7 + deco.nextInt(3);
-        int treeTwoX = cx + 1 + deco.nextInt(4);
-        int treeTwoZ = cz - 10 + deco.nextInt(4);
-        placeTree(world, treeOneX, getTopY(world, treeOneX, treeOneZ, y, y + 14) + 1, treeOneZ);
-        placeTree(world, treeTwoX, getTopY(world, treeTwoX, treeTwoZ, y, y + 14) + 1, treeTwoZ);
-
-        for (int i = 0; i < 10; i++) {
-            int fx = cx - 12 + deco.nextInt(25);
-            int fz = cz - 10 + deco.nextInt(21);
-            setFlower(world, fx, getTopY(world, fx, fz, y, y + 14) + 1, fz, (i % 2 == 0) ? Material.RED_ROSE : Material.YELLOW_FLOWER);
+        // --- 3-4 oak trees spread naturally ---
+        int[][] treeSpots = {
+            {cx - 12, cz - 7},
+            {cx + 4, cz - 10},
+            {cx + 10, cz + 5},
+            {cx - 6, cz + 10}
+        };
+        int treeCount = 3 + deco.nextInt(2);
+        for (int i = 0; i < treeCount; i++) {
+            int tx = treeSpots[i][0] + deco.nextInt(3) - 1;
+            int tz = treeSpots[i][1] + deco.nextInt(3) - 1;
+            int ty = getTopY(world, tx, tz, y, y + 16);
+            if (ty > y && world.getBlockAt(tx, ty, tz).getType() == Material.GRASS) {
+                placeTree(world, tx, ty + 1, tz);
+            }
         }
 
-        for (int i = 0; i < 3; i++) {
-            int lx = cx - 5 + deco.nextInt(11);
-            int lz = cz - 5 + deco.nextInt(11);
-            placeLantern(world, lx, plazaY + 1, lz);
+        // --- Flower garden with mixed flowers ---
+        Material[] flowers = {
+            Material.RED_ROSE, Material.YELLOW_FLOWER, Material.RED_ROSE,
+            Material.YELLOW_FLOWER, Material.RED_ROSE, Material.RED_ROSE
+        };
+        for (int i = 0; i < 16; i++) {
+            int fx = cx - 14 + deco.nextInt(29);
+            int fz = cz - 12 + deco.nextInt(25);
+            int fy = getTopY(world, fx, fz, y, y + 16);
+            if (fy > y && world.getBlockAt(fx, fy, fz).getType() == Material.GRASS
+                    && world.getBlockAt(fx, fy + 1, fz).getType() == Material.AIR) {
+                world.getBlockAt(fx, fy + 1, fz).setType(flowers[deco.nextInt(flowers.length)]);
+            }
         }
 
-        island.setHome(new Location(world, cx + 0.5D, plazaY + 1.0D, cz + 0.5D));
+        // --- Tall grass for natural look ---
+        for (int i = 0; i < 20; i++) {
+            int gx = cx - 14 + deco.nextInt(29);
+            int gz = cz - 12 + deco.nextInt(25);
+            int gy = getTopY(world, gx, gz, y, y + 16);
+            if (gy > y && world.getBlockAt(gx, gy, gz).getType() == Material.GRASS
+                    && world.getBlockAt(gx, gy + 1, gz).getType() == Material.AIR) {
+                world.getBlockAt(gx, gy + 1, gz).setType(Material.LONG_GRASS);
+                world.getBlockAt(gx, gy + 1, gz).setData((byte) 1);
+            }
+        }
+
+        // --- Lanterns on fence posts ---
+        int[][] lanternSpots = {
+            {cx - 5, cz - 5}, {cx + 5, cz - 5}, {cx + 5, cz + 5}, {cx - 5, cz + 5}
+        };
+        for (int i = 0; i < lanternSpots.length; i++) {
+            int lx = lanternSpots[i][0];
+            int lz = lanternSpots[i][1];
+            int ly = getTopY(world, lx, lz, y, y + 16);
+            if (ly > y) {
+                placeLantern(world, lx, ly + 1, lz);
+            }
+        }
+
+        island.setHome(new Location(world, cx + 0.5D, baseTop + 1.0D, cz + 0.5D));
     }
 
     public boolean unlockFarmingIsland(Island island) {

@@ -45,17 +45,20 @@ public class ArenaCombatListener implements Listener {
             return;
         }
         Player victim = (Player) event.getEntity();
-        if (!arenaWorldService.isArenaWorld(victim.getWorld())) {
+        if (!arenaWorldService.isArenaWorld(victim.getWorld()) && !arenaWorldService.isDuelWorld(victim.getWorld())) {
             return;
         }
         Player attacker = findAttacker(event.getDamager());
         if (attacker == null || attacker.equals(victim)) {
             return;
         }
-        if (safeZoneService.isSafe(victim.getLocation()) || safeZoneService.isSafe(attacker.getLocation())) {
-            event.setCancelled(true);
-            attacker.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.no-pvp-safe", "&fLe combat n'est pas autorise dans cette zone.")));
-            return;
+        // Skip safe zone check in duel world - PvP always allowed there
+        if (!arenaWorldService.isDuelWorld(victim.getWorld())) {
+            if (safeZoneService.isSafe(victim.getLocation()) || safeZoneService.isSafe(attacker.getLocation())) {
+                event.setCancelled(true);
+                attacker.sendMessage(plugin.color(plugin.getPrefix() + plugin.getConfig().getString("messages.no-pvp-safe", "&fLe combat n'est pas autorise dans cette zone.")));
+                return;
+            }
         }
         combatTagService.tag(attacker, victim);
     }
@@ -63,7 +66,7 @@ public class ArenaCombatListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onDeath(PlayerDeathEvent event) {
         Player victim = event.getEntity();
-        if (!arenaWorldService.isArenaWorld(victim.getWorld())) {
+        if (!arenaWorldService.isArenaWorld(victim.getWorld()) && !arenaWorldService.isDuelWorld(victim.getWorld())) {
             return;
         }
 

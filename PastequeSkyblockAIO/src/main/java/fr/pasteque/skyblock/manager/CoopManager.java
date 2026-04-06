@@ -64,9 +64,13 @@ public class CoopManager {
                         it.remove();
                         continue;
                     }
-                    Player owner = Bukkit.getPlayer(pending.owner);
-                    if (owner != null && owner.isOnline()) {
-                        sendProgress(owner, pending);
+                    // Only show progress bar every 10 seconds instead of every second
+                    long remaining = (pending.expireAt - System.currentTimeMillis()) / 1000L;
+                    if (remaining % 10 == 0) {
+                        Player owner = Bukkit.getPlayer(pending.owner);
+                        if (owner != null && owner.isOnline()) {
+                            sendProgress(owner, pending);
+                        }
                     }
                 }
             }

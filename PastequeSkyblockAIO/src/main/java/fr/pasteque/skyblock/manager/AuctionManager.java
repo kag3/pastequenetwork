@@ -121,6 +121,20 @@ public class AuctionManager {
         items.add(item == null ? null : item.clone());
     }
 
+    public void removeClaimable(UUID uuid, ItemStack item) {
+        List<ItemStack> items = claimableItems.get(uuid);
+        if (items == null) return;
+        java.util.Iterator<ItemStack> it = items.iterator();
+        while (it.hasNext()) {
+            ItemStack next = it.next();
+            if (next != null && next.isSimilar(item)) {
+                it.remove();
+                break;
+            }
+        }
+        if (items.isEmpty()) claimableItems.remove(uuid);
+    }
+
     public List<ItemStack> getClaimable(UUID uuid) {
         List<ItemStack> source = claimableItems.get(uuid);
         if (source == null) return Collections.emptyList();

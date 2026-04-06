@@ -180,6 +180,25 @@ public class GuiListener implements Listener {
             if (event.getSlot() == 49) {
                 player.performCommand("hdv recup all");
                 player.closeInventory();
+                return;
+            }
+            // Click individual item to retrieve it
+            int slot = event.getRawSlot();
+            if (slot >= 10 && slot < 44 && slot % 9 != 0 && slot % 9 != 8) {
+                ItemStack clicked = event.getCurrentItem();
+                if (clicked != null && clicked.getType() != Material.AIR
+                        && clicked.getType() != Material.STAINED_GLASS_PANE) {
+                    if (player.getInventory().firstEmpty() == -1) {
+                        MessageUtil.send(player, plugin.getPrefix(), "&cTon inventaire est plein.");
+                        return;
+                    }
+                    player.getInventory().addItem(clicked.clone());
+                    event.getInventory().setItem(slot, new ItemStack(Material.AIR));
+                    // Remove from claimable list
+                    plugin.getAuctionManager().removeClaimable(player.getUniqueId(), clicked);
+                    fr.pasteque.skyblock.gui.GuiHelper.playClick(player);
+                    MessageUtil.send(player, plugin.getPrefix(), "&aObjet recupere !");
+                }
             }
             return;
         }

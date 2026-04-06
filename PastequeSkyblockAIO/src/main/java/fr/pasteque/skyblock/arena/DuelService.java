@@ -443,40 +443,90 @@ public class DuelService {
             loser.sendMessage(PastequeSkyblockPlugin.color(plugin.getPrefix() + "&fELO : &d" + loserElo + " &f(" + eloService.getRankColor(loserElo) + eloService.getRank(loserElo) + "&f)"));
         }
 
-        // Titles
-        sendTitle(winner, PastequeSkyblockPlugin.color("&a&lVICTOIRE"), PastequeSkyblockPlugin.color("&7GG bien joue !"));
+        // ── LabyRoyale-style end sequence ──
+
+        // Freeze both players
+        winner.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 20 * 8, 255));
+        winner.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 20 * 8, 128));
+        winner.setGameMode(GameMode.ADVENTURE);
         if (loser.isOnline()) {
-            sendTitle(loser, PastequeSkyblockPlugin.color("&c&lDEFAITE"), PastequeSkyblockPlugin.color("&7Prochaine fois..."));
+            loser.setHealth(loser.getMaxHealth());
+            loser.setGameMode(GameMode.ADVENTURE);
+            loser.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 20 * 8, 255));
+            loser.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 20 * 8, 128));
+            loser.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 20 * 2, 0));
         }
 
-        // Broadcast
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            if (!p.getUniqueId().equals(winnerId) && !p.getUniqueId().equals(loserId)) {
-                p.sendMessage(PastequeSkyblockPlugin.color(plugin.getPrefix() + "&d" + winner.getName() + " &fa remporte le duel contre &d" + loser.getName() + "&f !"));
-            }
+        // Phase 1 (instant): dramatic titles
+        sendTitle(winner, PastequeSkyblockPlugin.color("&a&lVICTOIRE !"), PastequeSkyblockPlugin.color("&f&lGG &7contre &d" + loser.getName()));
+        if (loser.isOnline()) {
+            sendTitle(loser, PastequeSkyblockPlugin.color("&c&lDEFAITE"), PastequeSkyblockPlugin.color("&7" + winner.getName() + " a gagne"));
         }
 
-        // Spawn fireworks at winner (3 fireworks, 1 second apart)
+        // Phase 2 (1s): firework burst at winner location
         final Location fwLoc = winner.getLocation().clone();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 5; i++) {
             final int delay = i;
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    spawnFirework(fwLoc);
+                    Location offset = fwLoc.clone().add(
+                        (Math.random() - 0.5) * 4,
+                        Math.random() * 2,
+                        (Math.random() - 0.5) * 4);
+                    spawnFirework(offset);
                 }
-            }.runTaskLater(plugin, 20L * delay);
+            }.runTaskLater(plugin, 10L + (5L * delay));
         }
 
-        // Both players enter spectator mode for 5 seconds
-        winner.setGameMode(GameMode.ADVENTURE);
-        if (loser.isOnline()) {
-            loser.setGameMode(GameMode.ADVENTURE);
-            // Respawn loser health so they can spectate
-            loser.setHealth(loser.getMaxHealth());
+        // Phase 3 (2s): stats recap in chat
+        final String winnerName = winner.getName();
+        final String loserName = loser.getName();
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                Player w = Bukkit.getPlayer(winnerId);
+                Player l = Bukkit.getPlayer(loserId);
+                String border = PastequeSkyblockPlugin.color("&8&m                                                    ");
+                String[] recap = {
+                    "",
+                    border,
+                    PastequeSkyblockPlugin.color("  &6&l\u2B50 &e&lRESULTAT DU DUEL"),
+                    "",
+                    PastequeSkyblockPlugin.color("  &a\u2714 &fGagnant: &a" + winnerName + " &7(ELO: &d" + winnerElo + "&7)"),
+                    PastequeSkyblockPlugin.color("  &c\u2716 &fPerdant: &c" + loserName + " &7(ELO: &d" + loserElo + "&7)"),
+                    PastequeSkyblockPlugin.color("  &8\u25B8 &7Recompense: &e+" + (int) reward + " " + plugin.getEconomyManager().getCurrencyName()),
+                    "",
+                    border,
+                    ""
+                };
+                if (w != null && w.isOnline()) for (String line : recap) w.sendMessage(line);
+                if (l != null && l.isOnline()) for (String line : recap) l.sendMessage(line);
+            }
+        }.runTaskLater(plugin, 20L * 2);
+
+        // Phase 4 (4s): second firework burst
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                for (int i = 0; i < 3; i++) {
+                    Location offset = fwLoc.clone().add(
+                        (Math.random() - 0.5) * 6,
+                        1 + Math.random() * 2,
+                        (Math.random() - 0.5) * 6);
+                    spawnFirework(offset);
+                }
+            }
+        }.runTaskLater(plugin, 20L * 4);
+
+        // Broadcast to server
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (!p.getUniqueId().equals(winnerId) && !p.getUniqueId().equals(loserId)) {
+                p.sendMessage(PastequeSkyblockPlugin.color(plugin.getPrefix() + "&d" + winnerName + " &fa remporte le duel contre &d" + loserName + "&f !"));
+            }
         }
 
-        // After 5 seconds: restore and teleport back
+        // Phase 5 (7s): restore and teleport back
         final int finalMatchId = matchId;
         new BukkitRunnable() {
             @Override
@@ -491,8 +541,14 @@ public class DuelService {
                 }
 
                 eloService.save();
+
+                // Final title after TP back
+                Player w = Bukkit.getPlayer(winnerId);
+                if (w != null && w.isOnline()) {
+                    sendTitle(w, PastequeSkyblockPlugin.color("&a&l+ELO"), PastequeSkyblockPlugin.color("&7Classement mis a jour"));
+                }
             }
-        }.runTaskLater(plugin, 20L * 5);
+        }.runTaskLater(plugin, 20L * 7);
     }
 
     // =========================================================================

@@ -744,6 +744,7 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         registerEvents(new ArenaKitListener(this, arenaKitService));
         registerEvents(new ArenaSessionListener(this, arenaWorldService, arenaLevelService, playerDataService));
         registerEvents(new ArenaGlobalChatListener(this, arenaWorldService, playerDataService));
+        registerEvents(new fr.pasteque.skyblock.listener.arena.DuelEventListener(this, arenaWorldService, duelService));
     }
 
     private void registerEvents(Listener listener) {

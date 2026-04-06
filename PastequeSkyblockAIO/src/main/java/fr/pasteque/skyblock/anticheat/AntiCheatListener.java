@@ -61,17 +61,20 @@ public class AntiCheatListener implements Listener {
         double horiz = Math.sqrt(dx * dx + dz * dz);
         long elapsed = Math.max(1L, now - lastMs);
 
-        // Speed check: sustained >0.7 per tick = flag
+        // Speed check: only flag if significantly above threshold
         double speed = horiz / (elapsed / 50.0); // blocks per tick
-        if (speed > AntiCheatManager.MAX_HORIZONTAL_PER_TICK && !p.hasPotionEffect(org.bukkit.potion.PotionEffectType.SPEED)) {
-            ac.flag(p, "speed (" + String.format("%.2f", speed) + "b/t)", 2);
+        if (speed > AntiCheatManager.MAX_HORIZONTAL_PER_TICK
+                && !p.hasPotionEffect(org.bukkit.potion.PotionEffectType.SPEED)
+                && !p.isInsideVehicle()
+                && elapsed > 30L) { // ignore very short intervals (lag spikes)
+            ac.flag(p, "speed (" + String.format("%.2f", speed) + "b/t)", 1);
         }
 
         // Fly check: significant upward motion without a ground block below
-        if (dy > 0.42 && !p.isOnGround()) {
+        if (dy > 0.55 && !p.isOnGround()) {
             Location below = p.getLocation().clone().add(0, -1.1, 0);
             if (below.getBlock().getType() == org.bukkit.Material.AIR && !p.hasPotionEffect(org.bukkit.potion.PotionEffectType.JUMP)) {
-                ac.flag(p, "fly (dy=" + String.format("%.2f", dy) + ")", 2);
+                ac.flag(p, "fly (dy=" + String.format("%.2f", dy) + ")", 1);
             }
         }
     }

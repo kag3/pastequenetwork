@@ -22,8 +22,8 @@ public class AntiCheatManager {
 
     // Thresholds
     public static final double MAX_REACH_SQ = 4.5 * 4.5;   // 4.5 blocks hit reach
-    public static final double MAX_HORIZONTAL_PER_TICK = 0.7; // sprinting ~0.28, jumping ~0.4
-    public static final int KICK_VL = 20;
+    public static final double MAX_HORIZONTAL_PER_TICK = 1.2; // sprinting ~0.28, sprint-jump ~0.7, sprint-jump on ice ~1.0
+    public static final int KICK_VL = 30;
 
     public AntiCheatManager(PastequeSkyblockPlugin plugin) {
         this.plugin = plugin;
