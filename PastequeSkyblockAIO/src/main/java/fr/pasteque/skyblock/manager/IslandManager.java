@@ -7,6 +7,7 @@ import fr.pasteque.skyblock.model.Island;
 import fr.pasteque.skyblock.model.IslandRollback;
 import fr.pasteque.skyblock.util.LocationUtil;
 import org.bukkit.*;
+import org.bukkit.TreeType;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.configuration.ConfigurationSection;
@@ -406,6 +407,7 @@ public class IslandManager {
         chest.getBlockInventory().addItem(new ItemStack(Material.SEEDS, 16));
         chest.getBlockInventory().addItem(new ItemStack(Material.BREAD, 6));
         chest.update(true);
+        cleanupFloatingDecorations(world, cx, cz, y, y + 20, 20);
         island.setHome(new Location(world, cx + 0.5D, topY + 1.0D, cz + 0.5D));
     }
 
@@ -420,94 +422,44 @@ public class IslandManager {
                 world.getBlockAt(x, topY, z).setType(Material.WOOD);
         Random rng = new Random(seed);
 
-        // --- Big jungle tree 1 (thick trunk, wide canopy, vines) ---
+        // --- Big jungle tree (vanilla 2x2) ---
         int t1x = cx - 5;
         int t1z = cz - 5;
-        int t1base = getTopY(world, t1x, t1z, y, y + 14) + 1;
-        // 2x2 thick trunk, 9 blocks tall
-        for (int i = 0; i < 9; i++) {
-            for (int tx = 0; tx <= 1; tx++) {
-                for (int tz = 0; tz <= 1; tz++) {
-                    world.getBlockAt(t1x + tx, t1base + i, t1z + tz).setType(Material.LOG);
-                    world.getBlockAt(t1x + tx, t1base + i, t1z + tz).setData((byte) 3);
-                }
-            }
-        }
-        // Wide canopy (radius 4)
-        for (int lx = t1x - 4; lx <= t1x + 5; lx++) {
-            for (int lz = t1z - 4; lz <= t1z + 5; lz++) {
-                for (int ly = t1base + 6; ly <= t1base + 9; ly++) {
-                    double dx = lx - (t1x + 0.5D);
-                    double dz = lz - (t1z + 0.5D);
-                    double dist = Math.sqrt(dx * dx + dz * dz);
-                    int maxR = (ly == t1base + 9) ? 2 : (ly == t1base + 8) ? 3 : 4;
-                    if (dist <= maxR + 0.5D && world.getBlockAt(lx, ly, lz).getType() == Material.AIR) {
-                        world.getBlockAt(lx, ly, lz).setType(Material.LEAVES);
-                        world.getBlockAt(lx, ly, lz).setData((byte) 3);
-                    }
-                }
-            }
-        }
-        // Vines hanging from canopy and trunk
-        for (int vy = t1base + 1; vy <= t1base + 7; vy++) {
-            if (rng.nextInt(3) == 0) world.getBlockAt(t1x - 1, vy, t1z).setType(Material.VINE);
-            if (rng.nextInt(3) == 0) world.getBlockAt(t1x + 2, vy, t1z + 1).setType(Material.VINE);
-            if (rng.nextInt(3) == 0) world.getBlockAt(t1x, vy, t1z - 1).setType(Material.VINE);
-            if (rng.nextInt(3) == 0) world.getBlockAt(t1x + 1, vy, t1z + 2).setType(Material.VINE);
-        }
-        // Cocoa beans on trunk
-        world.getBlockAt(t1x - 1, t1base + 3, t1z).setType(Material.COCOA);
-        world.getBlockAt(t1x + 2, t1base + 4, t1z + 1).setType(Material.COCOA);
-
-        // --- Jungle tree 2 (smaller, single trunk) ---
-        int t2x = cx + 6;
-        int t2z = cz - 3;
-        int t2base = getTopY(world, t2x, t2z, y, y + 14) + 1;
-        for (int i = 0; i < 7; i++) {
-            world.getBlockAt(t2x, t2base + i, t2z).setType(Material.LOG);
-            world.getBlockAt(t2x, t2base + i, t2z).setData((byte) 3);
-        }
-        for (int lx = t2x - 3; lx <= t2x + 3; lx++) {
-            for (int lz = t2z - 3; lz <= t2z + 3; lz++) {
-                for (int ly = t2base + 4; ly <= t2base + 7; ly++) {
-                    int md = Math.abs(lx - t2x) + Math.abs(lz - t2z);
-                    int maxD = (ly >= t2base + 6) ? 2 : 3;
-                    if (md <= maxD && world.getBlockAt(lx, ly, lz).getType() == Material.AIR) {
-                        world.getBlockAt(lx, ly, lz).setType(Material.LEAVES);
-                        world.getBlockAt(lx, ly, lz).setData((byte) 3);
-                    }
-                }
-            }
-        }
-        // Vines hanging down from tree 2 canopy
-        for (int vy = t2base + 1; vy <= t2base + 5; vy++) {
-            if (rng.nextInt(3) == 0) world.getBlockAt(t2x - 1, vy, t2z).setType(Material.VINE);
-            if (rng.nextInt(3) == 0) world.getBlockAt(t2x, vy, t2z + 1).setType(Material.VINE);
+        int t1base = getTopY(world, t1x, t1z, y, y + 14);
+        if (t1base > y && world.getBlockAt(t1x, t1base, t1z).getType() == Material.GRASS) {
+            world.generateTree(new Location(world, t1x, t1base + 1, t1z), TreeType.JUNGLE);
         }
 
-        // --- Jungle tree 3 (medium) ---
-        int t3x = cx - 2;
-        int t3z = cz + 7;
-        int t3base = getTopY(world, t3x, t3z, y, y + 14) + 1;
-        for (int i = 0; i < 6; i++) {
-            world.getBlockAt(t3x, t3base + i, t3z).setType(Material.LOG);
-            world.getBlockAt(t3x, t3base + i, t3z).setData((byte) 3);
-        }
-        for (int lx = t3x - 2; lx <= t3x + 2; lx++) {
-            for (int lz = t3z - 2; lz <= t3z + 2; lz++) {
-                for (int ly = t3base + 3; ly <= t3base + 6; ly++) {
-                    int md = Math.abs(lx - t3x) + Math.abs(lz - t3z);
-                    if (md <= 3 && world.getBlockAt(lx, ly, lz).getType() == Material.AIR) {
-                        world.getBlockAt(lx, ly, lz).setType(Material.LEAVES);
-                        world.getBlockAt(lx, ly, lz).setData((byte) 3);
-                    }
-                }
+        // --- Small jungle trees ---
+        int[][] smallTreeSpots = {{cx + 6, cz - 3}, {cx - 2, cz + 7}};
+        for (int ti = 0; ti < smallTreeSpots.length; ti++) {
+            int stx = smallTreeSpots[ti][0];
+            int stz = smallTreeSpots[ti][1];
+            int stBase = getTopY(world, stx, stz, y, y + 14);
+            if (stBase > y && world.getBlockAt(stx, stBase, stz).getType() == Material.GRASS) {
+                world.generateTree(new Location(world, stx, stBase + 1, stz), TreeType.SMALL_JUNGLE);
             }
         }
-        for (int vy = t3base + 1; vy <= t3base + 4; vy++) {
-            if (rng.nextInt(3) == 0) world.getBlockAt(t3x + 1, vy, t3z - 1).setType(Material.VINE);
+
+        // --- Jungle bushes (1-2) ---
+        int bushCount = 1 + rng.nextInt(2);
+        int[][] bushSpots = {{cx + 3, cz + 5}, {cx - 7, cz + 2}};
+        for (int bi = 0; bi < bushCount; bi++) {
+            int bx = bushSpots[bi][0];
+            int bz = bushSpots[bi][1];
+            int bBase = getTopY(world, bx, bz, y, y + 14);
+            if (bBase > y && world.getBlockAt(bx, bBase, bz).getType() == Material.GRASS) {
+                world.generateTree(new Location(world, bx, bBase + 1, bz), TreeType.JUNGLE_BUSH);
+            }
         }
-        world.getBlockAt(t3x - 1, t3base + 2, t3z).setType(Material.COCOA);
+
+        // --- Cocoa tree ---
+        int ctx = cx + 4;
+        int ctz = cz - 6;
+        int ctBase = getTopY(world, ctx, ctz, y, y + 14);
+        if (ctBase > y && world.getBlockAt(ctx, ctBase, ctz).getType() == Material.GRASS) {
+            world.generateTree(new Location(world, ctx, ctBase + 1, ctz), TreeType.COCOA_TREE);
+        }
 
         // Dense tall grass and ferns
         for (int i = 0; i < 25; i++) {
@@ -534,6 +486,7 @@ public class IslandManager {
         chest.getBlockInventory().addItem(new ItemStack(Material.SEEDS, 16));
         chest.getBlockInventory().addItem(new ItemStack(Material.BREAD, 6));
         chest.update(true);
+        cleanupFloatingDecorations(world, cx, cz, y, y + 20, 20);
         island.setHome(new Location(world, cx + 0.5D, topY + 1.0D, cz + 0.5D));
     }
 
@@ -606,6 +559,7 @@ public class IslandManager {
         chest.getBlockInventory().addItem(new ItemStack(Material.SEEDS, 16));
         chest.getBlockInventory().addItem(new ItemStack(Material.BREAD, 6));
         chest.update(true);
+        cleanupFloatingDecorations(world, cx, cz, y, y + 20, 20);
         island.setHome(new Location(world, cx + 0.5D, topY + 1.0D, cz + 0.5D));
     }
 
@@ -758,6 +712,7 @@ public class IslandManager {
         chest.getBlockInventory().addItem(new ItemStack(Material.SEEDS, 16));
         chest.getBlockInventory().addItem(new ItemStack(Material.BREAD, 6));
         chest.update(true);
+        cleanupFloatingDecorations(world, cx, cz, y, y + 20, 20);
         island.setHome(new Location(world, cx + 0.5D, topY + 1.0D, cz + 0.5D));
     }
 
@@ -773,6 +728,7 @@ public class IslandManager {
         int mBase = getTopY(world, mX, mZ, y, y + 12) + 1;
         for (int i = 0; i < 7; i++) {
             world.getBlockAt(mX, mBase + i, mZ).setType(Material.HUGE_MUSHROOM_2); // stem
+            world.getBlockAt(mX, mBase + i, mZ).setData((byte) 15); // stem texture all sides
         }
         // Brown cap at top (radius 4)
         for (int dx = -4; dx <= 4; dx++) {
@@ -780,10 +736,12 @@ public class IslandManager {
                 double dist = Math.sqrt(dx * dx + dz * dz);
                 if (dist <= 4.5D) {
                     world.getBlockAt(mX + dx, mBase + 7, mZ + dz).setType(Material.HUGE_MUSHROOM_1);
+                    world.getBlockAt(mX + dx, mBase + 7, mZ + dz).setData((byte) 14); // all cap
                 }
                 // Second layer for depth
                 if (dist <= 3.0D) {
                     world.getBlockAt(mX + dx, mBase + 8, mZ + dz).setType(Material.HUGE_MUSHROOM_1);
+                    world.getBlockAt(mX + dx, mBase + 8, mZ + dz).setData((byte) 14); // all cap
                 }
             }
         }
@@ -794,6 +752,7 @@ public class IslandManager {
         // Stem (HUGE_MUSHROOM_2)
         for (int i = 0; i < 6; i++) {
             world.getBlockAt(rX, rBase + i, rZ).setType(Material.HUGE_MUSHROOM_2);
+            world.getBlockAt(rX, rBase + i, rZ).setData((byte) 15); // stem texture all sides
         }
         // Red mushroom cap (dome shape using HUGE_MUSHROOM_1)
         for (int dx = -3; dx <= 3; dx++) {
@@ -814,8 +773,8 @@ public class IslandManager {
             }
         }
 
-        // Scattered small mushrooms (8-12)
-        int smallCount = 8 + rng.nextInt(5);
+        // Scattered small mushrooms (15-20)
+        int smallCount = 15 + rng.nextInt(6);
         for (int i = 0; i < smallCount; i++) {
             int fx = cx - 10 + rng.nextInt(21);
             int fz = cz - 8 + rng.nextInt(17);
@@ -826,21 +785,12 @@ public class IslandManager {
             }
         }
 
-        // Grass patches between mycelium for variety
-        for (int i = 0; i < 8; i++) {
-            int gx = cx - 9 + rng.nextInt(19);
-            int gz = cz - 7 + rng.nextInt(15);
-            int gy = getTopY(world, gx, gz, y, y + 12);
-            if (gy > 0 && world.getBlockAt(gx, gy, gz).getType() == Material.MYCEL) {
-                world.getBlockAt(gx, gy, gz).setType(Material.GRASS);
-            }
-        }
-
         // Cobble gen in mossy cobble
         buildCobbleGen(world, cx + 5, topY, cz - 4, Material.MOSSY_COBBLESTONE);
         // Chest with mooshroom egg
-        world.getBlockAt(cx + 2, topY + 1, cz).setType(Material.CHEST);
-        Chest chest = (Chest) world.getBlockAt(cx + 2, topY + 1, cz).getState();
+        int chestSurfaceY = getTopY(world, cx + 2, cz, y, y + 12);
+        world.getBlockAt(cx + 2, chestSurfaceY + 1, cz).setType(Material.CHEST);
+        Chest chest = (Chest) world.getBlockAt(cx + 2, chestSurfaceY + 1, cz).getState();
         chest.getBlockInventory().clear();
         chest.getBlockInventory().addItem(new ItemStack(Material.ICE, 1));
         chest.getBlockInventory().addItem(new ItemStack(Material.WATER_BUCKET, 1));
@@ -850,6 +800,7 @@ public class IslandManager {
         chest.getBlockInventory().addItem(new ItemStack(Material.MONSTER_EGG, 1, (short) 96)); // mooshroom
         chest.getBlockInventory().addItem(new ItemStack(Material.BREAD, 6));
         chest.update(true);
+        cleanupFloatingDecorations(world, cx, cz, y, y + 20, 20);
         island.setHome(new Location(world, cx + 0.5D, topY + 1.0D, cz + 0.5D));
     }
 
@@ -867,20 +818,24 @@ public class IslandManager {
 
         int baseTop = getTopY(world, cx, cz, y, y + 16) + 1;
 
-        // --- Small pond (3x3 water surrounded by grass) ---
+        // --- Small pond (3x3 water surrounded by dirt border) ---
         int pondX = cx - 8;
         int pondZ = cz - 5;
         int pondY = getTopY(world, pondX, pondZ, y, y + 16);
         if (pondY > y) {
+            // 5x5 dirt border at water level to contain the water
+            for (int dx = -2; dx <= 2; dx++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    if (dx >= -1 && dx <= 1 && dz >= -1 && dz <= 1) continue; // skip inner 3x3
+                    world.getBlockAt(pondX + dx, pondY, pondZ + dz).setType(Material.DIRT);
+                }
+            }
+            // Place water in the inner 3x3
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dz = -1; dz <= 1; dz++) {
-                    int py = getTopY(world, pondX + dx, pondZ + dz, y, y + 16);
-                    if (py > y) {
-                        world.getBlockAt(pondX + dx, py, pondZ + dz).setType(Material.STATIONARY_WATER);
-                        // Ensure grass border
-                        world.getBlockAt(pondX + dx, py - 1, pondZ + dz).setType(Material.DIRT);
-                        clearColumnAbove(world, pondX + dx, py + 1, py + 4, pondZ + dz);
-                    }
+                    world.getBlockAt(pondX + dx, pondY, pondZ + dz).setType(Material.STATIONARY_WATER);
+                    world.getBlockAt(pondX + dx, pondY - 1, pondZ + dz).setType(Material.DIRT);
+                    clearColumnAbove(world, pondX + dx, pondY + 1, pondY + 4, pondZ + dz);
                 }
             }
             // Sugar cane by water
@@ -934,13 +889,25 @@ public class IslandManager {
             world.getBlockAt(x, farmY, farmZ + 2).setType(Material.STATIONARY_WATER);
             world.getBlockAt(x, farmY + 1, farmZ + 2).setType(Material.AIR);
         }
-        // Fence border around farm
+        // Fence border around farm (place dirt support if block below is air)
         for (int x = farmX - 1; x <= farmX + 7; x++) {
+            if (world.getBlockAt(x, farmY - 1, farmZ - 1).getType() == Material.AIR) {
+                world.getBlockAt(x, farmY - 1, farmZ - 1).setType(Material.DIRT);
+            }
             world.getBlockAt(x, farmY, farmZ - 1).setType(Material.FENCE);
+            if (world.getBlockAt(x, farmY - 1, farmZ + 5).getType() == Material.AIR) {
+                world.getBlockAt(x, farmY - 1, farmZ + 5).setType(Material.DIRT);
+            }
             world.getBlockAt(x, farmY, farmZ + 5).setType(Material.FENCE);
         }
         for (int z = farmZ - 1; z <= farmZ + 5; z++) {
+            if (world.getBlockAt(farmX - 1, farmY - 1, z).getType() == Material.AIR) {
+                world.getBlockAt(farmX - 1, farmY - 1, z).setType(Material.DIRT);
+            }
             world.getBlockAt(farmX - 1, farmY, z).setType(Material.FENCE);
+            if (world.getBlockAt(farmX + 7, farmY - 1, z).getType() == Material.AIR) {
+                world.getBlockAt(farmX + 7, farmY - 1, z).setType(Material.DIRT);
+            }
             world.getBlockAt(farmX + 7, farmY, z).setType(Material.FENCE);
         }
         // Farm gate entrance
@@ -1022,6 +989,7 @@ public class IslandManager {
             }
         }
 
+        cleanupFloatingDecorations(world, cx, cz, y, y + 20, 24);
         island.setHome(new Location(world, cx + 0.5D, baseTop + 1.0D, cz + 0.5D));
     }
 
@@ -1133,6 +1101,21 @@ public class IslandManager {
         placeLantern(world, targetX + 16, fieldY + 1, targetZ + 11);
 
         island.setFarmingHome(new Location(world, targetX + 0.5D, fieldY + 1.0D, targetZ + 0.5D));
+    }
+
+    private void cleanupFloatingDecorations(World world, int cx, int cz, int fromY, int toY, int radius) {
+        for (int x = cx - radius; x <= cx + radius; x++) {
+            for (int z = cz - radius; z <= cz + radius; z++) {
+                for (int yy = fromY; yy <= toY; yy++) {
+                    Block block = world.getBlockAt(x, yy, z);
+                    Material type = block.getType();
+                    if ((type == Material.FENCE || type == Material.TORCH || type == Material.FENCE_GATE)
+                            && world.getBlockAt(x, yy - 1, z).getType() == Material.AIR) {
+                        block.setType(Material.AIR);
+                    }
+                }
+            }
+        }
     }
 
     private int getTopY(World world, int x, int z, int minY, int maxY) {

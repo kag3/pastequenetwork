@@ -171,7 +171,10 @@ public class ArenaWorldService {
      */
     public Location getSpawn1(int matchId, int offsetX) {
         Location center = getMatchCenter(matchId);
-        return center.clone().add(offsetX, 1, 0);
+        Location spawn = center.clone().add(offsetX, 1, 0);
+        spawn.setYaw(-90.0F); // Face toward negative X (toward spawn2)
+        spawn.setPitch(0.0F);
+        return spawn;
     }
 
     /**
@@ -179,7 +182,10 @@ public class ArenaWorldService {
      */
     public Location getSpawn2(int matchId, int offsetX) {
         Location center = getMatchCenter(matchId);
-        return center.clone().add(-offsetX, 1, 0);
+        Location spawn = center.clone().add(-offsetX, 1, 0);
+        spawn.setYaw(90.0F); // Face toward positive X (toward spawn1)
+        spawn.setPitch(0.0F);
+        return spawn;
     }
 
     /**

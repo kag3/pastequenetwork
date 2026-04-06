@@ -24,6 +24,7 @@ public class EndEventManager {
     private final Map<UUID, Double> damage = new HashMap<UUID, Double>();
     private long lastDailyLaunchDay = -1L;
     private long lastReminderMinute = Long.MIN_VALUE;
+    private long lastDragonRespawnAlert = 0L;
 
     public EndEventManager(PastequeSkyblockPlugin plugin) {
         this.plugin = plugin;
@@ -46,7 +47,11 @@ public class EndEventManager {
                     if (dragon == null || dragon.isDead() || !dragon.isValid()) {
                         if (world != null) {
                             spawnTrackedDragon(world);
-                            broadcast("&d&lALERTE &fLe Pasteque Dragon revient dans l'arene !");
+                            long alertNow = System.currentTimeMillis();
+                            if (alertNow - lastDragonRespawnAlert > 60000L) {
+                                lastDragonRespawnAlert = alertNow;
+                                broadcast("&d&lALERTE &fLe Pasteque Dragon revient dans l'arene !");
+                            }
                         }
                         return;
                     }
@@ -78,6 +83,7 @@ public class EndEventManager {
         endAt = System.currentTimeMillis() + (plugin.getConfig().getLong("end-event.duration-minutes", 30L) * 60000L);
         lastHit = null;
         lastReminderMinute = Long.MIN_VALUE;
+        lastDragonRespawnAlert = 0L;
         damage.clear();
         broadcast("&d&lALERTE &fLe portail de l'End s'ouvre ! Event &dPasteque Dragon &fpendant &e30 minutes&f. Utilise &d/endevent&f !");
         if (manual) broadcast("&7(Event lance manuellement par un administrateur)");

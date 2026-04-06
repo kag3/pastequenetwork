@@ -455,6 +455,7 @@ public class DuelService {
             loser.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 20 * 8, 255));
             loser.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 20 * 8, 128));
             loser.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 20 * 2, 0));
+            loser.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 20 * 8, 0));
         }
 
         // Phase 1 (instant): dramatic titles
