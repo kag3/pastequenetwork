@@ -2,6 +2,9 @@ package fr.pasteque.skyblock;
 
 import fr.pasteque.skyblock.announce.AnnouncementManager;
 import fr.pasteque.skyblock.announce.AnnouncementListener;
+import fr.pasteque.skyblock.quest.QuestManager;
+import fr.pasteque.skyblock.quest.QuestListener;
+import fr.pasteque.skyblock.quest.QuestCommand;
 import fr.pasteque.skyblock.combatpass.CombatPassManager;
 import fr.pasteque.skyblock.combatpass.CombatPassListener;
 import fr.pasteque.skyblock.command.*;
@@ -55,6 +58,9 @@ import fr.pasteque.skyblock.gui.ScoreboardListener;
 import fr.pasteque.skyblock.gui.MenuListener;
 import fr.pasteque.skyblock.pvp.OldPvPListener;
 import fr.pasteque.skyblock.pvp.OffhandBlocker;
+import fr.pasteque.skyblock.guild.GuildManager;
+import fr.pasteque.skyblock.guild.GuildCommand;
+import fr.pasteque.skyblock.guild.GuildListener;
 import fr.pasteque.skyblock.util.MessageUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -142,6 +148,24 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
 
     /* ── Announcements ── */
     private AnnouncementManager announcementManager;
+
+    /* ── Quests ── */
+    private QuestManager questManager;
+
+    /* ── Trade ── */
+    private fr.pasteque.skyblock.trade.TradeManager tradeManager;
+
+    /* ── Guild ── */
+    private GuildManager guildManager;
+
+    /* ── Custom Enchantments ── */
+    private fr.pasteque.skyblock.enchant.EnchantManager enchantManager;
+
+    /* ── Custom Farming ── */
+    private fr.pasteque.skyblock.farming.FarmingManager farmingManager;
+
+    /* ── Dungeons ── */
+    private fr.pasteque.skyblock.dungeon.DungeonManager dungeonManager;
 
     /* ── Old PvP 1.8 ── */
     private OldPvPListener oldPvPListener;
@@ -276,6 +300,28 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         /* ── Announcements init ── */
         this.announcementManager = new AnnouncementManager(this);
 
+        /* ── Quests init ── */
+        this.questManager = new QuestManager(this);
+        this.questManager.load();
+
+        /* ── Trade init ── */
+        this.tradeManager = new fr.pasteque.skyblock.trade.TradeManager(this);
+
+        /* ── Guild init ── */
+        this.guildManager = new GuildManager(this);
+
+        /* ── Custom Enchantments init ── */
+        this.enchantManager = new fr.pasteque.skyblock.enchant.EnchantManager(this);
+        this.enchantManager.load();
+
+        /* ── Custom Farming init ── */
+        this.farmingManager = new fr.pasteque.skyblock.farming.FarmingManager(this);
+        this.farmingManager.load();
+
+        /* ── Dungeons init ── */
+        this.dungeonManager = new fr.pasteque.skyblock.dungeon.DungeonManager(this);
+        this.dungeonManager.initializeWorld();
+
         /* ── Commands ── */
         registerSkyblockCommands();
         registerGuardCommands();
@@ -291,6 +337,12 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         registerDarkAuctionCommands();
         registerSlayerCommands();
         registerStaffCommands();
+        registerQuestCommands();
+        registerTradeCommands();
+        registerGuildCommands();
+        registerEnchantCommands();
+        registerFarmingCommands();
+        registerDungeonCommands();
 
         /* ── Listeners ── */
         registerSkyblockListeners();
@@ -307,6 +359,12 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         registerDarkAuctionListeners();
         registerSlayerListeners();
         registerStaffListeners();
+        registerQuestListeners();
+        registerTradeListeners();
+        registerGuildListeners();
+        registerEnchantListeners();
+        registerFarmingListeners();
+        registerDungeonListeners();
 
         /* ── Announcement listener ── */
         registerEvents(new AnnouncementListener(announcementManager));
@@ -350,6 +408,10 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
 
         /* ── Leaderboard hologram auto-refresh (30s) ── */
         leaderboardManager.startAutoRefresh();
+
+        /* ── Auto KOTH scheduler (Wed/Sat 16h) ── */
+        new fr.pasteque.skyblock.serverevent.AutoKothScheduler(this).start();
+
     }
 
     @Override
@@ -409,6 +471,11 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
             slayerManager.save();
         }
 
+        /* Quest save */
+        if (questManager != null) {
+            questManager.save();
+        }
+
         /* PastequeMyLittleShop save */
         if (playerShopManager != null) {
             playerShopManager.save();
@@ -417,6 +484,17 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         /* PastequeSkyBlockArena save */
         safeZoneService.save();
         playerDataService.save();
+
+        /* Guild save */
+        if (guildManager != null) {
+            guildManager.save();
+        }
+
+        /* Enchant save */
+        if (enchantManager != null) enchantManager.save();
+
+        /* Farming save */
+        if (farmingManager != null) farmingManager.save();
 
         /* NPC / Leaderboard / DailyReward save */
         if (npcManager != null) npcManager.save();
@@ -514,6 +592,30 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
         bind("staff", new StaffCommand(this, staffModeManager));
     }
 
+    private void registerQuestCommands() {
+        bind("quest", new QuestCommand(this, questManager));
+    }
+
+    private void registerTradeCommands() {
+        bind("trade", new fr.pasteque.skyblock.trade.TradeCommand(this, tradeManager));
+    }
+
+    private void registerGuildCommands() {
+        bind("guild", new GuildCommand(this, guildManager));
+    }
+
+    private void registerEnchantCommands() {
+        bind("enchant", new fr.pasteque.skyblock.enchant.EnchantCommand(this, enchantManager));
+    }
+
+    private void registerFarmingCommands() {
+        bind("farming", new fr.pasteque.skyblock.farming.FarmingCommand(this, farmingManager));
+    }
+
+    private void registerDungeonCommands() {
+        bind("dungeon", new fr.pasteque.skyblock.dungeon.DungeonCommand(this, dungeonManager));
+    }
+
     private void registerArenaCommands() {
         ArenaCommand arenaCommand = new ArenaCommand(this, arenaWorldService);
         ArenaLevelCommand levelCommand = new ArenaLevelCommand(this, playerDataService, arenaLevelService);
@@ -608,6 +710,31 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
 
     private void registerStaffListeners() {
         registerEvents(new StaffListener(this, staffModeManager));
+    }
+
+    private void registerQuestListeners() {
+        registerEvents(new QuestListener(this, questManager));
+    }
+
+    private void registerTradeListeners() {
+        registerEvents(new fr.pasteque.skyblock.trade.TradeListener(this, tradeManager));
+    }
+
+    private void registerGuildListeners() {
+        registerEvents(new GuildListener(this, guildManager));
+    }
+
+    private void registerEnchantListeners() {
+        registerEvents(new fr.pasteque.skyblock.enchant.EnchantListener(this));
+        registerEvents(new fr.pasteque.skyblock.enchant.EnchantTableListener(this, enchantManager));
+    }
+
+    private void registerFarmingListeners() {
+        registerEvents(new fr.pasteque.skyblock.farming.FarmingListener(this, farmingManager));
+    }
+
+    private void registerDungeonListeners() {
+        registerEvents(new fr.pasteque.skyblock.dungeon.DungeonListener(this, dungeonManager));
     }
 
     private void registerArenaListeners() {
@@ -791,4 +918,24 @@ public class PastequeSkyblockPlugin extends JavaPlugin {
     // =========================================================================
 
     public AnnouncementManager getAnnouncementManager() { return announcementManager; }
+
+    // =========================================================================
+    //  Quests getter
+    // =========================================================================
+
+    public QuestManager getQuestManager() { return questManager; }
+
+    // =========================================================================
+    //  Guild getter
+    // =========================================================================
+
+    public GuildManager getGuildManager() { return guildManager; }
+
+    // =========================================================================
+    //  Enchant, Farming, Dungeon getters
+    // =========================================================================
+
+    public fr.pasteque.skyblock.enchant.EnchantManager getEnchantManager() { return enchantManager; }
+    public fr.pasteque.skyblock.farming.FarmingManager getFarmingManager() { return farmingManager; }
+    public fr.pasteque.skyblock.dungeon.DungeonManager getDungeonManager() { return dungeonManager; }
 }

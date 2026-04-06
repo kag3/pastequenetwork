@@ -99,6 +99,24 @@ commands:
   dailychest:
     description: Donner un coffre de recompense quotidienne (admin)
     aliases: [dailyreward]
+  quest:
+    description: Systeme de missions/quetes
+    aliases: [quests, missions, mission]
+  trade:
+    description: Systeme d'echange securise entre joueurs
+    aliases: [echange]
+  guild:
+    description: Systeme de guildes
+    aliases: [guilde, guilds]
+  enchant:
+    description: Enchantements custom
+    aliases: [enchants, enchantement]
+  farming:
+    description: Systeme de farming custom
+    aliases: [farm, cultures]
+  dungeon:
+    description: Systeme de donjons
+    aliases: [donjons, donjon, dungeons]
 
 permissions:
   pastequeskyblock.admin:
