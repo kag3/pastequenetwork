@@ -131,7 +131,7 @@ import java.util.UUID;
  *     amount: 1
  *     money-reward: 1000
  *     xp-reward: 100
- *     next-quest: ""
+ *     next-quest: "first_enchant"
  *     npc: ""
  *     first-join: false
  * </pre>
@@ -193,6 +193,75 @@ public class QuestManager {
                     moneyReward, xpReward, nextQuestId, npcName, firstJoin);
             quests.put(id, quest);
         }
+        // =====================================================================
+        // Post-tutorial default quests (11-20) — created if missing from config
+        // =====================================================================
+        boolean addedDefaults = false;
+
+        if (!quests.containsKey("first_enchant")) {
+            quests.put("first_enchant", new Quest("first_enchant", "&aEnchantement", "Appliquez 1 enchantement personnalise.",
+                    QuestType.CRAFT_ITEM, "ANY", 1, 500, 50, "farm_crops", "", false));
+            addedDefaults = true;
+        }
+        if (!quests.containsKey("farm_crops")) {
+            quests.put("farm_crops", new Quest("farm_crops", "&aRecolte de cultures", "Recoltez 20 cultures personnalisees.",
+                    QuestType.BREAK_BLOCK, "ANY", 20, 800, 80, "join_guild", "", false));
+            addedDefaults = true;
+        }
+        if (!quests.containsKey("join_guild")) {
+            quests.put("join_guild", new Quest("join_guild", "&aRejoindre une guilde", "Rejoignez une guilde.",
+                    QuestType.REACH_LEVEL, "GUILD", 1, 1000, 100, "trade_player", "", false));
+            addedDefaults = true;
+        }
+        if (!quests.containsKey("trade_player")) {
+            quests.put("trade_player", new Quest("trade_player", "&aEchange joueur", "Completez 1 echange avec un joueur.",
+                    QuestType.REACH_LEVEL, "TRADE", 1, 500, 50, "kill_arena", "", false));
+            addedDefaults = true;
+        }
+        if (!quests.containsKey("kill_arena")) {
+            quests.put("kill_arena", new Quest("kill_arena", "&aTueur d'arene", "Tuez 10 joueurs dans l'arene.",
+                    QuestType.KILL_MOB, "PLAYER", 10, 2000, 200, "complete_dungeon", "", false));
+            addedDefaults = true;
+        }
+        if (!quests.containsKey("complete_dungeon")) {
+            quests.put("complete_dungeon", new Quest("complete_dungeon", "&aDonjon termine", "Terminez 1 donjon.",
+                    QuestType.REACH_LEVEL, "DUNGEON", 1, 3000, 300, "reach_farming5", "", false));
+            addedDefaults = true;
+        }
+        if (!quests.containsKey("reach_farming5")) {
+            quests.put("reach_farming5", new Quest("reach_farming5", "&aFarming niveau 5", "Atteignez le niveau 5 en farming.",
+                    QuestType.REACH_LEVEL, "FARMING", 5, 2000, 200, "earn_50k", "", false));
+            addedDefaults = true;
+        }
+        if (!quests.containsKey("earn_50k")) {
+            quests.put("earn_50k", new Quest("earn_50k", "&aFortune", "Atteignez 50000 pasteques.",
+                    QuestType.REACH_LEVEL, "MONEY", 50000, 5000, 500, "slayer_boss", "", false));
+            addedDefaults = true;
+        }
+        if (!quests.containsKey("slayer_boss")) {
+            quests.put("slayer_boss", new Quest("slayer_boss", "&aChasseur de boss", "Tuez 5 boss slayer.",
+                    QuestType.KILL_MOB, "ANY", 5, 3000, 300, "island_level10", "", false));
+            addedDefaults = true;
+        }
+        if (!quests.containsKey("island_level10")) {
+            quests.put("island_level10", new Quest("island_level10", "&aIle niveau 10", "Atteignez le niveau 10 sur votre ile.",
+                    QuestType.REACH_LEVEL, "ISLAND", 10, 10000, 1000, "", "", false));
+            addedDefaults = true;
+        }
+
+        // Chain visit_arena into post-tutorial quests
+        Quest visitArena = quests.get("visit_arena");
+        if (visitArena != null && (visitArena.getNextQuestId() == null || visitArena.getNextQuestId().isEmpty())) {
+            quests.put("visit_arena", new Quest(visitArena.getId(), visitArena.getName(), visitArena.getDescription(),
+                    visitArena.getType(), visitArena.getTarget(), visitArena.getAmount(),
+                    visitArena.getMoneyReward(), visitArena.getXpReward(), "first_enchant",
+                    visitArena.getNpcName(), visitArena.isFirstJoin()));
+        }
+
+        if (addedDefaults) {
+            plugin.getLogger().info("[Quests] Quetes post-tutoriel par defaut ajoutees.");
+        }
+
         plugin.getLogger().info("[Quests] " + quests.size() + " quete(s) chargee(s).");
         loadProgress();
     }
