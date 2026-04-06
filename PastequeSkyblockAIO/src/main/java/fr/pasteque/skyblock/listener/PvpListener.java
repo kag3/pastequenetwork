@@ -18,8 +18,12 @@ public class PvpListener implements Listener {
         if (!(event.getEntity() instanceof Player) || !(event.getDamager() instanceof Player)) return;
         Player victim = (Player) event.getEntity();
         Player damager = (Player) event.getDamager();
-        if (victim.getWorld() != null && victim.getWorld().getName().equalsIgnoreCase(plugin.getConfig().getString("external-arena-world-name", "skyblockarena"))) {
-            return;
+        if (victim.getWorld() != null) {
+            String worldName = victim.getWorld().getName().toLowerCase();
+            String arenaWorld = plugin.getConfig().getString("external-arena-world-name", "skyblockarena").toLowerCase();
+            if (worldName.equals(arenaWorld) || worldName.equals("skyblockduels") || worldName.equals("skyblockkoth")) {
+                return;
+            }
         }
         boolean allowed = plugin.getPvpManager().isPvp(victim.getLocation());
         if (!allowed && plugin.getIslandManager().isSkyblockWorld(victim.getLocation())) {
@@ -37,8 +41,12 @@ public class PvpListener implements Listener {
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
         Player victim = event.getEntity();
-        if (victim.getWorld() != null && victim.getWorld().getName().equalsIgnoreCase(plugin.getConfig().getString("external-arena-world-name", "skyblockarena"))) {
-            return;
+        if (victim.getWorld() != null) {
+            String worldName = victim.getWorld().getName().toLowerCase();
+            String arenaWorld = plugin.getConfig().getString("external-arena-world-name", "skyblockarena").toLowerCase();
+            if (worldName.equals(arenaWorld) || worldName.equals("skyblockduels") || worldName.equals("skyblockkoth")) {
+                return;
+            }
         }
         Player killer = victim.getKiller();
         if (killer == null) return;

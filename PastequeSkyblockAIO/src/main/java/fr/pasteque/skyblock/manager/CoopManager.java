@@ -389,52 +389,91 @@ public class CoopManager {
         return Material.COAL_ORE;
     }
 
+    @SuppressWarnings("deprecation")
     public void generateStarterIsland(CoopIsland island, int players) {
         World world = plugin.getWorldManager().getOrCreateCoopWorld();
         int y = plugin.getConfig().getInt("worlds.coop-y", 100);
         int cx = island.getCenterX();
         int cz = island.getCenterZ();
         int radius = 24 + (players * 4);
-        sculptIsland(world, cx, y + 1, cz, radius, radius - 3, 3, Material.GRASS, Material.DIRT, (cx * 13L) ^ (cz * 31L) ^ players);
+        long seed = (cx * 13L) ^ (cz * 31L) ^ players;
+        sculptIsland(world, cx, y + 1, cz, radius, radius - 3, 3, Material.GRASS, Material.DIRT, seed);
+        Random deco = new Random((cx * 101L) ^ (cz * 59L) ^ (players * 13L));
 
         int plazaY = getTop(world, cx, cz, y - 4, y + 20) + 1;
-        for (int x = cx - 6; x <= cx + 6; x++) {
-            for (int z = cz - 6; z <= cz + 6; z++) {
+
+        // --- Central meeting platform (small 5x5 wooden area) ---
+        for (int x = cx - 2; x <= cx + 2; x++) {
+            for (int z = cz - 2; z <= cz + 2; z++) {
                 world.getBlockAt(x, plazaY, z).setType(Material.WOOD);
                 world.getBlockAt(x, plazaY - 1, z).setType(Material.DIRT);
                 clearAbove(world, x, plazaY + 1, z, 8);
             }
         }
-
-        Random deco = new Random((cx * 101L) ^ (cz * 59L) ^ (players * 13L));
-        for (int i = 0; i < 10; i++) {
-            int tx = cx - radius + 10 + deco.nextInt((radius * 2) - 20);
-            int tz = cz - radius + 10 + deco.nextInt((radius * 2) - 20);
-            int top = getTop(world, tx, tz, y - 4, y + 20) + 1;
-            for (int ox = -1; ox <= 1; ox++) {
-                world.getBlockAt(tx + ox, top, tz).setType(Material.WOOD);
-                world.getBlockAt(tx + ox, top - 1, tz).setType(Material.DIRT);
+        // Fence railing around platform edges
+        for (int x = cx - 2; x <= cx + 2; x++) {
+            if (x != cx) {
+                world.getBlockAt(x, plazaY + 1, cz - 2).setType(Material.FENCE);
+                world.getBlockAt(x, plazaY + 1, cz + 2).setType(Material.FENCE);
+            }
+        }
+        for (int z = cz - 2; z <= cz + 2; z++) {
+            if (z != cz) {
+                world.getBlockAt(cx - 2, plazaY + 1, z).setType(Material.FENCE);
+                world.getBlockAt(cx + 2, plazaY + 1, z).setType(Material.FENCE);
             }
         }
 
-        int treeCount = Math.max(3, Math.min(8, players + 2));
+        // --- Lanterns on fence posts at platform corners ---
+        placeLantern(world, cx - 2, plazaY + 1, cz - 2);
+        placeLantern(world, cx + 2, plazaY + 1, cz - 2);
+        placeLantern(world, cx - 2, plazaY + 1, cz + 2);
+        placeLantern(world, cx + 2, plazaY + 1, cz + 2);
+
+        // --- 4-6 trees spread naturally around the island ---
+        int treeCount = 4 + deco.nextInt(3);
         for (int i = 0; i < treeCount; i++) {
             double angle = (Math.PI * 2D / treeCount) * i + 0.35D + (deco.nextDouble() * 0.7D);
             int dist = (radius - 11) + deco.nextInt(5);
             int tx = cx + (int) Math.round(Math.cos(angle) * dist);
             int tz = cz + (int) Math.round(Math.sin(angle) * dist);
-            int ty = getTop(world, tx, tz, y - 4, y + 20) + 1;
-            placeNaturalTree(world, tx, ty, tz);
+            int ty = getTop(world, tx, tz, y - 4, y + 20);
+            if (ty > y && world.getBlockAt(tx, ty, tz).getType() == Material.GRASS) {
+                placeNaturalTree(world, tx, ty + 1, tz);
+            }
         }
 
+        // --- Small farm plots (one per player slot, 3x3 each) arranged in a circle ---
+        int farmSlots = Math.max(2, players);
+        for (int i = 0; i < farmSlots; i++) {
+            double angle = (Math.PI * 2D / farmSlots) * i + 0.5D;
+            int farmDist = 7 + deco.nextInt(3);
+            int fx = cx + (int) Math.round(Math.cos(angle) * farmDist);
+            int fz = cz + (int) Math.round(Math.sin(angle) * farmDist);
+            int fy = getTop(world, fx, fz, y - 4, y + 20) + 1;
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    world.getBlockAt(fx + dx, fy - 1, fz + dz).setType(Material.DIRT);
+                    if (dx == 0 && dz == 0) {
+                        world.getBlockAt(fx + dx, fy, fz + dz).setType(Material.STATIONARY_WATER);
+                        clearAbove(world, fx + dx, fy + 1, fz + dz, 4);
+                    } else {
+                        world.getBlockAt(fx + dx, fy, fz + dz).setType(Material.SOIL);
+                        world.getBlockAt(fx + dx, fy + 1, fz + dz).setType(Material.CROPS);
+                    }
+                }
+            }
+        }
+
+        // --- Chests in visible locations near the center (one per player) ---
         for (int i = 0; i < Math.max(2, players); i++) {
-            double angle = (Math.PI * 2D / Math.max(2, players)) * i + 1.1D + (deco.nextDouble() * 0.6D);
-            int dist = (radius - 14) + deco.nextInt(4);
-            int tx = cx + (int) Math.round(Math.cos(angle) * dist);
-            int tz = cz + (int) Math.round(Math.sin(angle) * dist);
-            int topY = getTop(world, tx, tz, y - 4, y + 20) + 1;
-            world.getBlockAt(tx, topY, tz).setType(Material.CHEST);
-            Chest chest = (Chest) world.getBlockAt(tx, topY, tz).getState();
+            double angle = (Math.PI * 2D / Math.max(2, players)) * i + 2.5D;
+            int chestDist = 4 + deco.nextInt(2);
+            int chestX = cx + (int) Math.round(Math.cos(angle) * chestDist);
+            int chestZ = cz + (int) Math.round(Math.sin(angle) * chestDist);
+            int topY = getTop(world, chestX, chestZ, y - 4, y + 20) + 1;
+            world.getBlockAt(chestX, topY, chestZ).setType(Material.CHEST);
+            Chest chest = (Chest) world.getBlockAt(chestX, topY, chestZ).getState();
             chest.getBlockInventory().clear();
             chest.getBlockInventory().addItem(new ItemStack(Material.ICE, 1));
             chest.getBlockInventory().addItem(new ItemStack(Material.WATER_BUCKET, 1));
@@ -446,10 +485,38 @@ public class CoopManager {
             chest.update(true);
         }
 
-        for (int i = 0; i < 4; i++) {
-            int lx = cx - 10 + deco.nextInt(21);
-            int lz = cz - 10 + deco.nextInt(21);
-            placeLantern(world, lx, plazaY + 1, lz);
+        // --- Flower beds and tall grass for a natural feel ---
+        for (int i = 0; i < 18; i++) {
+            int fx = cx - radius + 8 + deco.nextInt(Math.max(1, (radius * 2) - 16));
+            int fz = cz - radius + 8 + deco.nextInt(Math.max(1, (radius * 2) - 16));
+            int fy = getTop(world, fx, fz, y - 4, y + 20);
+            if (fy > y && world.getBlockAt(fx, fy, fz).getType() == Material.GRASS
+                    && world.getBlockAt(fx, fy + 1, fz).getType() == Material.AIR) {
+                Material[] flowers = {Material.RED_ROSE, Material.YELLOW_FLOWER, Material.RED_ROSE};
+                world.getBlockAt(fx, fy + 1, fz).setType(flowers[deco.nextInt(flowers.length)]);
+            }
+        }
+        for (int i = 0; i < 25; i++) {
+            int gx = cx - radius + 8 + deco.nextInt(Math.max(1, (radius * 2) - 16));
+            int gz = cz - radius + 8 + deco.nextInt(Math.max(1, (radius * 2) - 16));
+            int gy = getTop(world, gx, gz, y - 4, y + 20);
+            if (gy > y && world.getBlockAt(gx, gy, gz).getType() == Material.GRASS
+                    && world.getBlockAt(gx, gy + 1, gz).getType() == Material.AIR) {
+                world.getBlockAt(gx, gy + 1, gz).setType(Material.LONG_GRASS);
+                world.getBlockAt(gx, gy + 1, gz).setData((byte) 1);
+            }
+        }
+
+        // --- Additional lanterns spread around the island ---
+        for (int i = 0; i < 6; i++) {
+            double angle = (Math.PI * 2D / 6) * i + 0.8D;
+            int lDist = 9 + deco.nextInt(4);
+            int lx = cx + (int) Math.round(Math.cos(angle) * lDist);
+            int lz = cz + (int) Math.round(Math.sin(angle) * lDist);
+            int ly = getTop(world, lx, lz, y - 4, y + 20);
+            if (ly > y) {
+                placeLantern(world, lx, ly + 1, lz);
+            }
         }
 
         island.setHome(new Location(world, cx + 0.5D, plazaY + 1.0D, cz + 0.5D));

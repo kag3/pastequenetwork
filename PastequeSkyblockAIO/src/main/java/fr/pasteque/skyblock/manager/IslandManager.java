@@ -906,14 +906,14 @@ public class IslandManager {
         for (int px = cx - 6; px <= cx + 7; px++) {
             int pathY = getTopY(world, px, cz, y, y + 16);
             if (pathY > y && world.getBlockAt(px, pathY, cz).getType() == Material.GRASS) {
-                world.getBlockAt(px, pathY, cz).setType(Material.GRASS_PATH);
+                world.getBlockAt(px, pathY, cz).setType(Material.GRAVEL);
             }
         }
         // Path branch to farm
         for (int pz = cz; pz <= cz + 6; pz++) {
             int pathY = getTopY(world, cx - 5, pz, y, y + 16);
             if (pathY > y && world.getBlockAt(cx - 5, pathY, pz).getType() == Material.GRASS) {
-                world.getBlockAt(cx - 5, pathY, pz).setType(Material.GRASS_PATH);
+                world.getBlockAt(cx - 5, pathY, pz).setType(Material.GRAVEL);
             }
         }
 
