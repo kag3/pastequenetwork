@@ -47,11 +47,6 @@ public class EndEventManager {
                     if (dragon == null || dragon.isDead() || !dragon.isValid()) {
                         if (world != null) {
                             spawnTrackedDragon(world);
-                            long alertNow = System.currentTimeMillis();
-                            if (alertNow - lastDragonRespawnAlert > 60000L) {
-                                lastDragonRespawnAlert = alertNow;
-                                broadcast("&d&lALERTE &fLe Pasteque Dragon revient dans l'arene !");
-                            }
                         }
                         return;
                     }
