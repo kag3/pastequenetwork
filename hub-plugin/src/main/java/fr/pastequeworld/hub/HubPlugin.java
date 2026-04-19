@@ -39,7 +39,7 @@ public class HubPlugin extends JavaPlugin implements Listener, PluginMessageList
     private static final String[] SERVER_NAMES = {
             "pastequeskyblock",
             "pastequebuild",
-            "raft",
+            "pastequebedwars",
             "labyroyale"
     };
 
@@ -231,8 +231,8 @@ public class HubPlugin extends JavaPlugin implements Listener, PluginMessageList
         // Slot 15 (row1, col6) : PastequeBuild
         gui.setItem(15, createBuildItem());
 
-        // Slot 29 (row3, col2) : Raft
-        gui.setItem(29, createRaftItem());
+        // Slot 29 (row3, col2) : BedWars
+        gui.setItem(29, createBedWarsItem());
 
         // Slot 33 (row3, col6) : LabyRoyale
         gui.setItem(33, createLabyRoyaleItem());
@@ -332,20 +332,19 @@ public class HubPlugin extends JavaPlugin implements Listener, PluginMessageList
         return item;
     }
 
-    private ItemStack createRaftItem() {
-        ItemStack item = new ItemStack(Material.BOAT);
+    private ItemStack createBedWarsItem() {
+        ItemStack item = new ItemStack(Material.BED);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(color("&9&lRaft"));
+        meta.setDisplayName(color("&c&lBedWars"));
 
         List<String> lore = new ArrayList<String>();
         lore.add("");
-        lore.add(color("&7La reproduction du jeu vid\u00e9o"));
-        lore.add(color("&bRaft &7adapt\u00e9e dans Minecraft !"));
-        lore.add(color("&7Survis sur ton radeau en pleine mer."));
+        lore.add(color("&7Le c\u00e9l\u00e8bre mode &cBedWars &7adapt\u00e9"));
+        lore.add(color("&7sur &2pasteque&d.&fworld &7! Prot\u00e8ge"));
+        lore.add(color("&7ton lit, d\u00e9truis ceux des ennemis."));
         lore.add("");
-        lore.add(color("&8&oAcc\u00e8s en 1.16.5"));
-        lore.add("");
-        lore.add(color("&7Joueurs: &a" + getCount("raft")));
+        lore.add(color("&7Modes: &aSolo &7| &bDuo &7| &cTeams"));
+        lore.add(color("&7Joueurs: &a" + getCount("pastequebedwars")));
         lore.add("");
         lore.add(color("&e\u25b6 Cliquez pour rejoindre"));
         meta.setLore(lore);
@@ -407,7 +406,7 @@ public class HubPlugin extends JavaPlugin implements Listener, PluginMessageList
                 connectToServer(player, "pastequebuild");
                 break;
             case 29:
-                connectToServer(player, "raft");
+                connectToServer(player, "pastequebedwars");
                 break;
             case 33:
                 connectToServer(player, "labyroyale");

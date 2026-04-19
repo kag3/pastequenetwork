@@ -1,0 +1,265 @@
+# ============================================================
+#  PastequeBedWars - Shop villager (prix Hypixel-style)
+# ============================================================
+# Chaque item a:
+#   material: nom Bukkit Material 1.9.4
+#   amount: quantite achetee
+#   cost: cout (IRON/GOLD/DIAMOND/EMERALD)
+#   price: quantite requise
+#   name: nom affiche
+#   data: valeur de data (optionnel, pour wool/glass...)
+#   enchants: liste optionnelle "ENCHANT:level"
+#   lore: lore optionnel
+#   permanent: true si l'item reste apres la mort
+
+categories:
+  blocks:
+    icon: "WOOL"
+    name: "&aBlocs"
+    slot: 1
+    items:
+      - id: wool
+        material: WOOL
+        data: 0  # sera remplace par la couleur de l'equipe
+        amount: 16
+        cost: IRON
+        price: 4
+        name: "&fLaine"
+        team-colored: true
+      - id: hardened_clay
+        material: STAINED_CLAY
+        data: 0
+        amount: 16
+        cost: IRON
+        price: 12
+        name: "&6Terre cuite"
+        team-colored: true
+      - id: glass
+        material: STAINED_GLASS
+        data: 0
+        amount: 4
+        cost: IRON
+        price: 12
+        name: "&fVerre"
+        team-colored: true
+      - id: endstone
+        material: ENDER_STONE
+        amount: 12
+        cost: IRON
+        price: 24
+        name: "&eEndstone"
+      - id: ladder
+        material: LADDER
+        amount: 16
+        cost: IRON
+        price: 4
+        name: "&6Echelle"
+      - id: wood
+        material: WOOD
+        amount: 16
+        cost: GOLD
+        price: 4
+        name: "&6Bois"
+      - id: obsidian
+        material: OBSIDIAN
+        amount: 4
+        cost: EMERALD
+        price: 4
+        name: "&5Obsidienne"
+
+  melee:
+    icon: "GOLD_SWORD"
+    name: "&cCorps-a-corps"
+    slot: 2
+    items:
+      - id: stone_sword
+        material: STONE_SWORD
+        amount: 1
+        cost: IRON
+        price: 10
+        name: "&fEpee en pierre"
+      - id: iron_sword
+        material: IRON_SWORD
+        amount: 1
+        cost: GOLD
+        price: 7
+        name: "&fEpee en fer"
+      - id: diamond_sword
+        material: DIAMOND_SWORD
+        amount: 1
+        cost: EMERALD
+        price: 4
+        name: "&fEpee en diamant"
+      - id: stick_kb
+        material: STICK
+        amount: 1
+        cost: GOLD
+        price: 10
+        name: "&cBaton (Knockback II)"
+        enchants:
+          - "KNOCKBACK:2"
+
+  armor:
+    icon: "CHAINMAIL_BOOTS"
+    name: "&bArmure"
+    slot: 3
+    items:
+      - id: chain_armor
+        type: armor-upgrade
+        level: 1
+        cost: IRON
+        price: 40
+        name: "&bArmure en chaine permanente"
+      - id: iron_armor
+        type: armor-upgrade
+        level: 2
+        cost: GOLD
+        price: 12
+        name: "&fArmure en fer permanente"
+      - id: diamond_armor
+        type: armor-upgrade
+        level: 3
+        cost: EMERALD
+        price: 6
+        name: "&bArmure en diamant permanente"
+
+  tools:
+    icon: "STONE_PICKAXE"
+    name: "&eOutils"
+    slot: 4
+    items:
+      - id: shears
+        material: SHEARS
+        amount: 1
+        cost: IRON
+        price: 20
+        name: "&aCisaille"
+        permanent: true
+      - id: pickaxe
+        type: pickaxe-upgrade
+        cost: IRON
+        price: 10
+        name: "&fPioche (ameliorable)"
+        permanent: true
+      - id: axe
+        type: axe-upgrade
+        cost: IRON
+        price: 10
+        name: "&fHache (ameliorable)"
+        permanent: true
+
+  ranged:
+    icon: "BOW"
+    name: "&6Arcs"
+    slot: 5
+    items:
+      - id: arrows
+        material: ARROW
+        amount: 8
+        cost: GOLD
+        price: 2
+        name: "&eFleches (x8)"
+      - id: bow
+        material: BOW
+        amount: 1
+        cost: GOLD
+        price: 12
+        name: "&aArc"
+      - id: bow_power
+        material: BOW
+        amount: 1
+        cost: GOLD
+        price: 24
+        name: "&aArc (Puissance I)"
+        enchants:
+          - "ARROW_DAMAGE:1"
+      - id: bow_power_punch
+        material: BOW
+        amount: 1
+        cost: EMERALD
+        price: 6
+        name: "&aArc (Puissance I, Recul I)"
+        enchants:
+          - "ARROW_DAMAGE:1"
+          - "ARROW_KNOCKBACK:1"
+
+  potions:
+    icon: "POTION"
+    name: "&dPotions"
+    slot: 6
+    items:
+      - id: pot_speed
+        material: POTION
+        amount: 1
+        cost: EMERALD
+        price: 1
+        name: "&bPotion de Vitesse (45s)"
+        potion-effect: "SPEED:2:900"
+      - id: pot_jump
+        material: POTION
+        amount: 1
+        cost: EMERALD
+        price: 1
+        name: "&aPotion de Saut (45s)"
+        potion-effect: "JUMP:5:900"
+      - id: pot_invis
+        material: POTION
+        amount: 1
+        cost: EMERALD
+        price: 2
+        name: "&8Potion d'Invisibilite (30s)"
+        potion-effect: "INVISIBILITY:1:600"
+
+  utility:
+    icon: "TNT"
+    name: "&aUtilitaire"
+    slot: 7
+    items:
+      - id: golden_apple
+        material: GOLDEN_APPLE
+        amount: 1
+        cost: GOLD
+        price: 3
+        name: "&6Pomme doree"
+      - id: fireball
+        material: FIREBALL
+        amount: 1
+        cost: IRON
+        price: 40
+        name: "&cBoule de feu"
+      - id: tnt
+        material: TNT
+        amount: 1
+        cost: GOLD
+        price: 4
+        name: "&cTNT"
+      - id: ender_pearl
+        material: ENDER_PEARL
+        amount: 1
+        cost: EMERALD
+        price: 4
+        name: "&5Perle de l'Ender"
+      - id: water_bucket
+        material: WATER_BUCKET
+        amount: 1
+        cost: GOLD
+        price: 3
+        name: "&9Seau d'eau"
+      - id: magic_milk
+        material: MILK_BUCKET
+        amount: 1
+        cost: GOLD
+        price: 4
+        name: "&fLait magique"
+      - id: rescue_platform
+        material: BLAZE_ROD
+        amount: 1
+        cost: IRON
+        price: 24
+        name: "&bPlateforme de sauvetage"
+      - id: bridge_egg
+        material: EGG
+        amount: 1
+        cost: EMERALD
+        price: 1
+        name: "&aOeuf pont"
