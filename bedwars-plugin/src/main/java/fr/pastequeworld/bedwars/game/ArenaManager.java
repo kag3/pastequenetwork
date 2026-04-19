@@ -4,9 +4,11 @@ import fr.pastequeworld.bedwars.BedWarsPlugin;
 import fr.pastequeworld.bedwars.config.ConfigManager;
 import fr.pastequeworld.bedwars.generator.Generator;
 import fr.pastequeworld.bedwars.generator.GeneratorType;
+import fr.pastequeworld.bedwars.map.MapAutoDetector;
 import fr.pastequeworld.bedwars.map.MapTemplate;
 import fr.pastequeworld.bedwars.map.SchematicLoader;
 import fr.pastequeworld.bedwars.map.WorldManager;
+import fr.pastequeworld.bedwars.map.WorldTemplateLoader;
 import fr.pastequeworld.bedwars.shop.ShopVillager;
 import fr.pastequeworld.bedwars.team.Team;
 import fr.pastequeworld.bedwars.ui.EventsTimelineManager;
@@ -41,6 +43,7 @@ public class ArenaManager {
     private final BedWarsPlugin plugin;
     private final WorldManager worldManager;
     private final SchematicLoader schematicLoader;
+    private final MapAutoDetector autoDetector;
     private final EventsTimelineManager eventsTimelineManager;
 
     private final Map<String, Arena> arenas = new ConcurrentHashMap<String, Arena>();
@@ -50,6 +53,7 @@ public class ArenaManager {
         this.plugin = plugin;
         this.worldManager = new WorldManager(plugin);
         this.schematicLoader = new SchematicLoader(plugin);
+        this.autoDetector = new MapAutoDetector(plugin);
         this.eventsTimelineManager = new EventsTimelineManager(plugin);
     }
 
@@ -85,25 +89,41 @@ public class ArenaManager {
         }
 
         String arenaId = "bw_" + mode.getConfigKey() + "_" + idCounter.getAndIncrement();
-        World world = worldManager.createArenaWorld(arenaId);
-        if (world == null) {
-            plugin.getLogger().warning("Impossible de creer le monde d'arene " + arenaId);
-            return null;
-        }
+        World world;
+        Location worldCorner;
 
-        // Paste corner
-        Vector offset = template.getPasteOffset();
-        Location pasteTo = new Location(world, offset.getX(), offset.getY(), offset.getZ());
-        Location worldCorner = pasteTo.clone();
+        if (template.isWorldFolderBased()) {
+            WorldTemplateLoader wtl = plugin.getMapRegistry().getWorldTemplateLoader();
+            world = wtl.copyAndLoad(template.getWorldTemplate(), arenaId);
+            if (world == null) {
+                plugin.getLogger().warning("Impossible de charger le monde template " + template.getWorldTemplate());
+                return null;
+            }
+            // Les positions detectees sont ABSOLUES dans le monde copie
+            worldCorner = new Location(world, 0, 0, 0);
 
-        File schematicFile = schematicLoader.resolveSchematic(template.getSchematic());
-        if (schematicFile.exists()) {
-            boolean ok = schematicLoader.paste(schematicFile, pasteTo);
-            if (!ok) {
-                plugin.getLogger().warning("Echec paste schematic " + template.getSchematic());
+            if (template.isAutoDetect()) {
+                autoDetector.detect(world, template, new Location(world, 0, 64, 0), 200);
             }
         } else {
-            plugin.getLogger().warning("Schematic manquante (l'arene sera vide): " + schematicFile.getAbsolutePath());
+            world = worldManager.createArenaWorld(arenaId);
+            if (world == null) {
+                plugin.getLogger().warning("Impossible de creer le monde d'arene " + arenaId);
+                return null;
+            }
+            Vector offset = template.getPasteOffset();
+            Location pasteTo = new Location(world, offset.getX(), offset.getY(), offset.getZ());
+            worldCorner = pasteTo.clone();
+
+            File schematicFile = schematicLoader.resolveSchematic(template.getSchematic());
+            if (schematicFile.exists()) {
+                boolean ok = schematicLoader.paste(schematicFile, pasteTo);
+                if (!ok) {
+                    plugin.getLogger().warning("Echec paste schematic " + template.getSchematic());
+                }
+            } else {
+                plugin.getLogger().warning("Schematic manquante (l'arene sera vide): " + schematicFile.getAbsolutePath());
+            }
         }
 
         Arena arena = new Arena(plugin, arenaId, mode, template, world, worldCorner);

@@ -41,7 +41,46 @@ public class LobbyManager {
     }
 
     public void setup() {
-        // World deja cree par ConfigManager. Ici on pourrait poser un pedestal.
+        // Paste automatique de la schematic de lobby si non deja fait.
+        // Resout depuis :
+        //   1. plugins/PastequeBedWars/schematics/BedWarsLobbyY.schematic
+        //   2. <server-root>/lobbybedwars/BedWarsLobbyY.schematic (depot GitHub)
+        //   3. plugins/PastequeBedWars/lobbybedwars/BedWarsLobbyY.schematic
+        org.bukkit.Location spawn = plugin.getConfigManager().getLobbySpawn();
+        if (spawn == null || spawn.getWorld() == null) return;
+
+        java.io.File marker = new java.io.File(plugin.getDataFolder(), ".lobby-loaded");
+        if (marker.exists()) return;
+
+        java.io.File schematic = findLobbySchematic();
+        if (schematic == null) {
+            plugin.getLogger().info("Schematic de lobby non trouvee. Le lobby sera vide.");
+            return;
+        }
+
+        fr.pastequeworld.bedwars.map.SchematicLoader loader =
+                new fr.pastequeworld.bedwars.map.SchematicLoader(plugin);
+        // Paste centre sous le spawn : on decale X/Z pour approximation
+        org.bukkit.Location paste = spawn.clone().subtract(0, 10, 0);
+        boolean ok = loader.paste(schematic, paste);
+        if (ok) {
+            try { marker.createNewFile(); } catch (java.io.IOException ignored) {}
+            plugin.getLogger().info("Lobby paste depuis " + schematic.getAbsolutePath());
+        } else {
+            plugin.getLogger().warning("Echec paste lobby depuis " + schematic.getAbsolutePath());
+        }
+    }
+
+    private java.io.File findLobbySchematic() {
+        java.io.File[] candidates = new java.io.File[] {
+                new java.io.File(plugin.getDataFolder(), "schematics/BedWarsLobbyY.schematic"),
+                new java.io.File(plugin.getDataFolder(), "schematics/lobby.schematic"),
+                new java.io.File(plugin.getDataFolder().getParentFile().getParentFile(),
+                        "lobbybedwars/BedWarsLobbyY.schematic"),
+                new java.io.File(plugin.getDataFolder(), "lobbybedwars/BedWarsLobbyY.schematic")
+        };
+        for (java.io.File f : candidates) if (f != null && f.isFile()) return f;
+        return null;
     }
 
     public void setupLobbyPlayer(Player player) {

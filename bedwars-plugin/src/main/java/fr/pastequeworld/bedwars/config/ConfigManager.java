@@ -189,16 +189,37 @@ public class ConfigManager {
     }
 
     private void ensureLobbyWorld() {
-        if (Bukkit.getWorld(lobbyWorldName) != null) return;
+        World existing = Bukkit.getWorld(lobbyWorldName);
+        if (existing != null) { applyLobbyRules(existing); return; }
         try {
             org.bukkit.WorldCreator creator = new org.bukkit.WorldCreator(lobbyWorldName);
             creator.type(org.bukkit.WorldType.FLAT);
             creator.generateStructures(false);
-            creator.createWorld();
+            World w = creator.createWorld();
+            if (w != null) applyLobbyRules(w);
             plugin.getLogger().info("Monde de lobby cree: " + lobbyWorldName);
         } catch (Exception e) {
             plugin.getLogger().warning("Impossible de creer le monde de lobby: " + e.getMessage());
         }
+    }
+
+    private void applyLobbyRules(World w) {
+        w.setSpawnFlags(false, false);
+        w.setPVP(false);
+        w.setKeepSpawnInMemory(true);
+        w.setAutoSave(true);
+        w.setStorm(false);
+        w.setThundering(false);
+        w.setTime(6000L);
+        w.setGameRuleValue("doDaylightCycle", "false");
+        w.setGameRuleValue("doWeatherCycle", "false");
+        w.setGameRuleValue("doMobSpawning", "false");
+        w.setGameRuleValue("doFireTick", "false");
+        w.setGameRuleValue("mobGriefing", "false");
+        w.setGameRuleValue("naturalRegeneration", "true");
+        w.setGameRuleValue("showDeathMessages", "false");
+        w.setGameRuleValue("announceAdvancements", "false");
+        w.setDifficulty(org.bukkit.Difficulty.PEACEFUL);
     }
 
     // === Getters ===

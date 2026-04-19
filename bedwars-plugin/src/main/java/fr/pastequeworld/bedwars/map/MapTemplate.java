@@ -29,6 +29,8 @@ public class MapTemplate {
     private String displayName;
     private String author;
     private String schematic;
+    private String worldTemplate;  // dossier monde (level.dat) a copier; null si on utilise la schematic
+    private boolean autoDetect = false;
     private List<GameMode> supportedModes = new ArrayList<GameMode>();
 
     private Vector pasteOffset = new Vector();  // offset relatif a l'origine de paste
@@ -59,6 +61,8 @@ public class MapTemplate {
         t.displayName = cfg.getString("display-name", id);
         t.author = cfg.getString("author", "");
         t.schematic = cfg.getString("schematic", id + ".schematic");
+        t.worldTemplate = cfg.getString("world-template", null);
+        t.autoDetect = cfg.getBoolean("auto-detect", false);
         for (String m : cfg.getStringList("modes")) {
             GameMode mode = GameMode.fromConfigKey(m);
             if (mode != null) t.supportedModes.add(mode);
@@ -119,7 +123,15 @@ public class MapTemplate {
     public String getDisplayName() { return displayName; }
     public String getAuthor() { return author; }
     public String getSchematic() { return schematic; }
+    public String getWorldTemplate() { return worldTemplate; }
+    public boolean isAutoDetect() { return autoDetect; }
+    public boolean isWorldFolderBased() { return worldTemplate != null && !worldTemplate.isEmpty(); }
     public List<GameMode> getSupportedModes() { return supportedModes; }
+    public void setSupportedModes(List<GameMode> modes) { this.supportedModes = modes; }
+    public void setDisplayName(String name) { this.displayName = name; }
+    public void setWorldTemplate(String wt) { this.worldTemplate = wt; }
+    public void setAutoDetect(boolean b) { this.autoDetect = b; }
+    public void setQueueSpawn(Vector v) { this.queueSpawn = v; }
     public Vector getPasteOffset() { return pasteOffset; }
     public Vector getQueueSpawn() { return queueSpawn; }
     public int getBuildRadiusMax() { return buildRadiusMax; }

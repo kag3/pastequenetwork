@@ -1,6 +1,6 @@
 package fr.pastequeworld.bedwars;
 
-import fr.pastequeworld.bedwars.arena.ArenaManager;
+import fr.pastequeworld.bedwars.game.ArenaManager;
 import fr.pastequeworld.bedwars.command.BedWarsCommand;
 import fr.pastequeworld.bedwars.command.SetupCommand;
 import fr.pastequeworld.bedwars.command.ShoutCommand;

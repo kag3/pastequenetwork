@@ -208,18 +208,22 @@ gameplay:
   # Distance a partir de laquelle un joueur est considere comme un campeur
   camper-warn-radius: 10
 
-# Maps : definit quelles maps sont disponibles par mode
-# Chaque map doit avoir un fichier de config dans maps/<id>.yml
+# Maps : definit quelles maps sont disponibles par mode.
+# Deux formats sont supportes simultanement :
+#
+# 1) YAML explicite dans plugins/PastequeBedWars/maps/<id>.yml
+#    (pour les maps schematic avec positions fixes)
+#
+# 2) Dossier de monde Minecraft auto-detecte :
+#    Les dossiers nommes "mapbedwars", "mapbedwars2", ..., "mapbedwars5"
+#    situes dans la racine du serveur (ou plugins/PastequeBedWars/maps-worlds/)
+#    sont auto-enregistres. Leurs mecanismes (lits, generateurs, shops) sont
+#    scannes automatiquement a partir des marqueurs (beds, blocs de diamant/emeraude,
+#    etc.). Aucun /bwsetup manuel n'est necessaire.
+#
+# La liste ci-dessous est en fallback pour les maps YAML. Les maps auto-detectees
+# sont utilisees par defaut pour tous les modes.
 maps:
-  solo:
-    - "aquarium"
-    - "invasion"
-    - "picnic"
-  duo:
-    - "amazon"
-    - "arcade"
-    - "castle"
-  teams:
-    - "eastwood"
-    - "aquarium"
-    - "dreamgrove"
+  solo: []
+  duo: []
+  teams: []
