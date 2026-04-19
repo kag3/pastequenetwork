@@ -1,0 +1,89 @@
+# ============================================================
+#  PastequeBedWars - Messages
+#  Tous les messages sont en francais, format Hypixel-style
+# ============================================================
+
+prefix: "&b&lBedWars &8\u00bb &r"
+separator: "&7&m-----------------------------------------------------"
+
+# Chat
+chat:
+  format-lobby: "%rank%&7%player% &8\u00bb &7%message%"
+  format-game: "%team_color%[%team_prefix%] %rank%%player% &8\u00bb &f%message%"
+  format-spectator: "&7&o[SPECTATEUR] %player% \u00bb %message%"
+  format-team: "&6[\u00c9QUIPE] %team_color%%player% &8\u00bb &f%message%"
+  format-shout: "&e[SHOUT] %team_color%%player% &8\u00bb &f%message%"
+
+# Lobby
+lobby:
+  join: "&a\u25b6 &f%player% &7a rejoint le lobby BedWars !"
+  quit: "&c\u25c0 &f%player% &7a quitte le lobby."
+  welcome-title: "&b&lBEDWARS"
+  welcome-subtitle: "&7Bienvenue sur &bpasteque&d.&fworld"
+  npc-solo: "&a&lSolo &7(Clic-droit)"
+  npc-duo: "&b&lDuo &7(Clic-droit)"
+  npc-teams: "&c&lTeams &7(Clic-droit)"
+
+# Queue
+queue:
+  joined: "%prefix%&7Vous avez rejoint la file d'attente &f%mode% &7(&a%current%&7/&a%max%&7)."
+  left: "%prefix%&7Vous avez quitte la file d'attente."
+  player-joined: "&a\u25b6 &f%player% &7a rejoint la partie &8(&a%current%&7/&a%max%&8)"
+  player-left: "&c\u25c0 &f%player% &7a quitte la partie &8(&c%current%&7/&c%max%&8)"
+  countdown: "&a\u23f1 &7La partie demarre dans &f%seconds% &7secondes..."
+  countdown-5: "&6\u23f1 &eLa partie demarre dans &f%seconds% &eseconde(s) !"
+  countdown-cancel: "&cPas assez de joueurs ! Countdown annule."
+
+# Game events
+game:
+  start-title: "&b&lBEDWARS"
+  start-subtitle: "&7Protege ton lit et detruis ceux des ennemis !"
+  bed-destroyed-title: "&c&lLIT D\u00c9TRUIT !"
+  bed-destroyed-subtitle: "&7Vous ne pouvez plus reapparaitre !"
+  bed-broken-broadcast: "%team_color%LIT %team_name% &7&o(detruit par %breaker_color%%breaker%&7&o)"
+  team-eliminated: "&c&l\u25ba &c%team_color%\u00c9quipe %team_name% &c&lELIMIN\u00c9E !"
+  victory-title: "&6&l\u2605 VICTOIRE \u2605"
+  victory-subtitle: "%team_color%%team_name% &7gagne la partie !"
+  defeat-title: "&c&lGAME OVER"
+  defeat-subtitle: "&7Votre equipe a ete eliminee."
+  respawn-title: "&c&lVOUS \u00caTES MORT"
+  respawn-subtitle: "&7Reapparition dans &f%seconds% &7secondes..."
+  respawn-now-title: "&a&lRESPAWN !"
+  respawn-now-subtitle: "&7Vous avez reapparu."
+  final-kill: "&b&lFINAL KILL !"
+  kill-message: "%killer_color%%killer% &7a tue %victim_color%%victim%"
+  final-kill-message: "%killer_color%%killer% &7a tue %victim_color%%victim% &7&l[FINAL KILL]"
+  void-death: "%victim_color%%victim% &7est tombe dans le vide"
+  fall-death: "%victim_color%%victim% &7est tombe de trop haut"
+
+# Events timeline
+events:
+  diamond-ii-announce: "&b\u25c6 Generateurs de &bDiamant Tier II &7activ\u00e9s !"
+  diamond-iii-announce: "&b\u25c6 Generateurs de &bDiamant Tier III &7activ\u00e9s !"
+  emerald-ii-announce: "&a\u25c6 Generateurs d'&aEmeraude Tier II &7activ\u00e9s !"
+  emerald-iii-announce: "&a\u25c6 Generateurs d'&aEmeraude Tier III &7activ\u00e9s !"
+  bed-destruction-announce: "&c\u25c6 &cTous les lits seront detruits !"
+  sudden-death-announce: "&c&l\u25c6 SUDDEN DEATH \u25c6 &cLes lits sont detruits !"
+  game-end-announce: "&6\u25c6 &6La partie se termine dans &f1 minute &6!"
+
+# Shop
+shop:
+  cant-afford: "%prefix%&cVous n'avez pas assez de ressources !"
+  need-currency: "&cIl vous faut &f%amount% %currency%&c."
+  purchased: "%prefix%&aAchat effectue : &f%item%"
+  upgrade-purchased: "%prefix%&aAmelioration achetee : &f%upgrade%"
+  upgrade-maxed: "%prefix%&cCette amelioration est deja au maximum !"
+  upgrade-already-active: "%prefix%&cVotre equipe possede deja cette amelioration."
+
+# Scoreboard (contenu dans ScoreboardManager mais listable ici au besoin)
+scoreboard:
+  title: "&e&lBEDWARS"
+
+# Erreurs
+errors:
+  no-permission: "%prefix%&cVous n'avez pas la permission."
+  not-in-game: "%prefix%&cVous n'etes pas en partie."
+  already-in-queue: "%prefix%&cVous etes deja en file d'attente."
+  queue-full: "%prefix%&cLa file d'attente est pleine !"
+  map-load-fail: "%prefix%&cErreur de chargement de la map."
+  no-map-available: "%prefix%&cAucune map disponible pour ce mode."
