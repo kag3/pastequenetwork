@@ -6,10 +6,12 @@
 # Nom du serveur affiche dans le scoreboard
 server-name: "pasteque.world"
 
-# Monde du lobby BedWars (ou arrivent les joueurs apres le hub)
-# Doit exister sur le serveur. Le lobby contient les NPC de selection de mode.
+# Monde du lobby BedWars (ou arrivent les joueurs apres le hub).
+# Par defaut on REMPLACE le monde "world" par le lobby : le joueur apparait
+# directement dans la bonne map, pas de teleport sale au join.
+# Si tu veux un monde de lobby separe, change ceci en "bedwars_lobby".
 lobby:
-  world: "bedwars_lobby"
+  world: "world"
   spawn:
     x: 0.5
     y: 100.0

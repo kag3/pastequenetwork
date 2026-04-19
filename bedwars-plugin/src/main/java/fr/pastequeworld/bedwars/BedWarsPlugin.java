@@ -19,6 +19,7 @@ import fr.pastequeworld.bedwars.player.PlayerDataManager;
 import fr.pastequeworld.bedwars.queue.QueueManager;
 import fr.pastequeworld.bedwars.ui.ScoreboardManager;
 import fr.pastequeworld.bedwars.ui.TabManager;
+import fr.pastequeworld.bedwars.util.ResourceExtractor;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -57,6 +58,10 @@ public class BedWarsPlugin extends JavaPlugin {
         instance = this;
 
         saveDefaultResources();
+
+        // Extraction ALL-IN-ONE: depose le JAR, et les 5 maps + le lobby sont
+        // ecrits sur disque au premier boot. Plus besoin de FTP.
+        new ResourceExtractor(this).extractOnFirstRun();
 
         this.configManager = new ConfigManager(this);
         this.configManager.load();
