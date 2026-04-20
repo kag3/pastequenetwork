@@ -12,6 +12,11 @@ server-name: "pasteque.world"
 # Si tu veux un monde de lobby separe, change ceci en "bedwars_lobby".
 lobby:
   world: "world"
+  # Au PREMIER demarrage du plugin, si world == "world", le monde vanilla genere
+  # par Spigot est supprime et remplace par un void + la schematic du lobby.
+  # Operation faite UNE SEULE FOIS (marker .world-wiped). Mets a false si tu as
+  # deja prepare le monde a la main.
+  wipe-world-on-first-run: true
   spawn:
     x: 0.5
     y: 100.0
