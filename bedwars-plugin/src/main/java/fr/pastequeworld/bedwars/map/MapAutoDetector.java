@@ -196,12 +196,17 @@ public class MapAutoDetector {
             Vector shop = shopByColor.get(color);
             Vector upg  = upgradeByColor.get(color);
 
-            // Fallback : autour du lit, un cran au-dessus
-            Vector dirToCenter = unitXZToCenter(bed, mapCenter);
-            if (iron == null) iron = bed.clone().add(new Vector(dirToCenter.getX() * 3, 1, dirToCenter.getZ() * 3));
-            if (gold == null) gold = bed.clone().add(new Vector(dirToCenter.getX() * 3 + 1, 1, dirToCenter.getZ() * 3));
-            if (shop == null) shop = bed.clone().add(new Vector(-dirToCenter.getZ() * 3, 1, dirToCenter.getX() * 3));
-            if (upg  == null) upg  = bed.clone().add(new Vector( dirToCenter.getZ() * 3, 1, -dirToCenter.getX() * 3));
+            // Fallback agencement Hypixel. Axe (forward, right) oriente vers le
+            // centre de la map, perpendiculaire pour right :
+            //   bed (arriere) -> spawn (+1 fwd) -> iron (+3 fwd, milieu de l'ile)
+            //                                   -> gold (+3 fwd, +1 right)
+            //   shops sur les bords (+4 fwd, +/-3 right)
+            Vector fwd = unitXZToCenter(bed, mapCenter);
+            Vector right = new Vector(-fwd.getZ(), 0, fwd.getX());
+            if (iron == null) iron = hypixelOffset(bed, fwd, 3, right, 0, 1);
+            if (gold == null) gold = hypixelOffset(bed, fwd, 3, right, 1, 1);
+            if (shop == null) shop = hypixelOffset(bed, fwd, 4, right, -3, 1);
+            if (upg  == null) upg  = hypixelOffset(bed, fwd, 4, right,  3, 1);
 
             template.getIronGenLocations().put(color, iron);
             template.getGoldGenLocations().put(color, gold);
@@ -211,6 +216,11 @@ public class MapAutoDetector {
 
         template.getDiamondGenLocations().addAll(diamondSpots);
         template.getEmeraldGenLocations().addAll(emeraldSpots);
+
+        // Fallback si aucun diamant/emeraude trouve : positionne selon convention
+        // Hypixel (4 diamants aux 4 points cardinaux depuis le centre, 2 emeraudes
+        // a +/- 5 blocs X du centre au niveau du centre de la map).
+        injectDiamondEmeraldFallback(template, bedByColor, mapCenter);
 
         Vector qs = template.getQueueSpawn();
         if (qs == null || (qs.getX() == 0 && qs.getY() == 0 && qs.getZ() == 0)) {
@@ -345,6 +355,48 @@ public class MapAutoDetector {
             if (!merged) result.add(v.clone());
         }
         return result;
+    }
+
+    /**
+     * Applique un offset style Hypixel a partir du lit : (forward * fDist + right * rDist + upY).
+     * Les axes forward/right sont unitaires et XZ-plan. Retourne une position entiere centree.
+     */
+    private Vector hypixelOffset(Vector bed, Vector fwd, double fDist, Vector right, double rDist, double upY) {
+        double x = bed.getX() + fwd.getX() * fDist + right.getX() * rDist + 0.5;
+        double z = bed.getZ() + fwd.getZ() * fDist + right.getZ() * rDist + 0.5;
+        double y = bed.getY() + upY;
+        return new Vector(x, y, z);
+    }
+
+    /**
+     * Si aucun diamant ou emeraude n'a ete detecte, injecte des spots par defaut
+     * a l'agencement Hypixel : 4 diamants a NSWE du centre, 2 emeraudes centrees.
+     * La distance des diamants est calculee comme 2/3 de la distance moyenne
+     * bed<->centre pour coller a la topologie de la map.
+     */
+    private void injectDiamondEmeraldFallback(MapTemplate template,
+                                              Map<TeamColor, Vector> bedByColor,
+                                              Vector mapCenter) {
+        double meanBedDist = 0; int n = 0;
+        for (Vector bed : bedByColor.values()) {
+            double dx = bed.getX() - mapCenter.getX();
+            double dz = bed.getZ() - mapCenter.getZ();
+            meanBedDist += Math.sqrt(dx * dx + dz * dz); n++;
+        }
+        if (n > 0) meanBedDist /= n;
+        double diamondR = meanBedDist > 1 ? meanBedDist * 0.55 : 25;
+        double y = mapCenter.getY();
+
+        if (template.getDiamondGenLocations().isEmpty()) {
+            template.getDiamondGenLocations().add(new Vector(mapCenter.getX() + diamondR, y, mapCenter.getZ()));
+            template.getDiamondGenLocations().add(new Vector(mapCenter.getX() - diamondR, y, mapCenter.getZ()));
+            template.getDiamondGenLocations().add(new Vector(mapCenter.getX(), y, mapCenter.getZ() + diamondR));
+            template.getDiamondGenLocations().add(new Vector(mapCenter.getX(), y, mapCenter.getZ() - diamondR));
+        }
+        if (template.getEmeraldGenLocations().isEmpty()) {
+            template.getEmeraldGenLocations().add(new Vector(mapCenter.getX() + 4, y, mapCenter.getZ()));
+            template.getEmeraldGenLocations().add(new Vector(mapCenter.getX() - 4, y, mapCenter.getZ()));
+        }
     }
 
     private Vector unitXZToCenter(Vector from, Vector mapCenter) {
