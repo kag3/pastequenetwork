@@ -15,8 +15,8 @@ import java.util.jar.JarFile;
  * Extrait les ressources "bundled/*" du JAR du plugin vers le disque du
  * serveur au premier demarrage. Objectif : "all-in-one, pose le JAR c'est fini".
  *
- * - bundled/lobbybedwars/*.schematic -> plugins/PastequeBedWars/schematics/
- * - bundled/mapbedwars{,2..5}/*      -> plugins/PastequeBedWars/maps-worlds/<id>/
+ * - bundled/lobbybedwars/*.schematic   -> plugins/PastequeBedWars/schematics/
+ * - bundled/schematics/*.schematic     -> plugins/PastequeBedWars/schematics/
  *
  * Un marqueur .extracted empeche la re-extraction a chaque boot.
  * Si l'utilisateur a modifie les fichiers, l'extraction est skip.
@@ -92,8 +92,8 @@ public class ResourceExtractor {
 
     /**
      * Mapping entre entree bundled/ et destination sur disque :
-     *   bundled/lobbybedwars/<f>          -> <plugin-data>/schematics/<f>
-     *   bundled/mapbedwars{,2..5}/<f>     -> <plugin-data>/maps-worlds/<id>/<f>
+     *   bundled/lobbybedwars/<f>     -> <plugin-data>/schematics/<f>
+     *   bundled/schematics/<f>       -> <plugin-data>/schematics/<f>
      * Les fichiers "HERE" et WorldDownloader.txt sont skip.
      */
     private File mapEntryTarget(String rel) {
@@ -108,11 +108,8 @@ public class ResourceExtractor {
         String dir = rel.substring(0, slash);
         String remainder = rel.substring(slash + 1);
 
-        if (dir.equals("lobbybedwars")) {
+        if (dir.equals("lobbybedwars") || dir.equals("schematics")) {
             return new File(plugin.getDataFolder(), "schematics/" + remainder);
-        }
-        if (dir.startsWith("mapbedwars")) {
-            return new File(plugin.getDataFolder(), "maps-worlds/" + dir + "/" + remainder);
         }
         return null;
     }

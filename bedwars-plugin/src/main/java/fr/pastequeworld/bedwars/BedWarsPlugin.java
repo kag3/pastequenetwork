@@ -15,6 +15,7 @@ import fr.pastequeworld.bedwars.listener.ShopListener;
 import fr.pastequeworld.bedwars.lobby.LobbyManager;
 import fr.pastequeworld.bedwars.lobby.NPCManager;
 import fr.pastequeworld.bedwars.map.MapRegistry;
+import fr.pastequeworld.bedwars.map.WorldWiper;
 import fr.pastequeworld.bedwars.player.PlayerDataManager;
 import fr.pastequeworld.bedwars.queue.QueueManager;
 import fr.pastequeworld.bedwars.ui.ScoreboardManager;
@@ -62,6 +63,11 @@ public class BedWarsPlugin extends JavaPlugin {
         // Extraction ALL-IN-ONE: depose le JAR, et les 5 maps + le lobby sont
         // ecrits sur disque au premier boot. Plus besoin de FTP.
         new ResourceExtractor(this).extractOnFirstRun();
+
+        // Wipe-and-rebuild : au premier boot, supprime le monde 'world' genere
+        // par Spigot et le remplace par un void pur + paste de la schematic de
+        // lobby. Doit tourner AVANT ConfigManager.load() qui charge le monde.
+        new WorldWiper(this).wipeOnFirstRun();
 
         this.configManager = new ConfigManager(this);
         this.configManager.load();

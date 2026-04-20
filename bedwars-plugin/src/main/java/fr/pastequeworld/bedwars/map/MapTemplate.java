@@ -132,6 +132,8 @@ public class MapTemplate {
     public void setWorldTemplate(String wt) { this.worldTemplate = wt; }
     public void setAutoDetect(boolean b) { this.autoDetect = b; }
     public void setQueueSpawn(Vector v) { this.queueSpawn = v; }
+    public void setSchematic(String s) { this.schematic = s; }
+    public void setPasteOffset(Vector v) { this.pasteOffset = v; }
     public Vector getPasteOffset() { return pasteOffset; }
     public Vector getQueueSpawn() { return queueSpawn; }
     public int getBuildRadiusMax() { return buildRadiusMax; }
