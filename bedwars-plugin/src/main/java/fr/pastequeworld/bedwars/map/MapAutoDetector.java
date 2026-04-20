@@ -7,37 +7,40 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.util.Vector;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Detection automatique des mecanismes d'une map de BedWars a partir des
- * blocs "marqueurs" presents sur le monde.
+ * Detection automatique + robuste des mecanismes d'une map de BedWars.
  *
- * Convention (identique aux maps Hypixel et similaires) :
- *   - BED blocks : position de la base de chaque equipe. La couleur du lit
- *     determine la couleur de l'equipe (data value).
- *   - EMERALD_BLOCK : spots d'emeraude (generalement deux au centre et au bord).
- *   - DIAMOND_BLOCK : spots de diamant (generalement 4 sur les cotes).
- *   - IRON_BLOCK (isole dans une base) : position du generateur de fer de base.
- *   - GOLD_BLOCK (isole dans une base) : position du generateur d'or de base.
- *   - BEACON : point de spawn d'equipe (en fallback si absence de plateforme).
- *   - ENDER_STONE : position du villageois shop items.
- *   - OBSIDIAN (colonne isolee) : position du villageois upgrades.
+ * Specificite 1.9.4 : TOUS les BED_BLOCK ont le meme data (direction/etat, pas
+ * de couleur comme en 1.12+). La seule maniere fiable d'associer un lit a une
+ * equipe est la LAINE COLOREE adjacente (convention Hypixel classique).
  *
- * Si un ou plusieurs marqueurs sont absents, la detection tombera en fallback
- * sur les conventions:
- *   - IRON/GOLD generateur : juste au-dessus du lit de la team
- *   - Shop: 2 blocs a droite du lit (face au spawn)
- *   - Upgrades: 2 blocs a gauche du lit
- *   - Spawn: 3 blocs devant le lit, tourne vers le centre
- *
- * Les scans sont realises sur les chunks deja charges + chargent a la volee
- * les chunks dans un rayon autour du centre de la map (-200..+200 X/Z par defaut).
+ * Pipeline :
+ *   1. Scan plein du monde (chunks charges a la volee) :
+ *      - BED_BLOCK  -> candidates de lit (tete+pied)
+ *      - WOOL       -> liste de laines colorees
+ *      - DIAMOND_BLOCK / EMERALD_BLOCK -> spots publics
+ *      - IRON_BLOCK / GOLD_BLOCK       -> gens d'equipe
+ *      - ENDER_STONE / OBSIDIAN        -> villageois
+ *   2. Merge des paires de lits (tete+pied) en une seule position.
+ *   3. Association lit<->couleur via laine la plus proche (rayon 4 blocs).
+ *      Si pas de laine : fallback round-robin sur TeamColor.firstN.
+ *   4. Clustering des diamond/emerald blocks voisins (merge <3 blocs).
+ *   5. Attribution iron/gold/shop/upgrade au team le plus proche.
+ *   6. Fallback deterministe pour tout ce qui manque.
+ *   7. Cache YAML : les resultats sont persistes dans maps-cache/<id>.yml
+ *      et rechargees au prochain boot (scan une seule fois, demarrage instant).
  */
 public class MapAutoDetector {
 
@@ -48,16 +51,28 @@ public class MapAutoDetector {
     }
 
     /**
-     * Scanne le monde pour detecter les mecanismes et peuple le MapTemplate associe.
-     * Le template re\u00e7oit toutes ses coordonn\u00e9es en coordonn\u00e9es ABSOLUES du monde
-     * (Arena ajoutera worldCorner=0 dans le cas world-folder).
-     *
-     * @param world  monde deja charge contenant la map
-     * @param template template a enrichir
-     * @param center centre approximatif (pour limiter le scan). Peut etre null : utilise (0,0,0).
-     * @param radius rayon XZ en blocs
+     * Si un cache existe pour ce template, le charge. Sinon scan le monde,
+     * peuple le template et ecrit le cache.
      */
     public void detect(World world, MapTemplate template, Location center, int radius) {
+        File cacheFile = cacheFileFor(template.getId());
+        if (cacheFile.isFile() && loadCache(cacheFile, template)) {
+            plugin.getLogger().info("Map '" + template.getId() + "' chargee depuis le cache ("
+                    + template.getBedLocations().size() + " teams).");
+            return;
+        }
+
+        scanWorld(world, template, center, radius);
+        try {
+            saveCache(cacheFile, template);
+        } catch (IOException e) {
+            plugin.getLogger().warning("Impossible d'ecrire le cache " + cacheFile.getName() + ": " + e.getMessage());
+        }
+    }
+
+    // === SCAN ===
+
+    private void scanWorld(World world, MapTemplate template, Location center, int radius) {
         int minX = (center == null ? 0 : center.getBlockX()) - radius;
         int maxX = (center == null ? 0 : center.getBlockX()) + radius;
         int minZ = (center == null ? 0 : center.getBlockZ()) - radius;
@@ -65,15 +80,14 @@ public class MapAutoDetector {
         int cxMin = minX >> 4, cxMax = maxX >> 4;
         int czMin = minZ >> 4, czMax = maxZ >> 4;
 
-        Map<TeamColor, Vector> beds = new EnumMap<TeamColor, Vector>(TeamColor.class);
-        Map<TeamColor, List<Vector>> ironCandidates = new EnumMap<TeamColor, List<Vector>>(TeamColor.class);
-        Map<TeamColor, List<Vector>> goldCandidates = new EnumMap<TeamColor, List<Vector>>(TeamColor.class);
-        Map<TeamColor, List<Vector>> shopCandidates = new EnumMap<TeamColor, List<Vector>>(TeamColor.class);
-        Map<TeamColor, List<Vector>> upgradeCandidates = new EnumMap<TeamColor, List<Vector>>(TeamColor.class);
-        List<Vector> diamondSpots = new ArrayList<Vector>();
-        List<Vector> emeraldSpots = new ArrayList<Vector>();
-        Vector mapCenter = new Vector(0, 0, 0);
-        int centerCount = 0;
+        List<Vector> beds = new ArrayList<Vector>();
+        Map<Integer, List<Vector>> woolByColor = new HashMap<Integer, List<Vector>>();
+        List<Vector> ironBlocks = new ArrayList<Vector>();
+        List<Vector> goldBlocks = new ArrayList<Vector>();
+        List<Vector> diamondBlocks = new ArrayList<Vector>();
+        List<Vector> emeraldBlocks = new ArrayList<Vector>();
+        List<Vector> enderStones = new ArrayList<Vector>();
+        List<Vector> obsidians = new ArrayList<Vector>();
 
         for (int cx = cxMin; cx <= cxMax; cx++) {
             for (int cz = czMin; cz <= czMax; cz++) {
@@ -83,36 +97,33 @@ public class MapAutoDetector {
                     for (int lz = 0; lz < 16; lz++) {
                         int wx = (cx << 4) + lx;
                         int wz = (cz << 4) + lz;
-                        // parcourt de bas en haut ; on s'arrete a max-y utile (120)
-                        for (int y = 30; y <= 120; y++) {
+                        for (int y = 10; y <= 150; y++) {
                             Block b = world.getBlockAt(wx, y, wz);
                             Material type = b.getType();
                             if (type == Material.AIR) continue;
 
                             if (type == Material.BED_BLOCK || type == Material.BED) {
-                                // Un lit occupe 2 blocs : on ne garde que la tete ou le pied ;
-                                // on se contente du premier trouve par couleur.
-                                TeamColor color = colorFromData(b.getData());
-                                if (color != null && !beds.containsKey(color)) {
-                                    beds.put(color, new Vector(wx, y, wz));
+                                // Ne garder que la tete du lit (bit 0x8)
+                                if ((b.getData() & 0x8) != 0) {
+                                    beds.add(new Vector(wx, y, wz));
                                 }
-                            } else if (type == Material.EMERALD_BLOCK) {
-                                emeraldSpots.add(new Vector(wx, y, wz));
-                                mapCenter.add(new Vector(wx, 0, wz));
-                                centerCount++;
+                            } else if (type == Material.WOOL) {
+                                int data = b.getData() & 0xF;
+                                List<Vector> list = woolByColor.get(data);
+                                if (list == null) { list = new ArrayList<Vector>(); woolByColor.put(data, list); }
+                                list.add(new Vector(wx, y, wz));
                             } else if (type == Material.DIAMOND_BLOCK) {
-                                diamondSpots.add(new Vector(wx, y, wz));
-                                mapCenter.add(new Vector(wx, 0, wz));
-                                centerCount++;
+                                diamondBlocks.add(new Vector(wx, y, wz));
+                            } else if (type == Material.EMERALD_BLOCK) {
+                                emeraldBlocks.add(new Vector(wx, y, wz));
                             } else if (type == Material.IRON_BLOCK) {
-                                // Candidate pour iron generator. Rattache plus tard.
-                                addCandidate(ironCandidates, null, new Vector(wx, y, wz));
+                                ironBlocks.add(new Vector(wx, y, wz));
                             } else if (type == Material.GOLD_BLOCK) {
-                                addCandidate(goldCandidates, null, new Vector(wx, y, wz));
+                                goldBlocks.add(new Vector(wx, y, wz));
                             } else if (type == Material.ENDER_STONE) {
-                                addCandidate(shopCandidates, null, new Vector(wx, y, wz));
+                                enderStones.add(new Vector(wx, y, wz));
                             } else if (type == Material.OBSIDIAN) {
-                                addCandidate(upgradeCandidates, null, new Vector(wx, y, wz));
+                                obsidians.add(new Vector(wx, y, wz));
                             }
                         }
                     }
@@ -120,19 +131,51 @@ public class MapAutoDetector {
             }
         }
 
-        if (centerCount == 0) {
-            mapCenter = new Vector(0, 64, 0);
-        } else {
-            mapCenter = new Vector(mapCenter.getX() / centerCount, 64, mapCenter.getZ() / centerCount);
+        // Si aucun lit trouve en gardant seulement la tete, elargis a tous les beds.
+        if (beds.isEmpty()) {
+            for (int cx = cxMin; cx <= cxMax; cx++) {
+                for (int cz = czMin; cz <= czMax; cz++) {
+                    Chunk chunk = world.getChunkAt(cx, cz);
+                    if (!chunk.isLoaded()) continue;
+                    for (int lx = 0; lx < 16; lx++)
+                        for (int lz = 0; lz < 16; lz++)
+                            for (int y = 10; y <= 150; y++) {
+                                Block b = world.getBlockAt((cx << 4) + lx, y, (cz << 4) + lz);
+                                if (b.getType() == Material.BED_BLOCK || b.getType() == Material.BED) {
+                                    beds.add(new Vector((cx << 4) + lx, y, (cz << 4) + lz));
+                                }
+                            }
+                }
+            }
+            // Deduplique les paires tete/pied (<=1.5 blocs)
+            beds = mergeClose(beds, 1.5);
         }
 
-        // Attribue les generateurs/shops au team le plus proche
-        assignNearest(ironCandidates, beds);
-        assignNearest(goldCandidates, beds);
-        assignNearest(shopCandidates, beds);
-        assignNearest(upgradeCandidates, beds);
+        // Clustering diamond/emerald (blocs adjacents = un seul spot)
+        List<Vector> diamondSpots = mergeClose(diamondBlocks, 3.0);
+        List<Vector> emeraldSpots = mergeClose(emeraldBlocks, 3.0);
 
-        // Injecte dans le template (les vecteurs deviennent "offset 0")
+        // Centre de la map : moyenne des spots publics, fallback origine
+        Vector mapCenter;
+        if (!diamondSpots.isEmpty() || !emeraldSpots.isEmpty()) {
+            double sx = 0, sz = 0; int n = 0;
+            for (Vector v : diamondSpots) { sx += v.getX(); sz += v.getZ(); n++; }
+            for (Vector v : emeraldSpots) { sx += v.getX(); sz += v.getZ(); n++; }
+            mapCenter = new Vector(sx / n, 64, sz / n);
+        } else {
+            mapCenter = new Vector(0, 64, 0);
+        }
+
+        // Attribution lit -> couleur via laine la plus proche
+        Map<TeamColor, Vector> bedByColor = assignBedColors(beds, woolByColor);
+
+        // Attribution iron/gold/shop/upgrade au lit le plus proche
+        Map<TeamColor, Vector> ironByColor = assignToNearestBed(ironBlocks, bedByColor);
+        Map<TeamColor, Vector> goldByColor = assignToNearestBed(goldBlocks, bedByColor);
+        Map<TeamColor, Vector> shopByColor = assignToNearestBed(enderStones, bedByColor);
+        Map<TeamColor, Vector> upgradeByColor = assignToNearestBed(obsidians, bedByColor);
+
+        // Remplissage du template
         template.getBedLocations().clear();
         template.getSpawnLocations().clear();
         template.getShopLocations().clear();
@@ -142,25 +185,23 @@ public class MapAutoDetector {
         template.getDiamondGenLocations().clear();
         template.getEmeraldGenLocations().clear();
 
-        for (Map.Entry<TeamColor, Vector> e : beds.entrySet()) {
+        for (Map.Entry<TeamColor, Vector> e : bedByColor.entrySet()) {
             TeamColor color = e.getKey();
             Vector bed = e.getValue();
-            template.getBedLocations().put(color, bed.clone());
+            template.getBedLocations().put(color, bed);
+            template.getSpawnLocations().put(color, findSpawnNear(world, bed, mapCenter));
 
-            // Spawn : 3 blocs au-dessus et oriente vers le centre
-            Vector spawn = findSpawnNear(world, bed, mapCenter);
-            template.getSpawnLocations().put(color, spawn);
+            Vector iron = ironByColor.get(color);
+            Vector gold = goldByColor.get(color);
+            Vector shop = shopByColor.get(color);
+            Vector upg  = upgradeByColor.get(color);
 
-            Vector iron = pickFrom(ironCandidates, color);
-            Vector gold = pickFrom(goldCandidates, color);
-            Vector shop = pickFrom(shopCandidates, color);
-            Vector upg  = pickFrom(upgradeCandidates, color);
-
-            // Fallback si aucun marqueur
-            if (iron == null) iron = new Vector(bed.getX(), bed.getY() + 1, bed.getZ());
-            if (gold == null) gold = new Vector(bed.getX() + 1, bed.getY() + 1, bed.getZ());
-            if (shop == null) shop = new Vector(bed.getX() - 2, bed.getY() + 1, bed.getZ());
-            if (upg  == null) upg  = new Vector(bed.getX() + 2, bed.getY() + 1, bed.getZ());
+            // Fallback : autour du lit, un cran au-dessus
+            Vector dirToCenter = unitXZToCenter(bed, mapCenter);
+            if (iron == null) iron = bed.clone().add(new Vector(dirToCenter.getX() * 3, 1, dirToCenter.getZ() * 3));
+            if (gold == null) gold = bed.clone().add(new Vector(dirToCenter.getX() * 3 + 1, 1, dirToCenter.getZ() * 3));
+            if (shop == null) shop = bed.clone().add(new Vector(-dirToCenter.getZ() * 3, 1, dirToCenter.getX() * 3));
+            if (upg  == null) upg  = bed.clone().add(new Vector( dirToCenter.getZ() * 3, 1, -dirToCenter.getX() * 3));
 
             template.getIronGenLocations().put(color, iron);
             template.getGoldGenLocations().put(color, gold);
@@ -171,27 +212,154 @@ public class MapAutoDetector {
         template.getDiamondGenLocations().addAll(diamondSpots);
         template.getEmeraldGenLocations().addAll(emeraldSpots);
 
-        // Queue spawn : au-dessus du centre si pas defini
         Vector qs = template.getQueueSpawn();
         if (qs == null || (qs.getX() == 0 && qs.getY() == 0 && qs.getZ() == 0)) {
             template.setQueueSpawn(new Vector(mapCenter.getX(), mapCenter.getY() + 40, mapCenter.getZ()));
         }
 
         plugin.getLogger().info(String.format(
-                "Auto-detect map '%s': %d teams, %d diamant, %d emeraude",
-                template.getId(), beds.size(), diamondSpots.size(), emeraldSpots.size()));
+                "Auto-detect '%s' : %d teams, %d lit(s), %d diamant, %d emeraude, centre=(%d,%d)",
+                template.getId(), bedByColor.size(), beds.size(),
+                diamondSpots.size(), emeraldSpots.size(),
+                (int) mapCenter.getX(), (int) mapCenter.getZ()));
+    }
+
+    // === Association lit / couleur via laine adjacente ===
+
+    private Map<TeamColor, Vector> assignBedColors(List<Vector> beds, Map<Integer, List<Vector>> woolByColor) {
+        Map<TeamColor, Vector> result = new EnumMap<TeamColor, Vector>(TeamColor.class);
+        List<Vector> unassigned = new ArrayList<Vector>();
+
+        for (Vector bed : beds) {
+            TeamColor best = findClosestWoolColor(bed, woolByColor, 5.0);
+            if (best != null && !result.containsKey(best)) {
+                result.put(best, bed);
+            } else {
+                unassigned.add(bed);
+            }
+        }
+
+        // Fallback : les lits sans laine associee recuperent les couleurs restantes
+        // dans l'ordre standard (RED, BLUE, GREEN, YELLOW, ...)
+        if (!unassigned.isEmpty()) {
+            TeamColor[] order = { TeamColor.RED, TeamColor.BLUE, TeamColor.GREEN, TeamColor.YELLOW,
+                    TeamColor.AQUA, TeamColor.WHITE, TeamColor.PINK, TeamColor.GRAY };
+            int idx = 0;
+            for (Vector bed : unassigned) {
+                while (idx < order.length && result.containsKey(order[idx])) idx++;
+                if (idx >= order.length) break;
+                result.put(order[idx++], bed);
+            }
+        }
+        return result;
+    }
+
+    private TeamColor findClosestWoolColor(Vector bed, Map<Integer, List<Vector>> woolByColor, double maxDist) {
+        double best = maxDist * maxDist;
+        Integer bestData = null;
+        for (Map.Entry<Integer, List<Vector>> e : woolByColor.entrySet()) {
+            for (Vector w : e.getValue()) {
+                double dx = w.getX() - bed.getX();
+                double dy = w.getY() - bed.getY();
+                double dz = w.getZ() - bed.getZ();
+                double d = dx * dx + dy * dy + dz * dz;
+                if (d < best) { best = d; bestData = e.getKey(); }
+            }
+        }
+        return bestData == null ? null : woolDataToTeam(bestData);
+    }
+
+    /**
+     * Data-values de la laine (1.9.4) vers TeamColor du plugin.
+     *   0 white, 1 orange, 2 magenta, 3 lightblue, 4 yellow, 5 lime, 6 pink,
+     *   7 gray, 8 lightgray, 9 cyan, 10 purple, 11 blue, 12 brown, 13 green,
+     *   14 red, 15 black.
+     */
+    private TeamColor woolDataToTeam(int data) {
+        switch (data) {
+            case 0:  return TeamColor.WHITE;
+            case 3:  return TeamColor.AQUA;     // light blue
+            case 4:  return TeamColor.YELLOW;
+            case 5:  return TeamColor.GREEN;    // lime
+            case 6:  return TeamColor.PINK;
+            case 7:  return TeamColor.GRAY;
+            case 8:  return TeamColor.GRAY;     // light gray
+            case 9:  return TeamColor.AQUA;     // cyan
+            case 11: return TeamColor.BLUE;
+            case 13: return TeamColor.GREEN;
+            case 14: return TeamColor.RED;
+            case 15: return TeamColor.GRAY;     // black -> gray
+            case 1:  return TeamColor.YELLOW;   // orange -> yellow
+            case 2:  return TeamColor.PINK;     // magenta -> pink
+            case 10: return TeamColor.BLUE;     // purple -> blue
+            case 12: return TeamColor.RED;      // brown -> red
+            default: return null;
+        }
+    }
+
+    // === Attribution d'un ensemble de blocs au lit le plus proche ===
+
+    private Map<TeamColor, Vector> assignToNearestBed(List<Vector> candidates, Map<TeamColor, Vector> beds) {
+        Map<TeamColor, Vector> result = new EnumMap<TeamColor, Vector>(TeamColor.class);
+        if (beds.isEmpty()) return result;
+        for (Vector c : candidates) {
+            TeamColor nearest = null;
+            double bestDist = Double.MAX_VALUE;
+            for (Map.Entry<TeamColor, Vector> b : beds.entrySet()) {
+                double dx = b.getValue().getX() - c.getX();
+                double dz = b.getValue().getZ() - c.getZ();
+                double d = dx * dx + dz * dz;
+                if (d < bestDist) { bestDist = d; nearest = b.getKey(); }
+            }
+            if (nearest == null) continue;
+            // Garde le plus haut (le bloc sur plateforme, pas au sol)
+            Vector existing = result.get(nearest);
+            if (existing == null || c.getY() > existing.getY()) {
+                result.put(nearest, c);
+            }
+        }
+        return result;
+    }
+
+    // === Utilitaires ===
+
+    private List<Vector> mergeClose(List<Vector> input, double threshold) {
+        List<Vector> result = new ArrayList<Vector>();
+        double t2 = threshold * threshold;
+        for (Vector v : input) {
+            boolean merged = false;
+            for (int i = 0; i < result.size(); i++) {
+                Vector r = result.get(i);
+                double dx = r.getX() - v.getX();
+                double dy = r.getY() - v.getY();
+                double dz = r.getZ() - v.getZ();
+                if (dx * dx + dy * dy + dz * dz <= t2) {
+                    // moyenne
+                    result.set(i, new Vector((r.getX() + v.getX()) / 2,
+                            (r.getY() + v.getY()) / 2,
+                            (r.getZ() + v.getZ()) / 2));
+                    merged = true;
+                    break;
+                }
+            }
+            if (!merged) result.add(v.clone());
+        }
+        return result;
+    }
+
+    private Vector unitXZToCenter(Vector from, Vector mapCenter) {
+        double dx = mapCenter.getX() - from.getX();
+        double dz = mapCenter.getZ() - from.getZ();
+        double len = Math.sqrt(dx * dx + dz * dz);
+        if (len < 0.01) return new Vector(1, 0, 0);
+        return new Vector(dx / len, 0, dz / len);
     }
 
     private Vector findSpawnNear(World world, Vector bed, Vector mapCenter) {
-        double dx = mapCenter.getX() - bed.getX();
-        double dz = mapCenter.getZ() - bed.getZ();
-        double len = Math.sqrt(dx * dx + dz * dz);
-        if (len < 0.01) { dx = 1; dz = 0; len = 1; }
-        dx /= len; dz /= len;
-        double sx = bed.getX() + dx * 3 + 0.5;
-        double sz = bed.getZ() + dz * 3 + 0.5;
+        Vector dir = unitXZToCenter(bed, mapCenter);
+        double sx = bed.getX() + dir.getX() * 3 + 0.5;
+        double sz = bed.getZ() + dir.getZ() * 3 + 0.5;
         int startY = (int) bed.getY();
-        // trouve le premier bloc solide vers le bas puis pose au-dessus
         for (int y = startY + 2; y >= startY - 5; y--) {
             Block b = world.getBlockAt((int) Math.floor(sx), y, (int) Math.floor(sz));
             if (b.getType() != Material.AIR) {
@@ -201,66 +369,111 @@ public class MapAutoDetector {
         return new Vector(sx, bed.getY() + 1, sz);
     }
 
-    private TeamColor colorFromData(byte data) {
-        int wool = data & 0xF;
-        // Dans 1.9 les beds sont tous rouges (pas de data par couleur), cependant la
-        // convention BedWars est de coller un bloc de LAINE a cote du lit. On priorise
-        // donc une recherche par wool a proximite si plusieurs lits rouges sont trouves.
-        // En attendant, 0 == blanc, 14 == rouge etc.
-        switch (wool) {
-            case 0:  return TeamColor.WHITE;
-            case 1:  return TeamColor.YELLOW;   // orange -> yellow
-            case 3:  return TeamColor.AQUA;
-            case 4:  return TeamColor.YELLOW;
-            case 5:  return TeamColor.GREEN;
-            case 6:  return TeamColor.PINK;
-            case 7:  return TeamColor.GRAY;
-            case 9:  return TeamColor.AQUA;
-            case 11: return TeamColor.BLUE;
-            case 14: return TeamColor.RED;
-            default: return TeamColor.RED;
-        }
+    // === Cache YAML ===
+
+    private File cacheFileFor(String templateId) {
+        File folder = new File(plugin.getDataFolder(), "maps-cache");
+        if (!folder.exists()) //noinspection ResultOfMethodCallIgnored
+            folder.mkdirs();
+        return new File(folder, templateId + ".yml");
     }
 
-    private void addCandidate(Map<TeamColor, List<Vector>> map, TeamColor color, Vector v) {
-        TeamColor key = color == null ? TeamColor.WHITE : color;
-        List<Vector> list = map.get(key);
-        if (list == null) {
-            list = new ArrayList<Vector>();
-            map.put(key, list);
-        }
-        list.add(v);
-    }
+    private boolean loadCache(File file, MapTemplate template) {
+        try {
+            FileConfiguration cfg = YamlConfiguration.loadConfiguration(file);
+            if (cfg.getKeys(false).isEmpty()) return false;
 
-    private void assignNearest(Map<TeamColor, List<Vector>> map, Map<TeamColor, Vector> beds) {
-        // On regroupe tous les candidats "orphelins" (cle WHITE par defaut ci-dessus) et on
-        // les attribue a la team dont le lit est le plus proche.
-        List<Vector> all = new ArrayList<Vector>();
-        for (List<Vector> v : map.values()) all.addAll(v);
-        map.clear();
-        for (Vector v : all) {
-            TeamColor nearest = null;
-            double bestDist = Double.MAX_VALUE;
-            for (Map.Entry<TeamColor, Vector> b : beds.entrySet()) {
-                double dx = b.getValue().getX() - v.getX();
-                double dz = b.getValue().getZ() - v.getZ();
-                double d = dx * dx + dz * dz;
-                if (d < bestDist) { bestDist = d; nearest = b.getKey(); }
+            template.getBedLocations().clear();
+            template.getSpawnLocations().clear();
+            template.getShopLocations().clear();
+            template.getUpgradeLocations().clear();
+            template.getIronGenLocations().clear();
+            template.getGoldGenLocations().clear();
+            template.getDiamondGenLocations().clear();
+            template.getEmeraldGenLocations().clear();
+
+            readTeamMap(cfg, "beds", template.getBedLocations());
+            readTeamMap(cfg, "spawns", template.getSpawnLocations());
+            readTeamMap(cfg, "shops", template.getShopLocations());
+            readTeamMap(cfg, "upgrades", template.getUpgradeLocations());
+            readTeamMap(cfg, "iron", template.getIronGenLocations());
+            readTeamMap(cfg, "gold", template.getGoldGenLocations());
+            readVectorList(cfg, "diamond", template.getDiamondGenLocations());
+            readVectorList(cfg, "emerald", template.getEmeraldGenLocations());
+
+            if (cfg.isConfigurationSection("queue-spawn")) {
+                template.setQueueSpawn(new Vector(
+                        cfg.getDouble("queue-spawn.x"),
+                        cfg.getDouble("queue-spawn.y"),
+                        cfg.getDouble("queue-spawn.z")));
             }
-            if (nearest != null) {
-                List<Vector> list = map.get(nearest);
-                if (list == null) { list = new ArrayList<Vector>(); map.put(nearest, list); }
-                list.add(v);
-            }
+            return !template.getBedLocations().isEmpty();
+        } catch (Exception e) {
+            return false;
         }
     }
 
-    private Vector pickFrom(Map<TeamColor, List<Vector>> map, TeamColor color) {
-        List<Vector> list = map.get(color);
-        if (list == null || list.isEmpty()) return null;
-        // Prend le vecteur le plus haut (Y max) pour placer sur plateforme plutot qu'au sol
-        Vector best = list.get(0);
-        for (Vector v : list) if (v.getY() > best.getY()) best = v;
-        return best;
+    private void readTeamMap(FileConfiguration cfg, String path, Map<TeamColor, Vector> target) {
+        if (!cfg.isConfigurationSection(path)) return;
+        for (String key : cfg.getConfigurationSection(path).getKeys(false)) {
+            try {
+                TeamColor color = TeamColor.valueOf(key.toUpperCase());
+                target.put(color, new Vector(
+                        cfg.getDouble(path + "." + key + ".x"),
+                        cfg.getDouble(path + "." + key + ".y"),
+                        cfg.getDouble(path + "." + key + ".z")));
+            } catch (IllegalArgumentException ignored) {}
+        }
+    }
+
+    private void readVectorList(FileConfiguration cfg, String path, List<Vector> target) {
+        List<Map<?, ?>> list = cfg.getMapList(path);
+        for (Map<?, ?> raw : list) {
+            target.add(new Vector(
+                    ((Number) raw.get("x")).doubleValue(),
+                    ((Number) raw.get("y")).doubleValue(),
+                    ((Number) raw.get("z")).doubleValue()));
+        }
+    }
+
+    private void saveCache(File file, MapTemplate template) throws IOException {
+        YamlConfiguration cfg = new YamlConfiguration();
+        cfg.set("id", template.getId());
+        writeTeamMap(cfg, "beds", template.getBedLocations());
+        writeTeamMap(cfg, "spawns", template.getSpawnLocations());
+        writeTeamMap(cfg, "shops", template.getShopLocations());
+        writeTeamMap(cfg, "upgrades", template.getUpgradeLocations());
+        writeTeamMap(cfg, "iron", template.getIronGenLocations());
+        writeTeamMap(cfg, "gold", template.getGoldGenLocations());
+        writeVectorList(cfg, "diamond", template.getDiamondGenLocations());
+        writeVectorList(cfg, "emerald", template.getEmeraldGenLocations());
+        Vector qs = template.getQueueSpawn();
+        if (qs != null) {
+            cfg.set("queue-spawn.x", qs.getX());
+            cfg.set("queue-spawn.y", qs.getY());
+            cfg.set("queue-spawn.z", qs.getZ());
+        }
+        cfg.save(file);
+    }
+
+    private void writeTeamMap(YamlConfiguration cfg, String path, Map<TeamColor, Vector> src) {
+        for (Map.Entry<TeamColor, Vector> e : src.entrySet()) {
+            String base = path + "." + e.getKey().name();
+            cfg.set(base + ".x", e.getValue().getX());
+            cfg.set(base + ".y", e.getValue().getY());
+            cfg.set(base + ".z", e.getValue().getZ());
+        }
+    }
+
+    private void writeVectorList(YamlConfiguration cfg, String path, List<Vector> src) {
+        List<Map<String, Double>> list = new ArrayList<Map<String, Double>>();
+        for (Vector v : src) {
+            Map<String, Double> m = new HashMap<String, Double>();
+            m.put("x", v.getX());
+            m.put("y", v.getY());
+            m.put("z", v.getZ());
+            list.add(m);
+        }
+        cfg.set(path, list);
     }
 }
