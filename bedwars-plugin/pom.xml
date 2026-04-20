@@ -53,6 +53,20 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
+                <includes>
+                    <include>plugin.yml</include>
+                    <include>config.yml</include>
+                    <include>messages.yml</include>
+                    <include>*.yml</include>
+                </includes>
+            </resource>
+            <!-- Ressources binaires : PAS de filtering (corromprait les schematics) -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>*.yml</exclude>
+                </excludes>
             </resource>
         </resources>
         <plugins>

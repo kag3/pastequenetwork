@@ -124,6 +124,15 @@ public class ArenaManager {
             } else {
                 plugin.getLogger().warning("Schematic manquante (l'arene sera vide): " + schematicFile.getAbsolutePath());
             }
+
+            // Auto-detect des lits / ores / PNJ APRES le paste.
+            // Le centre de scan est le centre approximatif du paste (offset + ~90 blocs).
+            // Positions ecrites en RELATIF au pasteOrigin pour reutilisabilite.
+            if (template.isAutoDetect()) {
+                Location scanCenter = new Location(world,
+                        offset.getX() + 100, offset.getY() + 20, offset.getZ() + 100);
+                autoDetector.detect(world, template, scanCenter, 150, offset);
+            }
         }
 
         Arena arena = new Arena(plugin, arenaId, mode, template, world, worldCorner);
