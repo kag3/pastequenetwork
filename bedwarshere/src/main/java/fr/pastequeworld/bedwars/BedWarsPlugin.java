@@ -1,6 +1,7 @@
 package fr.pastequeworld.bedwars;
 
 import fr.pastequeworld.bedwars.game.ArenaManager;
+import fr.pastequeworld.bedwars.command.AdminCommand;
 import fr.pastequeworld.bedwars.command.BedWarsCommand;
 import fr.pastequeworld.bedwars.command.SetupCommand;
 import fr.pastequeworld.bedwars.command.ShoutCommand;
@@ -136,6 +137,9 @@ public class BedWarsPlugin extends JavaPlugin {
     private void registerCommands() {
         getCommand("bedwars").setExecutor(new BedWarsCommand(this));
         getCommand("bwsetup").setExecutor(new SetupCommand(this));
+        AdminCommand adminCmd = new AdminCommand(this);
+        getCommand("bwadmin").setExecutor(adminCmd);
+        getCommand("bwadmin").setTabCompleter(adminCmd);
         getCommand("shout").setExecutor(new ShoutCommand(this));
         getCommand("teamchat").setExecutor(new TeamChatCommand(this));
     }

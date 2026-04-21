@@ -144,6 +144,17 @@ public class NPCManager {
         holograms.clear();
     }
 
+    public void moveNpc(GameMode mode, Location location) {
+        LivingEntity old = npcs.get(mode);
+        if (old != null && !old.isDead()) old.remove();
+        npcs.remove(mode);
+        List<ArmorStand> oldHolo = holograms.remove(mode);
+        if (oldHolo != null) for (ArmorStand s : oldHolo) if (s != null && !s.isDead()) s.remove();
+
+        plugin.getConfigManager().setNpcLocation(mode, location);
+        spawn(mode, location);
+    }
+
     public boolean isNPC(org.bukkit.entity.Entity entity) {
         return entity != null && entity.hasMetadata(META_NPC_MODE);
     }

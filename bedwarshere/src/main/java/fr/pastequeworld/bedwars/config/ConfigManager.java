@@ -49,6 +49,7 @@ public class ConfigManager {
     private int camperWarnRadius;
 
     private final Map<GameMode, List<String>> mapsPerMode = new LinkedHashMap<GameMode, List<String>>();
+    private final Map<GameMode, Location> lobbyWaitingSpawns = new LinkedHashMap<GameMode, Location>();
 
     public ConfigManager(BedWarsPlugin plugin) {
         this.plugin = plugin;
@@ -177,6 +178,20 @@ public class ConfigManager {
         this.voidDeathY = c.getInt("gameplay.void-death-y", 0);
         this.camperWarnRadius = c.getInt("gameplay.camper-warn-radius", 10);
 
+        // Lobby waiting spawns per mode
+        ConfigurationSection waiting = c.getConfigurationSection("lobby.waiting");
+        if (waiting != null) {
+            for (String key : waiting.getKeys(false)) {
+                GameMode mode = GameMode.fromConfigKey(key);
+                if (mode == null) continue;
+                ConfigurationSection ws = waiting.getConfigurationSection(key);
+                Location loc = new Location(lobby,
+                        ws.getDouble("x"), ws.getDouble("y"), ws.getDouble("z"),
+                        (float) ws.getDouble("yaw", 0), (float) ws.getDouble("pitch", 0));
+                lobbyWaitingSpawns.put(mode, loc);
+            }
+        }
+
         // Maps per mode
         ConfigurationSection maps = c.getConfigurationSection("maps");
         if (maps != null) {
@@ -255,6 +270,43 @@ public class ConfigManager {
     public List<String> getMapsForMode(GameMode mode) {
         List<String> list = mapsPerMode.get(mode);
         return list == null ? new ArrayList<String>() : list;
+    }
+
+    public Location getLobbyWaitingSpawn(GameMode mode) { return lobbyWaitingSpawns.get(mode); }
+
+    public void setLobbySpawn(Location loc) {
+        this.lobbySpawn = loc.clone();
+        org.bukkit.configuration.file.FileConfiguration c = plugin.getConfig();
+        c.set("lobby.spawn.x", loc.getX());
+        c.set("lobby.spawn.y", loc.getY());
+        c.set("lobby.spawn.z", loc.getZ());
+        c.set("lobby.spawn.yaw", (double) loc.getYaw());
+        c.set("lobby.spawn.pitch", (double) loc.getPitch());
+        plugin.saveConfig();
+    }
+
+    public void setNpcLocation(GameMode mode, Location loc) {
+        npcLocations.put(mode, loc.clone());
+        String key = mode.getConfigKey();
+        org.bukkit.configuration.file.FileConfiguration c = plugin.getConfig();
+        c.set("lobby.npcs." + key + ".x", loc.getX());
+        c.set("lobby.npcs." + key + ".y", loc.getY());
+        c.set("lobby.npcs." + key + ".z", loc.getZ());
+        c.set("lobby.npcs." + key + ".yaw", (double) loc.getYaw());
+        c.set("lobby.npcs." + key + ".pitch", (double) loc.getPitch());
+        plugin.saveConfig();
+    }
+
+    public void setLobbyWaitingSpawn(GameMode mode, Location loc) {
+        lobbyWaitingSpawns.put(mode, loc.clone());
+        String key = mode.getConfigKey();
+        org.bukkit.configuration.file.FileConfiguration c = plugin.getConfig();
+        c.set("lobby.waiting." + key + ".x", loc.getX());
+        c.set("lobby.waiting." + key + ".y", loc.getY());
+        c.set("lobby.waiting." + key + ".z", loc.getZ());
+        c.set("lobby.waiting." + key + ".yaw", (double) loc.getYaw());
+        c.set("lobby.waiting." + key + ".pitch", (double) loc.getPitch());
+        plugin.saveConfig();
     }
 
     // === Inner data classes ===

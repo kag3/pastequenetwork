@@ -32,6 +32,27 @@ lobby:
     z: 0.5
     yaw: 0.0
     pitch: 0.0
+  # Zone d'attente par mode (ou les joueurs sont TP quand ils rejoignent la queue)
+  # Definissez ces coordonnees avec /bwadmin setwait <solo|duo|teams>
+  waiting:
+    solo:
+      x: 10.5
+      y: 100.0
+      z: 0.5
+      yaw: -90.0
+      pitch: 0.0
+    duo:
+      x: 0.5
+      y: 100.0
+      z: 10.5
+      yaw: 180.0
+      pitch: 0.0
+    teams:
+      x: -10.5
+      y: 100.0
+      z: 0.5
+      yaw: 90.0
+      pitch: 0.0
   # Position des NPC de selection de mode
   npcs:
     solo:

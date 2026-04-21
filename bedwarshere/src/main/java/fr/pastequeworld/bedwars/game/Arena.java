@@ -120,7 +120,8 @@ public class Arena {
         bw.setState(PlayerState.QUEUEING);
         players.add(player.getUniqueId());
 
-        player.teleport(queueSpawn);
+        org.bukkit.Location waitSpawn = plugin.getConfigManager().getLobbyWaitingSpawn(mode);
+        player.teleport(waitSpawn != null ? waitSpawn : queueSpawn);
         resetInventoryForLobby(player);
 
         broadcast(plugin.getMessageManager().get("queue.player-joined",

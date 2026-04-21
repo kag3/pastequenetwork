@@ -81,12 +81,8 @@ public class ScoreboardManager {
     private void tickAll() {
         for (Player p : Bukkit.getOnlinePlayers()) {
             BedWarsPlayer bw = plugin.getPlayerDataManager().get(p);
-            if (bw == null) continue;
-            if (bw.getArena() == null) {
+            if (bw == null || bw.getArena() == null) {
                 showLobby(p);
-            } else {
-                refresh(bw.getArena());
-                break;
             }
         }
         for (Arena arena : plugin.getArenaManager().getArenas()) refresh(arena);
