@@ -80,6 +80,50 @@ public class Arena {
         this.startCountdown = plugin.getConfigManager().getStartCountdown();
 
         setupTeams();
+        buildWaitingCage();
+    }
+
+    /**
+     * Construit une cage de verre 5x5x5 autour du {@link #queueSpawn} dans le monde
+     * d'arene. Les joueurs en WAITING / STARTING y sont teleportes pour eviter
+     * qu'ils tombent dans le vide avant le debut de la partie.
+     * Au start, on ne nettoie pas : le monde est detruit en fin de partie.
+     */
+    private void buildWaitingCage() {
+        if (queueSpawn == null || queueSpawn.getWorld() == null) return;
+        int cx = queueSpawn.getBlockX();
+        int cy = queueSpawn.getBlockY();
+        int cz = queueSpawn.getBlockZ();
+        World w = queueSpawn.getWorld();
+
+        // Sol 5x5 (y - 1)
+        for (int x = cx - 2; x <= cx + 2; x++) {
+            for (int z = cz - 2; z <= cz + 2; z++) {
+                w.getBlockAt(x, cy - 1, z).setType(Material.STAINED_GLASS);
+            }
+        }
+        // Murs 5x5, hauteur 4 (y..y+3)
+        for (int y = cy; y <= cy + 3; y++) {
+            for (int x = cx - 2; x <= cx + 2; x++) {
+                setGlass(w, x, y, cz - 2);
+                setGlass(w, x, y, cz + 2);
+            }
+            for (int z = cz - 2; z <= cz + 2; z++) {
+                setGlass(w, cx - 2, y, z);
+                setGlass(w, cx + 2, y, z);
+            }
+        }
+        // Plafond
+        for (int x = cx - 2; x <= cx + 2; x++) {
+            for (int z = cz - 2; z <= cz + 2; z++) {
+                setGlass(w, x, cy + 4, z);
+            }
+        }
+    }
+
+    private void setGlass(World w, int x, int y, int z) {
+        Block b = w.getBlockAt(x, y, z);
+        if (b.getType() == Material.AIR) b.setType(Material.STAINED_GLASS);
     }
 
     private void setupTeams() {
@@ -120,8 +164,13 @@ public class Arena {
         bw.setState(PlayerState.QUEUEING);
         players.add(player.getUniqueId());
 
-        org.bukkit.Location waitSpawn = plugin.getConfigManager().getLobbyWaitingSpawn(mode);
-        player.teleport(waitSpawn != null ? waitSpawn : queueSpawn);
+        // TP dans le monde de l'arene, sur la plateforme d'attente (cage en verre).
+        // queueSpawn = centre de la map + 40Y dans le monde d'arene.
+        if (queueSpawn != null) {
+            player.teleport(queueSpawn);
+        } else {
+            plugin.getLogger().warning("Arena " + id + " n'a pas de queueSpawn, joueur non teleporte !");
+        }
         resetInventoryForLobby(player);
 
         broadcast(plugin.getMessageManager().get("queue.player-joined",

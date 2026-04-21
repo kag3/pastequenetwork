@@ -32,7 +32,9 @@ public class NPCManager {
 
     private final BedWarsPlugin plugin;
     private final Map<GameMode, LivingEntity> npcs = new HashMap<GameMode, LivingEntity>();
+    private final Map<GameMode, Location> npcAnchors = new HashMap<GameMode, Location>();
     private final Map<GameMode, List<ArmorStand>> holograms = new HashMap<GameMode, List<ArmorStand>>();
+    private int lockTaskId = -1;
 
     public NPCManager(BedWarsPlugin plugin) {
         this.plugin = plugin;
@@ -44,12 +46,39 @@ public class NPCManager {
         for (Map.Entry<GameMode, Location> entry : locations.entrySet()) {
             spawn(entry.getKey(), entry.getValue());
         }
+        startLockTask();
+    }
+
+    private void startLockTask() {
+        if (lockTaskId != -1) return;
+        lockTaskId = Bukkit.getScheduler().runTaskTimer(plugin, new Runnable() {
+            @Override
+            public void run() { lockTick(); }
+        }, 40L, 40L).getTaskId();
+    }
+
+    private void lockTick() {
+        for (Map.Entry<GameMode, LivingEntity> entry : npcs.entrySet()) {
+            LivingEntity e = entry.getValue();
+            if (e == null || e.isDead()) continue;
+            Location anchor = npcAnchors.get(entry.getKey());
+            if (anchor == null) continue;
+            Location cur = e.getLocation();
+            if (cur.getWorld() != anchor.getWorld()
+                    || cur.distanceSquared(anchor) > 0.01
+                    || Math.abs(cur.getYaw() - anchor.getYaw()) > 0.5f
+                    || Math.abs(cur.getPitch() - anchor.getPitch()) > 0.5f) {
+                e.teleport(anchor);
+            }
+        }
     }
 
     public void spawn(GameMode mode, Location location) {
         if (location == null || location.getWorld() == null) return;
-        LivingEntity npc = (LivingEntity) location.getWorld().spawnEntity(location, selectEntity(mode));
+        Location anchor = location.clone();
+        LivingEntity npc = (LivingEntity) anchor.getWorld().spawnEntity(anchor, selectEntity(mode));
         npc.setAI(false);
+        npc.setGravity(false);
         npc.setInvulnerable(true);
         npc.setSilent(true);
         npc.setCollidable(false);
@@ -57,6 +86,7 @@ public class NPCManager {
         npc.setCustomNameVisible(false);  // on utilise les armor stands
         npc.setMetadata(META_NPC_MODE, new FixedMetadataValue(plugin, mode.name()));
         npc.setRemoveWhenFarAway(false);
+        npc.teleport(anchor); // fige yaw/pitch exact
         if (npc instanceof Villager) {
             ((Villager) npc).setProfession(professionFor(mode));
         } else if (npc instanceof Zombie) {
@@ -64,6 +94,7 @@ public class NPCManager {
         }
         equipNPC(npc, mode);
         npcs.put(mode, npc);
+        npcAnchors.put(mode, anchor);
 
         // Hologrammes au-dessus : 3 lignes
         double y = location.getY() + 2.3;
@@ -138,21 +169,28 @@ public class NPCManager {
     public void despawnAll() {
         for (LivingEntity e : npcs.values()) if (e != null && !e.isDead()) e.remove();
         npcs.clear();
+        npcAnchors.clear();
         for (List<ArmorStand> list : holograms.values()) {
             for (ArmorStand s : list) if (s != null && !s.isDead()) s.remove();
         }
         holograms.clear();
+        if (lockTaskId != -1) {
+            Bukkit.getScheduler().cancelTask(lockTaskId);
+            lockTaskId = -1;
+        }
     }
 
     public void moveNpc(GameMode mode, Location location) {
         LivingEntity old = npcs.get(mode);
         if (old != null && !old.isDead()) old.remove();
         npcs.remove(mode);
+        npcAnchors.remove(mode);
         List<ArmorStand> oldHolo = holograms.remove(mode);
         if (oldHolo != null) for (ArmorStand s : oldHolo) if (s != null && !s.isDead()) s.remove();
 
         plugin.getConfigManager().setNpcLocation(mode, location);
         spawn(mode, location);
+        startLockTask();
     }
 
     public boolean isNPC(org.bukkit.entity.Entity entity) {

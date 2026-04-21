@@ -20,7 +20,7 @@ commands:
     permission: pastequebedwars.admin
   bwadmin:
     description: Commandes d'administration BedWars
-    usage: /<command> <movnpc|setwait|setlobbyspawn|forcestart|forcestop|spawnall|kick|tp|list|reload>
+    usage: /<command> <movnpc|setlobbyspawn|forcestart|forcestop|spawnall|kick|tp|list|reload>
     aliases: [bwa]
     permission: pastequebedwars.admin
   shout:

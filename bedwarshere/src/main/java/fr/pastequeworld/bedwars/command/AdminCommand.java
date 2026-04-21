@@ -21,7 +21,6 @@ import java.util.List;
  *
  * Sous-commandes :
  *   movnpc <solo|duo|teams>         Deplace le NPC a votre position
- *   setwait <solo|duo|teams>        Definit la zone d'attente de la file
  *   setlobbyspawn                   Definit le spawn du lobby
  *   forcestart <solo|duo|teams>     Force le demarrage d'une partie (meme avec peu de joueurs)
  *   forcestop                       Force l'arret de la partie ou vous vous trouvez
@@ -30,6 +29,9 @@ import java.util.List;
  *   tp <arenaId>                    Vous teleporte dans une arene
  *   list                            Liste toutes les arenes actives
  *   reload                          Recharge la configuration
+ *
+ * Remarque : les joueurs en file d'attente sont automatiquement teleportes dans
+ * une cage de verre construite dans le MONDE D'ARENE (pas dans le lobby).
  */
 public class AdminCommand implements CommandExecutor, TabCompleter {
 
@@ -66,18 +68,6 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
                 Player p = (Player) sender;
                 plugin.getNpcManager().moveNpc(mode, p.getLocation());
                 sender.sendMessage(ColorUtil.color("&aNPC &f" + mode.name() + " &adeplaced a votre position et sauvegarde."));
-                break;
-            }
-
-            // --- setwait <mode> ---
-            case "setwait": {
-                if (!(sender instanceof Player)) { sender.sendMessage("Joueur requis."); return true; }
-                if (args.length < 2) { sender.sendMessage(ColorUtil.color("&cUsage: /bwadmin setwait <solo|duo|teams>")); return true; }
-                GameMode mode = GameMode.fromConfigKey(args[1]);
-                if (mode == null) { sender.sendMessage(ColorUtil.color("&cMode invalide.")); return true; }
-                Player p = (Player) sender;
-                plugin.getConfigManager().setLobbyWaitingSpawn(mode, p.getLocation());
-                sender.sendMessage(ColorUtil.color("&aZone d'attente &f" + mode.name() + " &adefinit a votre position."));
                 break;
             }
 
@@ -212,7 +202,6 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ColorUtil.color("&7&m-------------------------------------"));
         sender.sendMessage(ColorUtil.color("&c&lBwAdmin &7- Commandes d'administration"));
         sender.sendMessage(ColorUtil.color("&e/bwadmin movnpc <mode>      &7Deplace un NPC a votre position"));
-        sender.sendMessage(ColorUtil.color("&e/bwadmin setwait <mode>     &7Zone d'attente de la file"));
         sender.sendMessage(ColorUtil.color("&e/bwadmin setlobbyspawn      &7Spawn du lobby"));
         sender.sendMessage(ColorUtil.color("&e/bwadmin forcestart <mode>  &7Force le demarrage d'une partie"));
         sender.sendMessage(ColorUtil.color("&e/bwadmin forcestop          &7Force l'arret de votre partie"));
@@ -228,12 +217,12 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!sender.hasPermission(PERM)) return new ArrayList<String>();
         if (args.length == 1) {
-            return filterStart(args[0], "movnpc", "setwait", "setlobbyspawn", "forcestart", "forcestop",
+            return filterStart(args[0], "movnpc", "setlobbyspawn", "forcestart", "forcestop",
                     "spawnall", "kick", "tp", "list", "reload");
         }
         if (args.length == 2) {
             String sub = args[0].toLowerCase();
-            if ("movnpc".equals(sub) || "setwait".equals(sub) || "forcestart".equals(sub)) {
+            if ("movnpc".equals(sub) || "forcestart".equals(sub)) {
                 return filterStart(args[1], "solo", "duo", "teams");
             }
             if ("kick".equals(sub)) {

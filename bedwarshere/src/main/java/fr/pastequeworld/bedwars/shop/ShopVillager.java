@@ -36,12 +36,14 @@ public class ShopVillager {
         if (entity != null && !entity.isDead()) return;
         Villager v = (Villager) location.getWorld().spawnEntity(location, EntityType.VILLAGER);
         v.setAI(false);
+        v.setGravity(false);
         v.setInvulnerable(true);
         v.setSilent(true);
         v.setCollidable(false);
         v.setRemoveWhenFarAway(false);
         v.setCustomNameVisible(true);
         v.setCustomName(formatName());
+        v.teleport(location); // fige yaw/pitch
         v.setMetadata("bw_shop", new org.bukkit.metadata.FixedMetadataValue(plugin, shopType.name()));
         v.setMetadata("bw_arena", new org.bukkit.metadata.FixedMetadataValue(plugin, arena.getId()));
         v.setMetadata("bw_team", new org.bukkit.metadata.FixedMetadataValue(plugin,
