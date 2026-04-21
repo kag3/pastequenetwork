@@ -1,0 +1,251 @@
+# ============================================================
+#  PastequeBedWars - Configuration principale
+#  Hypixel-style BedWars pour Minecraft 1.9.4
+# ============================================================
+
+# Nom du serveur affiche dans le scoreboard
+server-name: "pasteque.world"
+
+# Monde du lobby BedWars (ou arrivent les joueurs apres le hub).
+# Par defaut on REMPLACE le monde "world" par le lobby : le joueur apparait
+# directement dans la bonne map, pas de teleport sale au join.
+# Si tu veux un monde de lobby separe, change ceci en "bedwars_lobby".
+lobby:
+  world: "world"
+  # Au PREMIER demarrage du plugin, si world == "world", le monde vanilla genere
+  # par Spigot est supprime et remplace par un void + la schematic du lobby.
+  # Operation faite UNE SEULE FOIS (marker .world-wiped). Mets a false si tu as
+  # deja prepare le monde a la main.
+  wipe-world-on-first-run: true
+  # Si le dechargement de "world" echoue (certains hebergeurs), ce flag controle
+  # le fallback de paste automatique du lobby sur le monde deja charge.
+  # Desactive par defaut pour eviter les boots loops CPU sur grosses schematics.
+  paste-on-unload-fail: false
+  # Paste automatique du lobby au demarrage si .lobby-loaded absent.
+  # Active par defaut avec un delai pour laisser le serveur finir son boot.
+  auto-paste-on-startup: true
+  # Delai (ticks) avant auto-paste du lobby (20 ticks = 1 sec)
+  auto-paste-delay-ticks: 40
+  spawn:
+    x: 0.5
+    y: 100.0
+    z: 0.5
+    yaw: 0.0
+    pitch: 0.0
+  # Position des NPC de selection de mode
+  npcs:
+    solo:
+      x: 5.5
+      y: 100.0
+      z: 0.5
+      yaw: -90.0
+      pitch: 0.0
+      skin: "MHF_Steve"
+    duo:
+      x: 0.5
+      y: 100.0
+      z: 5.5
+      yaw: 180.0
+      pitch: 0.0
+      skin: "MHF_Alex"
+    teams:
+      x: -5.5
+      y: 100.0
+      z: 0.5
+      yaw: 90.0
+      pitch: 0.0
+      skin: "MHF_Herobrine"
+
+# Configuration des modes de jeu
+modes:
+  solo:
+    display-name: "&a&lSolo"
+    icon: "IRON_SWORD"
+    teams: 4
+    players-per-team: 1
+    min-players-to-start: 2
+    lines:
+      - "&7Mode 4x1"
+      - "&7Chacun pour soi, 4 joueurs max"
+  duo:
+    display-name: "&b&lDuo"
+    icon: "DIAMOND_SWORD"
+    teams: 4
+    players-per-team: 2
+    min-players-to-start: 4
+    lines:
+      - "&7Mode 4x2"
+      - "&7En equipe de 2, 8 joueurs max"
+  teams:
+    display-name: "&c&lTeams"
+    icon: "DIAMOND_AXE"
+    teams: 4
+    players-per-team: 4
+    min-players-to-start: 8
+    lines:
+      - "&7Mode 4x4"
+      - "&7En equipe de 4, 16 joueurs max"
+
+# Pool d'arenes : configuration du cycle des maps
+arena:
+  # Dossier des schematics (relatif au dossier du plugin)
+  schematic-folder: "schematics"
+  # Dossier d'exports des templates de mondes
+  template-folder: "templates"
+  # Delai en secondes de decompte du demarrage
+  start-countdown: 20
+  # Delai du countdown quand le min-players est atteint
+  start-countdown-quick: 10
+  # Delai de fin de partie avant teleport lobby
+  end-delay: 10
+  # Hauteur y du monde void (pour generer des worlds vides)
+  void-height: 64
+  # Distance entre deux arenes dans le meme monde (chunks)
+  arena-spacing: 500
+
+# Timeline des events (en secondes depuis le debut de la partie)
+events:
+  diamond-ii: 360      # 6 minutes
+  emerald-ii: 480      # 8 minutes
+  diamond-iii: 720     # 12 minutes
+  emerald-iii: 840     # 14 minutes
+  bed-destruction: 1200 # 20 minutes
+  sudden-death: 1500   # 25 minutes
+  game-end: 1800       # 30 minutes
+
+# Configuration des generateurs par type
+generators:
+  iron:
+    spawn-interval-ticks: 10   # 0.5s
+    max-items-ground: 48
+    drops:
+      - "IRON_INGOT 1"
+  gold:
+    spawn-interval-ticks: 40   # 2s
+    max-items-ground: 8
+    drops:
+      - "GOLD_INGOT 1"
+  diamond:
+    tiers:
+      - interval-ticks: 600    # 30s
+        display: "&bTier I"
+      - interval-ticks: 400    # 20s
+        display: "&bTier II"
+      - interval-ticks: 200    # 10s
+        display: "&bTier III"
+    max-items-ground: 4
+    drops:
+      - "DIAMOND 1"
+  emerald:
+    tiers:
+      - interval-ticks: 1300   # 65s
+        display: "&aTier I"
+      - interval-ticks: 800    # 40s
+        display: "&aTier II"
+      - interval-ticks: 400    # 20s
+        display: "&aTier III"
+    max-items-ground: 4
+    drops:
+      - "EMERALD 1"
+
+# Configuration des equipes disponibles (couleur / wool / bed)
+teams:
+  RED:
+    chat-color: "&c"
+    display-name: "Rouge"
+    prefix: "R"
+    wool-data: 14
+    glass-data: 14
+    clay-data: 14
+    armor-color: "170,0,0"
+  BLUE:
+    chat-color: "&9"
+    display-name: "Bleu"
+    prefix: "B"
+    wool-data: 11
+    glass-data: 11
+    clay-data: 11
+    armor-color: "0,0,170"
+  GREEN:
+    chat-color: "&a"
+    display-name: "Vert"
+    prefix: "V"
+    wool-data: 5
+    glass-data: 5
+    clay-data: 5
+    armor-color: "0,170,0"
+  YELLOW:
+    chat-color: "&e"
+    display-name: "Jaune"
+    prefix: "J"
+    wool-data: 4
+    glass-data: 4
+    clay-data: 4
+    armor-color: "255,255,0"
+  AQUA:
+    chat-color: "&b"
+    display-name: "Cyan"
+    prefix: "C"
+    wool-data: 3
+    glass-data: 3
+    clay-data: 3
+    armor-color: "0,170,170"
+  WHITE:
+    chat-color: "&f"
+    display-name: "Blanc"
+    prefix: "W"
+    wool-data: 0
+    glass-data: 0
+    clay-data: 0
+    armor-color: "230,230,230"
+  PINK:
+    chat-color: "&d"
+    display-name: "Rose"
+    prefix: "P"
+    wool-data: 6
+    glass-data: 6
+    clay-data: 6
+    armor-color: "255,100,200"
+  GRAY:
+    chat-color: "&8"
+    display-name: "Gris"
+    prefix: "G"
+    wool-data: 7
+    glass-data: 7
+    clay-data: 7
+    armor-color: "70,70,70"
+
+# Respawn et gameplay
+gameplay:
+  respawn-seconds: 5
+  spawn-protection-seconds: 3
+  bed-destroy-radius: 3
+  void-death-y: 0
+  # Distance a partir de laquelle un joueur est considere comme un campeur
+  camper-warn-radius: 10
+
+# Maps : definit quelles maps sont disponibles par mode.
+# Deux formats sont supportes simultanement :
+#
+# 1) YAML explicite dans plugins/PastequeBedWars/maps/<id>.yml
+#    (pour les maps schematic avec positions fixes)
+#
+# 2) Dossier de monde Minecraft auto-detecte :
+#    Les dossiers nommes "mapbedwars", "mapbedwars2", ..., "mapbedwars5"
+#    situes dans la racine du serveur (ou plugins/PastequeBedWars/maps-worlds/)
+#    sont auto-enregistres. Leurs mecanismes (lits, generateurs, shops) sont
+#    scannes automatiquement a partir des marqueurs (beds, blocs de diamant/emeraude,
+#    etc.). Aucun /bwsetup manuel n'est necessaire.
+#
+# La liste ci-dessous est en fallback pour les maps YAML. Les maps auto-detectees
+# sont utilisees par defaut pour tous les modes.
+maps:
+  solo: []
+  duo: []
+  teams: []
+
+# Reglages de collage des schematics.
+# Garder ignore-air-on-paste a true pour eviter les watchdog timeouts au boot
+# sur les grosses maps/lobbys (moins de blocs modifies d'un coup).
+schematics:
+  ignore-air-on-paste: true
