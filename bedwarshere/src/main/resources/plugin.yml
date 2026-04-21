@@ -1,0 +1,41 @@
+name: PastequeBedWars
+version: ${project.version}
+main: fr.pastequeworld.bedwars.BedWarsPlugin
+api-version: 1.9
+author: PastequeWorld
+description: BedWars Hypixel-style pour le reseau PastequeWorld
+depend: [WorldEdit]
+load: POSTWORLD
+
+commands:
+  bedwars:
+    description: Commande principale BedWars
+    usage: /<command> <help|setup|start|stop|leave|join|reload>
+    aliases: [bw]
+    permission: pastequebedwars.command
+  bwsetup:
+    description: Commande de setup admin
+    usage: /<command> <map|team|generator|shop|spawn>
+    aliases: [bws]
+    permission: pastequebedwars.admin
+  bwadmin:
+    description: Commandes d'administration BedWars
+    usage: /<command> <movnpc|setwait|setlobbyspawn|forcestart|forcestop|spawnall|kick|tp|list|reload>
+    aliases: [bwa]
+    permission: pastequebedwars.admin
+  shout:
+    description: Crier dans le chat global
+    usage: /<command> <message>
+    aliases: [sc]
+  teamchat:
+    description: Parler uniquement a son equipe
+    usage: /<command> <message>
+    aliases: [tc]
+
+permissions:
+  pastequebedwars.command:
+    description: Acces aux commandes BedWars de base
+    default: true
+  pastequebedwars.admin:
+    description: Acces complet admin (setup, start, stop)
+    default: op
